@@ -22,25 +22,27 @@ smriti/
 
 ## 🚀 Services & Tech Stack
 
-| Service | Technology | Description |
-| :--- | :--- | :--- |
-| **Patient App** | Flutter (Dart) | Simplified, high-contrast, voice-enabled mobile companion for patients |
-| **Web Portal** | React 18 / Vite / TypeScript | Dashboard for Caregivers, Admins, and NGOs |
-| **Backend API** | Node.js / Express (ESM JavaScript) | Business logic, authentication, reminders, games, sync engine |
-| **AI Engine** | Python / FastAPI / PyTorch / Transformers | Speech analysis, cognitive decline prediction, personalized recall |
-| **Infrastructure** | Docker Compose, Nginx | Multi-container development and deployment |
+| Service            | Technology                                | Description                                                            |
+| :----------------- | :---------------------------------------- | :--------------------------------------------------------------------- |
+| **Patient App**    | Flutter (Dart)                            | Simplified, high-contrast, voice-enabled mobile companion for patients |
+| **Web Portal**     | React 18 / Vite / TypeScript              | Dashboard for Caregivers, Admins, and NGOs                             |
+| **Backend API**    | Node.js / Express (ESM JavaScript)        | Business logic, authentication, reminders, games, sync engine          |
+| **AI Engine**      | Python / FastAPI / PyTorch / Transformers | Speech analysis, cognitive decline prediction, personalized recall     |
+| **Infrastructure** | Docker Compose, Nginx                     | Multi-container development and deployment                             |
 
 ---
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
+
 - Node.js (v18+) & npm (v9+)
 - Python (v3.10+) & [uv](https://docs.astral.sh/uv/)
 - Flutter SDK (v3.10+)
 - Docker & Docker Compose (Optional for containerized run)
 
 ### Running with Docker Compose
+
 ```bash
 docker-compose up --build
 ```
@@ -48,6 +50,7 @@ docker-compose up --build
 ### Local Development Setup
 
 #### 1. Backend
+
 ```bash
 cd backend
 npm install
@@ -56,6 +59,7 @@ npm run dev
 ```
 
 #### 2. Web Portal
+
 ```bash
 cd apps/web
 npm install
@@ -63,6 +67,7 @@ npm run dev
 ```
 
 #### 3. AI Service (Python & uv)
+
 ```bash
 # Create virtual environment with uv
 uv venv
@@ -78,10 +83,11 @@ uv pip install -r requirements.txt
 
 # Run the FastAPI server
 cd ai
-uv run uvicorn app.main:app --reload --port 8000
+  uv run uvicorn app.main:app --reload --port 8000
 ```
 
 #### 4. Patient App (Flutter)
+
 ```bash
 cd apps/patient
 flutter pub get
@@ -91,4 +97,5 @@ flutter run
 ---
 
 ## 📄 License
+
 All rights reserved.
