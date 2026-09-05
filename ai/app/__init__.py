@@ -1,0 +1,1 @@
+"""Smriti AI Application Package."""

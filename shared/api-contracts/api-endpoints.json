@@ -1,0 +1,61 @@
+{
+  "name": "Smriti API Contract",
+  "version": "1.0.0",
+  "baseUrls": {
+    "backend": "http://localhost:5000/api",
+    "ai": "http://localhost:8000"
+  },
+  "endpoints": {
+    "auth": [
+      { "method": "POST", "path": "/auth/register", "access": "public", "description": "Register new user (caregiver, ngo, admin)" },
+      { "method": "POST", "path": "/auth/login", "access": "public", "description": "User login and JWT token issuance" },
+      { "method": "GET", "path": "/auth/me", "access": "authenticated", "description": "Fetch current session user profile" }
+    ],
+    "patients": [
+      { "method": "GET", "path": "/patients", "access": "caregiver,admin,ngo", "description": "List accessible patients" },
+      { "method": "POST", "path": "/patients", "access": "caregiver,admin", "description": "Register patient profile" },
+      { "method": "GET", "path": "/patients/:id", "access": "authenticated", "description": "Get detailed patient profile" },
+      { "method": "PUT", "path": "/patients/:id", "access": "caregiver,admin", "description": "Update patient profile" },
+      { "method": "DELETE", "path": "/patients/:id", "access": "admin", "description": "Archive/delete patient record" }
+    ],
+    "caregivers": [
+      { "method": "GET", "path": "/caregivers/profile", "access": "caregiver", "description": "Get caregiver profile" },
+      { "method": "POST", "path": "/caregivers/link-patient", "access": "caregiver", "description": "Link patient to caregiver" }
+    ],
+    "games": [
+      { "method": "GET", "path": "/games", "access": "authenticated", "description": "List cognitive therapy games" },
+      { "method": "POST", "path": "/games/session", "access": "authenticated", "description": "Submit completed game session results" },
+      { "method": "GET", "path": "/games/history/:patientId", "access": "authenticated", "description": "Get game history scores" }
+    ],
+    "reminders": [
+      { "method": "GET", "path": "/reminders/:patientId", "access": "authenticated", "description": "List reminders for patient" },
+      { "method": "POST", "path": "/reminders", "access": "caregiver,admin", "description": "Create medication or task reminder" },
+      { "method": "PATCH", "path": "/reminders/:id/status", "access": "authenticated", "description": "Mark reminder as completed or missed" }
+    ],
+    "progress": [
+      { "method": "GET", "path": "/progress/:patientId", "access": "authenticated", "description": "Get cognitive progress reports" },
+      { "method": "POST", "path": "/progress/assessment", "access": "caregiver,admin", "description": "Submit clinical cognitive assessment" }
+    ],
+    "family": [
+      { "method": "GET", "path": "/family/memories/:patientId", "access": "authenticated", "description": "Get memory gallery photos and prompts" },
+      { "method": "POST", "path": "/family/memories", "access": "caregiver", "description": "Upload family photo with memory tagging" }
+    ],
+    "analytics": [
+      { "method": "GET", "path": "/analytics/dashboard/:patientId", "access": "caregiver,admin,ngo", "description": "Aggregated dashboard statistics" }
+    ],
+    "voice": [
+      { "method": "POST", "path": "/voice/process", "access": "authenticated", "description": "Process voice interaction and trigger action" }
+    ],
+    "sync": [
+      { "method": "POST", "path": "/sync/push", "access": "patient", "description": "Push offline recorded sessions from mobile client" },
+      { "method": "GET", "path": "/sync/pull/:patientId", "access": "patient", "description": "Pull latest updates to mobile client" }
+    ],
+    "ai_engine": [
+      { "method": "POST", "path": "/predict/cognitive-decline", "service": "ai", "description": "Predict cognitive risk score" },
+      { "method": "POST", "path": "/speech/analyze", "service": "ai", "description": "Extract speech acoustic & linguistic markers" },
+      { "method": "POST", "path": "/personalization/generate-question", "service": "ai", "description": "Generate dynamic recall questions" },
+      { "method": "POST", "path": "/analysis/cognitive-trends", "service": "ai", "description": "Multi-week cognitive trend evaluation" },
+      { "method": "POST", "path": "/analysis/behavioral-summary", "service": "ai", "description": "Daily behavioral and sentiment summary" }
+    ]
+  }
+}

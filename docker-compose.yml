@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smriti-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/smriti
+      - AI_SERVICE_URL=http://ai:8000
+    depends_on:
+      - mongo
+      - ai
+    networks:
+      - smriti-net
+
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: smriti-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - MODEL_ENV=development
+    networks:
+      - smriti-net
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: smriti-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - smriti-net
+
+  mongo:
+    image: mongo:6.0
+    container_name: smriti-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - smriti-net
+
+volumes:
+  mongo-data:
+
+networks:
+  smriti-net:
+    driver: bridge
