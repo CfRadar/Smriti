@@ -1,6 +1,6 @@
 # Smriti (स्मृति)
 
-> An intelligent, multi-platform cognitive care and memory assistance ecosystem designed for dementia and Alzheimer's patients, their caregivers, healthcare administrators, and NGOs.
+> An intelligent, multi-platform cognitive care and memory assistance ecosystem designed for dementia and Alzheimer's patients, their caregivers, healthcare administrators, and NGOs
 
 ---
 
