@@ -27,3 +27,22 @@ export const syncOfflineData = async (patientId, offlinePayload) => {
     results,
   };
 };
+
+export const getSyncPullData = async (patientId, since) => {
+  const query = { patientId };
+  if (since) {
+    query.updatedAt = { $gte: new Date(since) };
+  }
+
+  const [reminders, memories] = await Promise.all([
+    Reminder.find(query),
+    FamilyMemory.find(query),
+  ]);
+
+  return {
+    patientId,
+    serverTimestamp: new Date().toISOString(),
+    reminders,
+    memories,
+  };
+};
