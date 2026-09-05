@@ -7,7 +7,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', gameController.listGames);
-router.post('/sessions', gameController.submitGameSession);
+router.post(['/session', '/sessions'], gameController.submitGameSession);
 router.get('/history/:patientId', gameController.getGameHistory);
 
 export default router;
