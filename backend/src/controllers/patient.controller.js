@@ -1,9 +1,24 @@
 import * as patientService from '../services/patient.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
+import { Caregiver } from '../models/Caregiver.js';
 
 export const getAllPatients = async (req, res, next) => {
   try {
-    const patients = await patientService.getPatients();
+    let query = {};
+
+    //If caller is a caregiver, filter only their assigned patients
+    if (req.user && req.user.role === 'caregiver') {
+      const caregiver = await Caregiver.findOne({ userId: req.user.id });
+      if (caregiver && caregiver.assignedPatients?.length > 0) {
+        query = { _id: { $in: caregiver.assignedPatients } };
+      } else {
+        // Caregiver has no assigned patients yet, return empty or as per business logic.
+        // Here we return empty list.
+        return sendSuccess(res, [], 'No patients assigned yet');
+      }
+    }
+
+    const patients = await patientService.getPatients(query);
     return sendSuccess(res, patients, 'Patients retrieved');
   } catch (error) {
     return sendError(res, error.message, 500);

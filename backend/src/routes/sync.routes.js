@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post('/', syncController.syncPush);
+router.post(['/', '/push'], syncController.syncPush);
 router.get('/pull/:patientId', syncController.syncPull);
 
 export default router;

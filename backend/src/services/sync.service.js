@@ -1,5 +1,7 @@
 import { Reminder } from '../models/Reminder.js';
 import { GameSession } from '../models/GameSession.js';
+import { FamilyMemory } from '../models/FamilyMemory.js';
+
 
 export const syncOfflineData = async (patientId, offlinePayload) => {
   const { completedReminders = [], gameSessions = [], timestamp } = offlinePayload;
