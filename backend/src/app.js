@@ -31,16 +31,16 @@ app.get('/health', (req, res) => {
 });
 
 // Mount Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/patients', patientRoutes);
-app.use('/api/v1/caregivers', caregiverRoutes);
-app.use('/api/v1/games', gameRoutes);
-app.use('/api/v1/reminders', reminderRoutes);
-app.use('/api/v1/progress', progressRoutes);
-app.use('/api/v1/family', familyRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
-app.use('/api/v1/voice', voiceRoutes);
-app.use('/api/v1/sync', syncRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/caregivers', caregiverRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/family', familyRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/voice', voiceRoutes);
+app.use('/api/sync', syncRoutes);
 
 // Global Error Handler
 app.use(errorMiddleware);
