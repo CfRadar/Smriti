@@ -36,7 +36,7 @@ smriti/
 
 ### Prerequisites
 - Node.js (v18+) & npm (v9+)
-- Python (v3.10+)
+- Python (v3.10+) & [uv](https://docs.astral.sh/uv/)
 - Flutter SDK (v3.10+)
 - Docker & Docker Compose (Optional for containerized run)
 
@@ -62,16 +62,23 @@ npm install
 npm run dev
 ```
 
-#### 3. AI Service
+#### 3. AI Service (Python & uv)
 ```bash
-cd ai
-python -m venv venv
+# Create virtual environment with uv
+uv venv
+
+# Activate virtual environment
 # On Windows:
-.\venv\Scripts\activate
+.venv\Scripts\activate
 # On Unix:
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+source .venv/bin/activate
+
+# Install dependencies using uv
+uv pip install -r requirements.txt
+
+# Run the FastAPI server
+cd ai
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 #### 4. Patient App (Flutter)
