@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.get('/patient/:patientId', reminderController.getReminders);
+router.get(['/:patientId', '/patient/:patientId'], reminderController.getReminders);
 router.post('/', reminderController.createReminder);
 router.patch('/:id/status', reminderController.updateStatus);
 router.delete('/:id', reminderController.deleteReminder);
