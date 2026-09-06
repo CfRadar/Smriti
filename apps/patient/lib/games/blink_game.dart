@@ -3,11 +3,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Enum representing the phase of a single game trial.
 enum GamePhase { targetDisplay, selection, feedback }
 
 /// Model capturing performance data for a single trial.
@@ -42,7 +44,6 @@ class TrialTelemetry {
 }
 
 /// Service responsible for offline-first telemetry management.
-/// Saves trial metrics to device memory first, then flushes them to the backend API.
 class GameTelemetryService {
   final String endpointUrl;
   final http.Client _client;
@@ -53,8 +54,7 @@ class GameTelemetryService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  /// 1. Saves telemetry payload directly to phone/device memory first.
-  /// 2. Automatically triggers background sync to the server.
+  /// Saves telemetry payload directly to device memory first.
   Future<void> sendTelemetry(TrialTelemetry telemetry) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -63,18 +63,16 @@ class GameTelemetryService {
       final String jsonPayload = jsonEncode(telemetry.toJson());
       cachedQueue.add(jsonPayload);
 
-      // Save to local device memory
       await prefs.setStringList(_offlineCacheKey, cachedQueue);
-      debugPrint(' Telemetry saved to local storage. Total queued: ${cachedQueue.length}');
+      debugPrint(' Telemetry saved locally. Total queued: ${cachedQueue.length}');
 
-      // Attempt background network transmission
       await syncCachedTelemetry();
     } catch (e) {
-      debugPrint('Error writing telemetry to local storage: $e');
+      debugPrint('Error saving telemetry locally: $e');
     }
   }
 
-  /// Transmits all unsent telemetry stored in local memory to the backend server.
+  /// Flushes local queue to backend.
   Future<void> syncCachedTelemetry() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -95,19 +93,15 @@ class GameTelemetryService {
               .timeout(const Duration(seconds: 4));
 
           if (response.statusCode >= 200 && response.statusCode < 300) {
-            debugPrint(' Telemetry successfully synced to backend: $rawJson');
+            debugPrint(' Telemetry synced: $rawJson');
           } else {
-            debugPrint(' Server error (${response.statusCode}). Keeping in local queue.');
             remainingQueue.add(rawJson);
           }
         } catch (e) {
-          // Network timeout or unreachable host: keep in local memory
-          debugPrint(' Offline or host unreachable. Kept in local queue.');
           remainingQueue.add(rawJson);
         }
       }
 
-      // Update phone memory with only unsent logs
       await prefs.setStringList(_offlineCacheKey, remainingQueue);
     } catch (e) {
       debugPrint('Error syncing telemetry queue: $e');
@@ -126,7 +120,7 @@ class BlinkGameScreen extends StatefulWidget {
   const BlinkGameScreen({
     super.key,
     this.sessionId = 'session_123456',
-    this.totalTrials = 10,
+    this.totalTrials = 5,
   });
 
   @override
@@ -134,7 +128,7 @@ class BlinkGameScreen extends StatefulWidget {
 }
 
 class _BlinkGameScreenState extends State<BlinkGameScreen> {
-  // Theme Palette Definitions (Pastel Sage Green & Off-White)
+  // Theme Palette Definitions
   static const Color primarySage = Color(0xFF4A7C59);
   static const Color softBackground = Color(0xFFF8FAF7);
   static const Color cardWhite = Color(0xFFFFFFFF);
@@ -142,6 +136,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   static const Color textDark = Color(0xFF2C3E35);
 
   final GameTelemetryService _telemetryService = GameTelemetryService();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final Random _random = Random();
 
   GamePhase _currentPhase = GamePhase.targetDisplay;
@@ -155,10 +150,21 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   DateTime? _selectionPhaseStartTime;
   int? _selectedTileNumber;
 
+  // Local audio asset bundled for zero-latency, cross-platform playback (Phone & Web)
+  static const String _clickSoundAsset = 'audio/click.wav';
+
   @override
   void initState() {
     super.initState();
-    // Flush any pending logs from previous sessions on startup
+    // On mobile platforms, lowLatency mode utilizes SoundPool/AVAudioPlayer for instant SFX
+    if (!kIsWeb) {
+      _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
+    }
+    // Pre-warm the audio source so first tap has 0ms latency on both web and mobile
+    _audioPlayer.setSource(AssetSource(_clickSoundAsset)).catchError((e) {
+      debugPrint('Audio pre-warm error: $e');
+    });
+
     _telemetryService.syncCachedTelemetry();
     _startTrial();
   }
@@ -166,18 +172,33 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   @override
   void dispose() {
     _phaseTimer?.cancel();
+    _audioPlayer.dispose();
     _telemetryService.dispose();
     super.dispose();
   }
 
-  /// Initiates a new trial sequence.
+  /// Plays crisp, snappy game-like click sound & tactile feedback on widget tap
+  Future<void> _playClickSound() async {
+    try {
+      // Tactile physical feedback for mobile (light haptic & system click)
+      HapticFeedback.lightImpact();
+      SystemSound.play(SystemSoundType.click);
+
+      // Instant local audio playback for both Phone and Web
+      await _audioPlayer.stop();
+      await _audioPlayer.play(
+        AssetSource(_clickSoundAsset),
+        volume: 1.0,
+      );
+    } catch (e) {
+      debugPrint('Click sound playback error: $e');
+    }
+  }
+
   void _startTrial() {
     _phaseTimer?.cancel();
 
-    // 1. Generate target number (1-99)
     final newTarget = _random.nextInt(99) + 1;
-
-    // 2. Generate 8 distinct random distractors (1-99) excluding the target
     final Set<int> numbersSet = {newTarget};
     while (numbersSet.length < 9) {
       numbersSet.add(_random.nextInt(99) + 1);
@@ -192,7 +213,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       _selectedTileNumber = null;
     });
 
-    // Target display duration: 2.5 seconds before showing selection grid
+    // Display target for 2.5s before revealing grid
     _phaseTimer = Timer(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       setState(() {
@@ -202,9 +223,11 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
     });
   }
 
-  /// Handles tile taps during the selection phase.
   void _onTileSelected(int selectedVal) {
     if (_currentPhase != GamePhase.selection) return;
+
+    // Play crisp click sound instantly on user tap
+    _playClickSound();
 
     final now = DateTime.now();
     final reactionTimeMs = _selectionPhaseStartTime != null
@@ -218,7 +241,6 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       _currentPhase = GamePhase.feedback;
     });
 
-    // Construct telemetry event payload
     final telemetry = TrialTelemetry(
       sessionId: widget.sessionId,
       trialNumber: _currentTrial,
@@ -229,10 +251,10 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       timestamp: now.toUtc().toIso8601String(),
     );
 
-    // Save to local storage first, then sync
+    // Save locally first
     _telemetryService.sendTelemetry(telemetry);
 
-    // Transition smoothly after a silent 500ms feedback pause
+    // Smooth 500ms visual feedback window
     _phaseTimer = Timer(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       if (_currentTrial < widget.totalTrials) {
@@ -257,28 +279,75 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: cardWhite,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Session Complete',
-          style: TextStyle(
-            color: textDark,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primarySage.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: primarySage,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Session Complete',
+              style: TextStyle(
+                color: textDark,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         content: const Text(
-          'Thank you for completing the attention exercise.',
-          style: TextStyle(color: textDark, fontSize: 20),
+          'Great job! Thank you for completing the attention & focus exercise.',
+          style: TextStyle(color: textDark, fontSize: 16, height: 1.4),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        actionsOverflowButtonSpacing: 10,
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primarySage,
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: textDark,
+              side: const BorderSide(color: borderGrey, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () {
+              _playClickSound();
+              Navigator.of(context).pop(); // Dismiss dialog
+              if (mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop(); // Return to Home
+              }
+            },
+            icon: const Icon(Icons.home_rounded, size: 20, color: primarySage),
+            label: const Text(
+              'Back to Home',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textDark,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primarySage,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            onPressed: () {
+              _playClickSound();
               Navigator.of(context).pop();
               setState(() {
                 _currentTrial = 1;
@@ -286,9 +355,14 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
               });
               _startTrial();
             },
-            child: const Text(
-              'Restart',
-              style: TextStyle(fontSize: 20, color: Colors.white),
+            icon: const Icon(Icons.replay_rounded, size: 20, color: Colors.white),
+            label: const Text(
+              'Play Again',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -317,7 +391,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch, //  Correct Flutter property
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildTopHeader(),
               const SizedBox(height: 24),
@@ -381,13 +455,6 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
         color: cardWhite,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: primarySage, width: 3),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          )
-        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -404,7 +471,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
             decoration: BoxDecoration(
-              color: primarySage.withOpacity(0.12),
+              color: primarySage.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
@@ -445,11 +512,13 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
-                color: isSelected ? primarySage.withOpacity(0.2) : cardWhite,
+                color: isSelected
+                    ? primarySage.withValues(alpha: 0.2)
+                    : cardWhite,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? primarySage : borderGrey,
-                  width: isSelected ? 2.5 : 1.5,
+                  width: isSelected ? 3.0 : 1.5,
                 ),
               ),
               child: Center(
