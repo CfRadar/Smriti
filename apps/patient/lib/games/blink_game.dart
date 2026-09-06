@@ -404,7 +404,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
             decoration: BoxDecoration(
-              color: primarySage.withOpacity(0.12),
+color: primarySage.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
@@ -445,7 +445,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
-                color: isSelected ? primarySage.withOpacity(0.2) : cardWhite,
+                color: isSelected ? primarySage.withValues(alpha: 0.2) : cardWhite,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? primarySage : borderGrey,
