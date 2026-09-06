@@ -235,7 +235,6 @@ class GameHubPage extends StatelessWidget {
                   context,
                   icon: Icons.grid_3x3_rounded,
                   title: 'Blink Memory',
-                  description: 'Remember the number and find it again.',
                   isAvailable: true,
                   onTap: () => _openBlinkGame(context),
                 ),
@@ -243,19 +242,16 @@ class GameHubPage extends StatelessWidget {
                   context,
                   icon: Icons.extension_rounded,
                   title: 'Game 2',
-                  description: 'A new memory activity is coming soon.',
                 ),
                 _gameCard(
                   context,
                   icon: Icons.record_voice_over_rounded,
                   title: 'Game 3',
-                  description: 'A new recall activity is coming soon.',
                 ),
                 _gameCard(
                   context,
                   icon: Icons.palette_rounded,
                   title: 'Game 4',
-                  description: 'A new calming activity is coming soon.',
                 ),
               ],
             );
@@ -294,7 +290,6 @@ class GameHubPage extends StatelessWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
-    required String description,
     bool isAvailable = false,
     VoidCallback? onTap,
   }) {
@@ -306,68 +301,40 @@ class GameHubPage extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Container(
-          padding: const EdgeInsets.all(17),
           decoration: BoxDecoration(
-            color: isAvailable ? Colors.white : const Color(0xFFF1EEE5),
+            color: isAvailable ? lightGreen : const Color(0xFFE5E1D7),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: isAvailable ? lightGreen : const Color(0xFFE3DED1),
               width: 1.5,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Container(
-                height: 52,
-                width: 52,
-                decoration: BoxDecoration(
-                  color: isAvailable ? lightGreen : const Color(0xFFE5E1D7),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon,
-                    color: isAvailable ? darkGreen : textGrey, size: 28),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: TextStyle(
-                  color: isAvailable ? darkGreen : textGrey,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+              Center(
+                child: Icon(
+                  icon,
+                  color: isAvailable
+                      ? darkGreen.withValues(alpha: .24)
+                      : textGrey.withValues(alpha: .22),
+                  size: 92,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: textGrey,
-                  fontSize: 13,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Text(
-                    isAvailable ? 'Play now' : 'Coming soon',
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  color: Colors.white.withValues(alpha: .78),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: isAvailable ? green : textGrey,
-                      fontSize: 14,
+                      color: isAvailable ? darkGreen : textGrey,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const Spacer(),
-                  Icon(
-                    isAvailable
-                        ? Icons.arrow_forward_rounded
-                        : Icons.lock_outline_rounded,
-                    color: isAvailable ? green : textGrey,
-                    size: 21,
-                  ),
-                ],
+                ),
               ),
             ],
           ),
