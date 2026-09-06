@@ -4,10 +4,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Enum representing the phase of a single game trial.
 enum GamePhase { targetDisplay, selection, feedback }
 
 /// Model capturing performance data for a single trial.
@@ -42,7 +42,6 @@ class TrialTelemetry {
 }
 
 /// Service responsible for offline-first telemetry management.
-/// Saves trial metrics to device memory first, then flushes them to the backend API.
 class GameTelemetryService {
   final String endpointUrl;
   final http.Client _client;
@@ -53,8 +52,7 @@ class GameTelemetryService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  /// 1. Saves telemetry payload directly to phone/device memory first.
-  /// 2. Automatically triggers background sync to the server.
+  /// Saves telemetry payload directly to phone/device memory first.
   Future<void> sendTelemetry(TrialTelemetry telemetry) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -63,18 +61,16 @@ class GameTelemetryService {
       final String jsonPayload = jsonEncode(telemetry.toJson());
       cachedQueue.add(jsonPayload);
 
-      // Save to local device memory
       await prefs.setStringList(_offlineCacheKey, cachedQueue);
       debugPrint(' Telemetry saved to local storage. Total queued: ${cachedQueue.length}');
 
-      // Attempt background network transmission
       await syncCachedTelemetry();
     } catch (e) {
       debugPrint('Error writing telemetry to local storage: $e');
     }
   }
 
-  /// Transmits all unsent telemetry stored in local memory to the backend server.
+  /// Transmits cached telemetry logs to the backend.
   Future<void> syncCachedTelemetry() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -95,19 +91,15 @@ class GameTelemetryService {
               .timeout(const Duration(seconds: 4));
 
           if (response.statusCode >= 200 && response.statusCode < 300) {
-            debugPrint(' Telemetry successfully synced to backend: $rawJson');
+            debugPrint(' Telemetry synced: $rawJson');
           } else {
-            debugPrint(' Server error (${response.statusCode}). Keeping in local queue.');
             remainingQueue.add(rawJson);
           }
         } catch (e) {
-          // Network timeout or unreachable host: keep in local memory
-          debugPrint(' Offline or host unreachable. Kept in local queue.');
           remainingQueue.add(rawJson);
         }
       }
 
-      // Update phone memory with only unsent logs
       await prefs.setStringList(_offlineCacheKey, remainingQueue);
     } catch (e) {
       debugPrint('Error syncing telemetry queue: $e');
@@ -126,7 +118,7 @@ class BlinkGameScreen extends StatefulWidget {
   const BlinkGameScreen({
     super.key,
     this.sessionId = 'session_123456',
-    this.totalTrials = 10,
+    this.totalTrials = 5,
   });
 
   @override
@@ -134,7 +126,7 @@ class BlinkGameScreen extends StatefulWidget {
 }
 
 class _BlinkGameScreenState extends State<BlinkGameScreen> {
-  // Theme Palette Definitions (Pastel Sage Green & Off-White)
+  // Pastel Sage Green Theme Palette
   static const Color primarySage = Color(0xFF4A7C59);
   static const Color softBackground = Color(0xFFF8FAF7);
   static const Color cardWhite = Color(0xFFFFFFFF);
@@ -158,7 +150,6 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   @override
   void initState() {
     super.initState();
-    // Flush any pending logs from previous sessions on startup
     _telemetryService.syncCachedTelemetry();
     _startTrial();
   }
@@ -170,14 +161,27 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
     super.dispose();
   }
 
-  /// Initiates a new trial sequence.
+  /// WASM-compliant Sound & Feedback Handler
+  /// WASM & Chrome Web Safe Sound/Feedback Handler
+  void _playSoundFeedback(bool isCorrect) {
+    try {
+      if (isCorrect) {
+        SystemSound.play(SystemSoundType.click);
+        HapticFeedback.lightImpact();
+      } else {
+        SystemSound.play(SystemSoundType.alert);
+        HapticFeedback.heavyImpact();
+      }
+    } catch (e) {
+      // Gracefully ignore web platform assertion errors in Chrome
+      debugPrint('Audio/Haptic feedback skipped on Web: $e');
+    }
+  }
+
   void _startTrial() {
     _phaseTimer?.cancel();
 
-    // 1. Generate target number (1-99)
     final newTarget = _random.nextInt(99) + 1;
-
-    // 2. Generate 8 distinct random distractors (1-99) excluding the target
     final Set<int> numbersSet = {newTarget};
     while (numbersSet.length < 9) {
       numbersSet.add(_random.nextInt(99) + 1);
@@ -192,7 +196,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       _selectedTileNumber = null;
     });
 
-    // Target display duration: 2.5 seconds before showing selection grid
+    // Display target digit for 2.5 seconds before showing grid
     _phaseTimer = Timer(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       setState(() {
@@ -202,7 +206,6 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
     });
   }
 
-  /// Handles tile taps during the selection phase.
   void _onTileSelected(int selectedVal) {
     if (_currentPhase != GamePhase.selection) return;
 
@@ -213,12 +216,14 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
 
     final isCorrect = selectedVal == _targetNumber;
 
+    // Trigger sound/haptic feedback on tap
+    _playSoundFeedback(isCorrect);
+
     setState(() {
       _selectedTileNumber = selectedVal;
       _currentPhase = GamePhase.feedback;
     });
 
-    // Construct telemetry event payload
     final telemetry = TrialTelemetry(
       sessionId: widget.sessionId,
       trialNumber: _currentTrial,
@@ -232,7 +237,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
     // Save to local storage first, then sync
     _telemetryService.sendTelemetry(telemetry);
 
-    // Transition smoothly after a silent 500ms feedback pause
+    // Smooth silent transition after 500ms feedback pause
     _phaseTimer = Timer(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       if (_currentTrial < widget.totalTrials) {
@@ -267,7 +272,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
         ),
         content: const Text(
           'Thank you for completing the attention exercise.',
-          style: TextStyle(color: textDark, fontSize: 20),
+          style: TextStyle(color: textDark, fontSize: 18),
         ),
         actions: [
           ElevatedButton(
@@ -287,8 +292,8 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
               _startTrial();
             },
             child: const Text(
-              'Restart',
-              style: TextStyle(fontSize: 20, color: Colors.white),
+              'Play Again',
+              style: TextStyle(fontSize: 18, color: Colors.white),
             ),
           ),
         ],
@@ -317,7 +322,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch, //  Correct Flutter property
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildTopHeader(),
               const SizedBox(height: 24),
@@ -381,13 +386,6 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
         color: cardWhite,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: primarySage, width: 3),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          )
-        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -404,7 +402,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
             decoration: BoxDecoration(
-color: primarySage.withValues(alpha: 0.12),
+              color: primarySage.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Text(
@@ -445,7 +443,9 @@ color: primarySage.withValues(alpha: 0.12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
-                color: isSelected ? primarySage.withValues(alpha: 0.2) : cardWhite,
+                color: isSelected
+                    ? primarySage.withValues(alpha: 0.2)
+                    : cardWhite,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? primarySage : borderGrey,
