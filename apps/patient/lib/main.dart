@@ -18,7 +18,328 @@ class SmritiApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: LandingPage.darkGreen),
         fontFamily: 'Arial',
       ),
-      home: const LandingPage(),
+      home: const SplashPage(),
+    );
+  }
+}
+
+class SplashPage extends StatefulWidget {
+  const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _scaleAnimation = Tween<double>(begin: .9, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+    _controller.forward();
+    Future.delayed(const Duration(milliseconds: 2200), _openGameHub);
+  }
+
+  void _openGameHub() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const GameHubPage(),
+        transitionDuration: const Duration(milliseconds: 550),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F5EC),
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 76,
+                  width: 76,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF214E3B),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Icon(Icons.psychology_alt_rounded,
+                      color: Colors.white, size: 42),
+                ),
+                const SizedBox(height: 22),
+                const Text(
+                  'SMRITI',
+                  style: TextStyle(
+                    color: Color(0xFF214E3B),
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Care that feels like home.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF66736C),
+                    fontSize: 17,
+                    height: 1.4,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GameHubPage extends StatelessWidget {
+  const GameHubPage({super.key});
+
+  static const Color ivory = Color(0xFFF8F5EC);
+  static const Color darkGreen = Color(0xFF214E3B);
+  static const Color green = Color(0xFF5F866D);
+  static const Color lightGreen = Color(0xFFDCE8DA);
+  static const Color cream = Color(0xFFEDE7D7);
+  static const Color textGrey = Color(0xFF66736C);
+
+  void _openBlinkGame(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const BlinkGameScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ivory,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader()),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(22, 34, 22, 40),
+              sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+      child: Row(
+        children: [
+          Container(
+            height: 48,
+            width: 48,
+            decoration: BoxDecoration(
+              color: darkGreen,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(Icons.psychology_alt_rounded,
+                color: Colors.white, size: 27),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'SMRITI',
+            style: TextStyle(
+              color: darkGreen,
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2.5,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: 'Accessibility settings',
+            onPressed: () {},
+            style: IconButton.styleFrom(
+              backgroundColor: lightGreen,
+              fixedSize: const Size(48, 48),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+            ),
+            icon: const Icon(Icons.tune_rounded, color: darkGreen, size: 25),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGamesSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Choose an activity',
+          style: TextStyle(
+            color: darkGreen,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 7),
+        const Text(
+          'Small exercises for memory and attention.',
+          style: TextStyle(color: textGrey, fontSize: 15),
+        ),
+        const SizedBox(height: 20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 650 ? 3 : 2;
+            return GridView.count(
+              crossAxisCount: columns,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: columns == 2 ? .84 : 1.05,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _gameCard(
+                  context,
+                  icon: Icons.grid_3x3_rounded,
+                  title: 'Blink Memory',
+                  isAvailable: true,
+                  onTap: () => _openBlinkGame(context),
+                ),
+                _gameCard(
+                  context,
+                  icon: Icons.extension_rounded,
+                  title: 'Game 2',
+                ),
+                _gameCard(
+                  context,
+                  icon: Icons.record_voice_over_rounded,
+                  title: 'Game 3',
+                ),
+                _gameCard(
+                  context,
+                  icon: Icons.palette_rounded,
+                  title: 'Game 4',
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 25),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: cream,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.favorite_rounded, color: green, size: 25),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'There is no rush. Go at your own pace.',
+                  style: TextStyle(
+                    color: darkGreen,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _gameCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    bool isAvailable = false,
+    VoidCallback? onTap,
+  }) {
+    return Semantics(
+      button: isAvailable,
+      enabled: isAvailable,
+      label: isAvailable ? '$title. Start game.' : '$title. Coming soon.',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isAvailable ? lightGreen : const Color(0xFFE5E1D7),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isAvailable ? lightGreen : const Color(0xFFE3DED1),
+              width: 1.5,
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Center(
+                child: Icon(
+                  icon,
+                  color: isAvailable
+                      ? darkGreen.withValues(alpha: .24)
+                      : textGrey.withValues(alpha: .22),
+                  size: 92,
+                ),
+              ),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  color: Colors.white.withValues(alpha: .78),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isAvailable ? darkGreen : textGrey,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
