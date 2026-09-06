@@ -601,12 +601,12 @@ class LandingPage extends StatelessWidget {
               Positioned(
                 top: -50,
                 right: -40,
-                child: _circle(170, Colors.white.withOpacity(.25)),
+                child: _circle(170, Colors.white.withValues(alpha: .25)),
               ),
               Positioned(
                 bottom: -45,
                 left: -35,
-                child: _circle(130, cream.withOpacity(.5)),
+                child: _circle(130, cream.withValues(alpha: .5)),
               ),
               Center(
                 child: Column(
@@ -616,7 +616,7 @@ class LandingPage extends StatelessWidget {
                       height: 90,
                       width: 90,
                       decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.75), shape: BoxShape.circle),
+                          color: Colors.white.withValues(alpha: .75), shape: BoxShape.circle),
                       child: const Icon(Icons.diversity_1_rounded,
                           size: 46, color: darkGreen),
                     ),
@@ -657,7 +657,7 @@ class LandingPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(21),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(.035),
+                  color: Colors.black.withValues(alpha: .035),
                   blurRadius: 18,
                   offset: const Offset(0, 7)),
             ],

@@ -3,6 +3,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -52,7 +54,7 @@ class GameTelemetryService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  /// Saves telemetry payload directly to phone/device memory first.
+  /// Saves telemetry payload directly to device memory first.
   Future<void> sendTelemetry(TrialTelemetry telemetry) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -62,15 +64,15 @@ class GameTelemetryService {
       cachedQueue.add(jsonPayload);
 
       await prefs.setStringList(_offlineCacheKey, cachedQueue);
-      debugPrint(' Telemetry saved to local storage. Total queued: ${cachedQueue.length}');
+      debugPrint(' Telemetry saved locally. Total queued: ${cachedQueue.length}');
 
       await syncCachedTelemetry();
     } catch (e) {
-      debugPrint('Error writing telemetry to local storage: $e');
+      debugPrint('Error saving telemetry locally: $e');
     }
   }
 
-  /// Transmits cached telemetry logs to the backend.
+  /// Flushes local queue to backend.
   Future<void> syncCachedTelemetry() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -126,7 +128,7 @@ class BlinkGameScreen extends StatefulWidget {
 }
 
 class _BlinkGameScreenState extends State<BlinkGameScreen> {
-  // Pastel Sage Green Theme Palette
+  // Theme Palette Definitions
   static const Color primarySage = Color(0xFF4A7C59);
   static const Color softBackground = Color(0xFFF8FAF7);
   static const Color cardWhite = Color(0xFFFFFFFF);
@@ -134,6 +136,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   static const Color textDark = Color(0xFF2C3E35);
 
   final GameTelemetryService _telemetryService = GameTelemetryService();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   final Random _random = Random();
 
   GamePhase _currentPhase = GamePhase.targetDisplay;
@@ -147,9 +150,21 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   DateTime? _selectionPhaseStartTime;
   int? _selectedTileNumber;
 
+  // Local audio asset bundled for zero-latency, cross-platform playback (Phone & Web)
+  static const String _clickSoundAsset = 'audio/click.wav';
+
   @override
   void initState() {
     super.initState();
+    // On mobile platforms, lowLatency mode utilizes SoundPool/AVAudioPlayer for instant SFX
+    if (!kIsWeb) {
+      _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
+    }
+    // Pre-warm the audio source so first tap has 0ms latency on both web and mobile
+    _audioPlayer.setSource(AssetSource(_clickSoundAsset)).catchError((e) {
+      debugPrint('Audio pre-warm error: $e');
+    });
+
     _telemetryService.syncCachedTelemetry();
     _startTrial();
   }
@@ -157,24 +172,26 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   @override
   void dispose() {
     _phaseTimer?.cancel();
+    _audioPlayer.dispose();
     _telemetryService.dispose();
     super.dispose();
   }
 
-  /// WASM-compliant Sound & Feedback Handler
-  /// WASM & Chrome Web Safe Sound/Feedback Handler
-  void _playSoundFeedback(bool isCorrect) {
+  /// Plays crisp, snappy game-like click sound & tactile feedback on widget tap
+  Future<void> _playClickSound() async {
     try {
-      if (isCorrect) {
-        SystemSound.play(SystemSoundType.click);
-        HapticFeedback.lightImpact();
-      } else {
-        SystemSound.play(SystemSoundType.alert);
-        HapticFeedback.heavyImpact();
-      }
+      // Tactile physical feedback for mobile (light haptic & system click)
+      HapticFeedback.lightImpact();
+      SystemSound.play(SystemSoundType.click);
+
+      // Instant local audio playback for both Phone and Web
+      await _audioPlayer.stop();
+      await _audioPlayer.play(
+        AssetSource(_clickSoundAsset),
+        volume: 1.0,
+      );
     } catch (e) {
-      // Gracefully ignore web platform assertion errors in Chrome
-      debugPrint('Audio/Haptic feedback skipped on Web: $e');
+      debugPrint('Click sound playback error: $e');
     }
   }
 
@@ -196,7 +213,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       _selectedTileNumber = null;
     });
 
-    // Display target digit for 2.5 seconds before showing grid
+    // Display target for 2.5s before revealing grid
     _phaseTimer = Timer(const Duration(milliseconds: 2500), () {
       if (!mounted) return;
       setState(() {
@@ -209,15 +226,15 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   void _onTileSelected(int selectedVal) {
     if (_currentPhase != GamePhase.selection) return;
 
+    // Play crisp click sound instantly on user tap
+    _playClickSound();
+
     final now = DateTime.now();
     final reactionTimeMs = _selectionPhaseStartTime != null
         ? now.difference(_selectionPhaseStartTime!).inMilliseconds
         : 0;
 
     final isCorrect = selectedVal == _targetNumber;
-
-    // Trigger sound/haptic feedback on tap
-    _playSoundFeedback(isCorrect);
 
     setState(() {
       _selectedTileNumber = selectedVal;
@@ -234,10 +251,10 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       timestamp: now.toUtc().toIso8601String(),
     );
 
-    // Save to local storage first, then sync
+    // Save locally first
     _telemetryService.sendTelemetry(telemetry);
 
-    // Smooth silent transition after 500ms feedback pause
+    // Smooth 500ms visual feedback window
     _phaseTimer = Timer(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       if (_currentTrial < widget.totalTrials) {
@@ -262,28 +279,75 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: cardWhite,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Session Complete',
-          style: TextStyle(
-            color: textDark,
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primarySage.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: primarySage,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Session Complete',
+              style: TextStyle(
+                color: textDark,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         content: const Text(
-          'Thank you for completing the attention exercise.',
-          style: TextStyle(color: textDark, fontSize: 18),
+          'Great job! Thank you for completing the attention & focus exercise.',
+          style: TextStyle(color: textDark, fontSize: 16, height: 1.4),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        actionsOverflowButtonSpacing: 10,
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primarySage,
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: textDark,
+              side: const BorderSide(color: borderGrey, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () {
+              _playClickSound();
+              Navigator.of(context).pop(); // Dismiss dialog
+              if (mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop(); // Return to Home
+              }
+            },
+            icon: const Icon(Icons.home_rounded, size: 20, color: primarySage),
+            label: const Text(
+              'Back to Home',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textDark,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primarySage,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            onPressed: () {
+              _playClickSound();
               Navigator.of(context).pop();
               setState(() {
                 _currentTrial = 1;
@@ -291,9 +355,14 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
               });
               _startTrial();
             },
-            child: const Text(
+            icon: const Icon(Icons.replay_rounded, size: 20, color: Colors.white),
+            label: const Text(
               'Play Again',
-              style: TextStyle(fontSize: 18, color: Colors.white),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -449,7 +518,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? primarySage : borderGrey,
-                  width: isSelected ? 2.5 : 1.5,
+                  width: isSelected ? 3.0 : 1.5,
                 ),
               ),
               child: Center(
