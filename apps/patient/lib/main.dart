@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'games/blink_game.dart';
+import 'games/pattern_memory_game.dart';
 
 void main() {
   runApp(const SmritiApp());
@@ -142,6 +143,12 @@ class GameHubPage extends StatelessWidget {
     );
   }
 
+  void _openPatternGame(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PatternMemoryGameScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,8 +247,10 @@ class GameHubPage extends StatelessWidget {
                 ),
                 _gameCard(
                   context,
-                  icon: Icons.extension_rounded,
-                  title: 'Game 2',
+                  icon: Icons.grid_view_rounded,
+                  title: 'Pattern Memory',
+                  isAvailable: true,
+                  onTap: () => _openPatternGame(context),
                 ),
                 _gameCard(
                   context,
