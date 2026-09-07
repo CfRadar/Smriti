@@ -1,17 +1,91 @@
 import 'package:flutter/material.dart';
+
+import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
 import 'games/pattern_memory_game.dart';
+import 'models/voice_command.dart';
+import 'services/voice_service.dart';
+import 'widgets/voice_status_indicator.dart';
 
 void main() {
   runApp(const SmritiApp());
 }
 
-class SmritiApp extends StatelessWidget {
+class SmritiApp extends StatefulWidget {
   const SmritiApp({super.key});
+
+  @override
+  State<SmritiApp> createState() => _SmritiAppState();
+}
+
+class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    VoiceCommandController.instance.attachNavigator(_navigatorKey);
+    _registerVoiceRoutes();
+    VoiceService.instance.initialize();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        VoiceService.instance.startListening();
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        VoiceService.instance.stopListening();
+        break;
+    }
+  }
+
+  void _registerVoiceRoutes() {
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.openBlinkingGame,
+      () => _openRoute(const BlinkGameScreen()),
+    );
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.openMemoryGame,
+      () => _openRoute(const PatternMemoryGameScreen()),
+    );
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.goHome,
+      () {
+        final context = _navigatorKey.currentContext;
+        if (context == null || !context.mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const GameHubPage()),
+          (route) => false,
+        );
+      },
+    );
+  }
+
+  void _openRoute(Widget page) {
+    final context = _navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => page),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    VoiceService.instance.stopListening();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'SMRITI',
       theme: ThemeData(
@@ -20,6 +94,25 @@ class SmritiApp extends StatelessWidget {
         fontFamily: 'Arial',
       ),
       home: const SplashPage(),
+      builder: (context, child) {
+        if (child == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Stack(
+          children: [
+            child,
+            const Positioned(
+              bottom: 18,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: VoiceStatusIndicator(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

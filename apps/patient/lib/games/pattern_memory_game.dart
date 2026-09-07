@@ -3,11 +3,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:patient/controllers/voice_command_controller.dart';
+import 'package:patient/models/voice_command.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Game phases during a trial
@@ -261,6 +264,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   static const String _clickSoundAsset = 'audio/click.wav';
 
   // Game & Session State
+  bool _isPaused = false;
   late DateTime _sessionStartTime;
   late int _initialSessionLevel;
   int _currentLevel = 1;
@@ -290,6 +294,19 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   @override
   void initState() {
     super.initState();
+    VoiceCommandController.instance.registerGame((command) {
+      switch (command.intent) {
+        case VoiceIntent.pauseGame:
+          pauseGame();
+          break;
+        case VoiceIntent.resumeGame:
+          resumeGame();
+          break;
+        default:
+          break;
+      }
+    });
+
     _sessionStartTime = DateTime.now();
     _initialSessionLevel = 1;
     _progressController = AnimationController(vsync: this);
@@ -308,11 +325,33 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
 
   @override
   void dispose() {
+    VoiceCommandController.instance.unregisterGame();
     _gameTimer?.cancel();
     _progressController.dispose();
     _audioPlayer.dispose();
     _telemetryService.dispose();
     super.dispose();
+  }
+
+  void pauseGame() {
+    if (_isPaused) return;
+    _gameTimer?.cancel();
+    _progressController.stop();
+    setState(() {
+      _isPaused = true;
+    });
+  }
+
+  void resumeGame() {
+    if (!_isPaused) return;
+    setState(() {
+      _isPaused = false;
+    });
+    if (_currentPhase == PatternGamePhase.countdown ||
+        _currentPhase == PatternGamePhase.memorize ||
+        _currentPhase == PatternGamePhase.recall) {
+      _startCountdown();
+    }
   }
 
   /// Load persisted difficulty level and start the game session

@@ -3,11 +3,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:patient/controllers/voice_command_controller.dart';
+import 'package:patient/models/voice_command.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum GamePhase { targetDisplay, selection, feedback }
@@ -139,6 +142,7 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   final Random _random = Random();
 
+  bool _isPaused = false;
   GamePhase _currentPhase = GamePhase.targetDisplay;
   int _currentTrial = 1;
   int _completedCount = 0;
@@ -156,6 +160,24 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
   @override
   void initState() {
     super.initState();
+    VoiceCommandController.instance.registerGame((command) {
+      switch (command.intent) {
+        case VoiceIntent.pauseGame:
+          pauseGame();
+          break;
+        case VoiceIntent.resumeGame:
+          resumeGame();
+          break;
+        case VoiceIntent.tapNumber:
+          if (command.parameter != null) {
+            tapNumber(command.parameter!);
+          }
+          break;
+        default:
+          break;
+      }
+    });
+
     // On mobile platforms, lowLatency mode utilizes SoundPool/AVAudioPlayer for instant SFX
     if (!kIsWeb) {
       _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
@@ -171,10 +193,36 @@ class _BlinkGameScreenState extends State<BlinkGameScreen> {
 
   @override
   void dispose() {
+    VoiceCommandController.instance.unregisterGame();
     _phaseTimer?.cancel();
     _audioPlayer.dispose();
     _telemetryService.dispose();
     super.dispose();
+  }
+
+  void pauseGame() {
+    if (!mounted || _isPaused) return;
+    _phaseTimer?.cancel();
+    setState(() {
+      _isPaused = true;
+    });
+  }
+
+  void resumeGame() {
+    if (!mounted || !_isPaused) return;
+    setState(() {
+      _isPaused = false;
+    });
+    if (_currentPhase == GamePhase.targetDisplay) {
+      _startTrial();
+    }
+  }
+
+  void tapNumber(int number) {
+    if (_currentPhase != GamePhase.selection || !_gridNumbers.contains(number)) {
+      return;
+    }
+    _onTileSelected(number);
   }
 
   /// Plays crisp, snappy game-like click sound & tactile feedback on widget tap
