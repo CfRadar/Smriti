@@ -1,6 +1,39 @@
 import '../models/voice_command.dart';
 
 class VoiceCommandParser {
+  static const Map<String, List<String>> _gameAliases = {
+    'blinking game': [
+      'blinking game',
+      'blink game',
+      'blinking',
+      'blink',
+      'ब्लिंकिंग गेम',
+      'ब्लिंक गेम',
+      'ब्लिंकिंग',
+      'ब्लिंक',
+      'blink game kholo',
+      'blinking game kholo',
+      'blink game shuru karo',
+      'blinking game chalao',
+      'ব্লিংকিং গেম',
+      'ব্লিংক গেম',
+    ],
+    'pattern memory game': [
+      'pattern memory game',
+      'pattern memory',
+      'memory game',
+      'memory',
+      'প্যাটাৰ্ণ মেমৰি',
+      'মেমৰি গেম',
+      'मेमोरी गेम',
+      'पैटर्न मेमोरी',
+      'memory game kholo',
+      'memory game shuru karo',
+      'memory game chalao',
+      'pattern memory kholo',
+    ],
+  };
+
   static final Map<String, int> _numberWords = {
     'zero': 0,
     'one': 1,
@@ -13,14 +46,35 @@ class VoiceCommandParser {
     'eight': 8,
     'nine': 9,
     'ten': 10,
+    'शून्य': 0,
+    'एक': 1,
+    'दो': 2,
+    'तीन': 3,
+    'चार': 4,
+    'पाँच': 5,
+    'पांच': 5,
+    'छह': 6,
+    'सात': 7,
+    'आठ': 8,
+    'नौ': 9,
+    'दस': 10,
+    'shunya': 0,
+    'ek': 1,
+    'do': 2,
+    'teen': 3,
+    'char': 4,
+    'paanch': 5,
+    'panch': 5,
+    'cheh': 6,
+    'chhe': 6,
+    'saat': 7,
+    'aath': 8,
+    'nau': 9,
+    'das': 10,
   };
 
   static VoiceCommand parse(String rawText, {double confidence = 0.0}) {
-    final normalized = rawText
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final normalized = _normalize(rawText);
 
     if (normalized.isEmpty) {
       return VoiceCommand(
@@ -30,7 +84,141 @@ class VoiceCommandParser {
       );
     }
 
-    if (_matchesNavigation(normalized, 'home', 'game hub', 'main menu')) {
+    if (_matchesAny(normalized, const [
+      'close',
+      'close the game',
+      'close this game',
+      'exit',
+      'exit game',
+      'exit the game',
+      'leave',
+      'leave the game',
+      'quit',
+      'quit the game',
+      'stop playing',
+      'end game',
+      'end the game',
+      'cancel',
+      'cancel the game',
+      'i don t want to play',
+      'i don t want to play this game',
+      'i don t want to play anymore',
+      'i don t want to continue',
+      'i don t want to continue playing',
+      'i want to stop playing',
+      'i want to stop',
+      'i want to leave',
+      'i want to leave the game',
+      'i am done',
+      'i m done',
+      'i am finished',
+      'i m finished',
+      'that s enough',
+      'enough',
+      'let s stop',
+      'let s quit',
+      'take me out',
+      'get me out of the game',
+      'गेम बंद करो',
+      'गेम बंद कर दो',
+      'यह गेम बंद करो',
+      'गेम से बाहर निकलो',
+      'बाहर निकलो',
+      'गेम छोड़ो',
+      'गेम छोड़ दो',
+      'खेल बंद करो',
+      'खेल बंद कर दो',
+      'खेलना बंद करो',
+      'बंद करो',
+      'कैंसल करो',
+      'रद्द करो',
+      'मुझे नहीं खेलना',
+      'मुझे यह गेम नहीं खेलना',
+      'मुझे अब नहीं खेलना',
+      'मुझे और नहीं खेलना',
+      'मैं खेलना बंद करना चाहती हूँ',
+      'मैं खेलना बंद करना चाहता हूँ',
+      'मैं नहीं खेलना चाहती',
+      'मैं नहीं खेलना चाहता',
+      'अब बस',
+      'बस करो',
+      'अब नहीं खेलना',
+      'अब खेलना बंद',
+      'मुझे बाहर जाना है',
+      'मुझे बाहर निकालो',
+      'मुझे गेम से बाहर निकालो',
+      'मुझे घर जाना है',
+      'मुझे वापस जाना है',
+      'game band karo',
+      'game band kar do',
+      'ye game band karo',
+      'game se bahar niklo',
+      'bahar niklo',
+      'game chhodo',
+      'game chhod do',
+      'khel band karo',
+      'khel band kar do',
+      'khelna band karo',
+      'band karo',
+      'cancel karo',
+      'radd karo',
+      'mujhe nahi khelna',
+      'mujhe ye game nahi khelna',
+      'mujhe ab nahi khelna',
+      'mujhe aur nahi khelna',
+      'main khelna band karna chahti hoon',
+      'main khelna band karna chahta hoon',
+      'main nahi khelna chahti',
+      'main nahi khelna chahta',
+      'ab bas',
+      'bas karo',
+      'ab nahi khelna',
+      'mujhe bahar jana hai',
+      'mujhe bahar nikalo',
+      'mujhe game se bahar nikalo',
+      'mujhe ghar jana hai',
+      'mujhe wapas jana hai',
+      'খেলটো বন্ধ কৰা',
+      'খেলটো বন্ধ কৰি দিয়া',
+      'এই খেলটো বন্ধ কৰা',
+      'খেলৰ পৰা ওলাই যোৱা',
+      'ওলাই যোৱা',
+      'খেলটো এৰি দিয়া',
+      'খেলটো নেখেলা',
+      'খেল বন্ধ কৰা',
+      'খেলা বন্ধ কৰা',
+      'বন্ধ কৰা',
+      'বাতিল কৰা',
+      'পিছলৈ যোৱা',
+      'ঘৰলৈ উভতি যোৱা',
+      'হোমলৈ যোৱা',
+      'মই আৰু খেলিব নিবিচাৰোঁ',
+      'মই এই খেলটো খেলিব নিবিচাৰোঁ',
+      'এতিয়া আৰু খেলিব নালাগে',
+      'মই খেলাটো বন্ধ কৰিব বিচাৰোঁ',
+      'মই খেলিব নোখোজোঁ',
+      'মোক খেলৰ পৰা উলিয়াই দিয়া',
+      'মোক বাহিৰলৈ লৈ যোৱা',
+      'মই উভতি যাব বিচাৰোঁ',
+      'মোক ঘৰলৈ লৈ যোৱা',
+      'এতিয়া বচ',
+      'আৰু নালাগে',
+    ])) {
+      return _command(VoiceIntent.exitGame, rawText, confidence);
+    }
+
+    if (_matchesNavigation(normalized, 'home', 'game hub', 'main menu') ||
+        _matchesAny(normalized, const [
+          'घर वापस जाओ',
+          'होम पर जाओ',
+          'वापस जाओ',
+          'ghar wapas jao',
+          'home par jao',
+          'wapas jao',
+          'পিছলৈ যোৱা',
+          'ঘৰলৈ উভতি যোৱা',
+          'হোমলৈ যোৱা',
+        ])) {
       return VoiceCommand(
         intent: VoiceIntent.goHome,
         originalText: rawText,
@@ -38,51 +226,26 @@ class VoiceCommandParser {
       );
     }
 
-    if (_matchesCommand(
-      normalized,
-      patterns: [
-        'open blinking game',
-        'open blink game',
-        'open blinking',
-        'open blink',
-        'start blinking game',
-        'start blink game',
-        'start blinking',
-        'start blink',
-        'play blinking',
-        'play blink',
-        'blinking game',
-        'blink game',
-      ],
-    )) {
-      return VoiceCommand(
-        intent: VoiceIntent.openBlinkingGame,
-        originalText: rawText,
-        confidence: confidence,
-      );
+    final gameName = _extractGameName(normalized);
+    if (gameName != null) {
+      final legacyIntent = _legacyGameIntent(normalized, gameName);
+      return _command(legacyIntent ?? VoiceIntent.openGame, rawText, confidence,
+          gameName: gameName);
     }
 
-    if (_matchesCommand(
-      normalized,
-      patterns: [
-        'open memory game',
-        'open memory',
-        'open pattern memory',
-        'start memory game',
-        'start pattern memory',
-        'play memory game',
-        'play memory',
-        'pattern memory',
-      ],
-    )) {
-      return VoiceCommand(
-        intent: VoiceIntent.openMemoryGame,
-        originalText: rawText,
-        confidence: confidence,
-      );
-    }
-
-    if (_matchesCommand(normalized, patterns: ['pause', 'pause the game', 'stop the game', 'stop']) ||
+    if (_matchesCommand(normalized, patterns: [
+          'pause',
+          'pause the game',
+          'stop the game',
+          'stop',
+          'रुको',
+          'रुक जाओ',
+          'गेम रोक दो',
+          'खेल रोक दो',
+          'ruk jao',
+          'game rok do',
+          'khel rok do',
+        ]) ||
         normalized.startsWith('pause ') ||
         normalized.startsWith('stop ')) {
       return VoiceCommand(
@@ -92,7 +255,21 @@ class VoiceCommandParser {
       );
     }
 
-    if (_matchesCommand(normalized, patterns: ['resume', 'resume the game', 'continue', 'continue the game', 'keep going']) ||
+    if (_matchesCommand(normalized, patterns: [
+          'resume',
+          'resume the game',
+          'continue',
+          'continue the game',
+          'keep going',
+          'जारी रखो',
+          'फिर से शुरू करो',
+          'दोबारा शुरू करो',
+          'जारी रखिए',
+          'जारी रखो',
+          'jari rakho',
+          'phir se shuru karo',
+          'dobara shuru karo',
+        ]) ||
         normalized.startsWith('resume ') ||
         normalized.startsWith('continue ')) {
       return VoiceCommand(
@@ -119,7 +296,73 @@ class VoiceCommandParser {
     );
   }
 
-  static bool _matchesNavigation(String normalized, String first, String second, String third) {
+  static String _normalize(String value) => value
+      .toLowerCase()
+      .replaceAll(RegExp(r'''[.,!?;:"'“”‘’]+'''), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  static VoiceCommand _command(
+    VoiceIntent intent,
+    String rawText,
+    double confidence, {
+    String? gameName,
+    int? parameter,
+  }) =>
+      VoiceCommand(
+        intent: intent,
+        originalText: rawText,
+        confidence: confidence,
+        gameName: gameName,
+        parameter: parameter,
+      );
+
+  static bool _matchesAny(String normalized, List<String> patterns) {
+    return patterns
+        .any((pattern) => _matchesCommand(normalized, patterns: [pattern]));
+  }
+
+  static String? _extractGameName(String normalized) {
+    const openWords = [
+      'open',
+      'start',
+      'play',
+      'let s play',
+      'i want to play',
+      'take me to',
+      'go to',
+      'खोलो',
+      'शुरू करो',
+      'चलाओ',
+      'खेलना है',
+      'पर चलो',
+      'खेलने चलो',
+      'শুরু কৰা',
+      'খেলা',
+      'খেলিব বিচাৰোঁ',
+      'আৰম্ভ কৰা',
+      'লৈ যোৱা',
+    ];
+    for (final entry in _gameAliases.entries) {
+      for (final alias in entry.value) {
+        final hasGame = normalized == alias || normalized.contains(alias);
+        if (!hasGame) continue;
+        final hasOpenWord = openWords.any((word) => normalized.contains(word));
+        if (hasOpenWord || normalized == alias) return entry.key;
+      }
+    }
+    return null;
+  }
+
+  static VoiceIntent? _legacyGameIntent(String normalized, String gameName) {
+    if (!RegExp(r'^[a-z0-9\s]+$').hasMatch(normalized)) return null;
+    return gameName == 'blinking game'
+        ? VoiceIntent.openBlinkingGame
+        : VoiceIntent.openMemoryGame;
+  }
+
+  static bool _matchesNavigation(
+      String normalized, String first, String second, String third) {
     return normalized == first ||
         normalized == second ||
         normalized == third ||
@@ -131,10 +374,14 @@ class VoiceCommandParser {
         normalized.startsWith('take me to the home');
   }
 
-  static bool _matchesCommand(String normalized, {required List<String> patterns}) {
+  static bool _matchesCommand(String normalized,
+      {required List<String> patterns}) {
     for (final pattern in patterns) {
       final candidate = pattern.trim();
-      if (normalized == candidate || normalized.startsWith('$candidate ') || normalized.contains(' $candidate ') || normalized.contains(candidate)) {
+      if (normalized == candidate ||
+          normalized.startsWith('$candidate ') ||
+          normalized.contains(' $candidate ') ||
+          normalized.contains(candidate)) {
         return true;
       }
     }
@@ -142,23 +389,26 @@ class VoiceCommandParser {
   }
 
   static int? _extractTapNumber(String normalized) {
-    final hasTapWord = RegExp(r'\b(?:tap|press|select|pick|choose|hit|activate)\b').hasMatch(normalized);
-    if (!hasTapWord) {
-      return null;
-    }
-
-    final match = RegExp(
+    final englishMatch = RegExp(
       r'\b(?:tap|press|select|pick|choose|hit|activate)\s+(?:number\s+)?([a-z0-9]+)\b',
     ).firstMatch(normalized);
-
-    if (match == null) {
-      return null;
-    }
+    final hindiMatch = RegExp(
+      r'(?:नंबर\s*)?(\d+|[०-९]+|[एक-दोतीनचारपाँचपांचछहसातआठनौदस]+)\s*(?:दबाओ|चुनो)',
+    ).firstMatch(normalized);
+    final romanHindiMatch = RegExp(
+      r'(?:number\s*)?(\d+|shunya|ek|do|teen|char|paanch|panch|cheh|chhe|saat|aath|nau|das)\s*(?:dabao|chuno)',
+    ).firstMatch(normalized);
+    final match = englishMatch ?? hindiMatch ?? romanHindiMatch;
+    if (match == null) return null;
 
     final value = match.group(1) ?? '';
     final parsedInt = int.tryParse(value);
     if (parsedInt != null) {
       return parsedInt;
+    }
+
+    if (value.runes.every((rune) => rune >= 0x0966 && rune <= 0x096f)) {
+      return int.tryParse(value.runes.map((rune) => rune - 0x0966).join());
     }
 
     final numberWord = _numberWords[value];

@@ -13,6 +13,7 @@ class VoiceCommandController {
   final ValueNotifier<VoiceCommand?> lastCommand =
       ValueNotifier<VoiceCommand?>(null);
   final Map<VoiceIntent, VoiceRouteHandler> _routeHandlers = {};
+  final Map<String, VoiceRouteHandler> _gameRoutes = {};
   GlobalKey<NavigatorState>? _navigatorKey;
   VoiceGameHandler? _activeGameHandler;
 
@@ -26,6 +27,11 @@ class VoiceCommandController {
 
   void clearRoutes() {
     _routeHandlers.clear();
+    _gameRoutes.clear();
+  }
+
+  void registerGameRoute(String gameName, VoiceRouteHandler handler) {
+    _gameRoutes[_normalizeGameName(gameName)] = handler;
   }
 
   void registerGame(VoiceGameHandler? handler) {
@@ -36,19 +42,33 @@ class VoiceCommandController {
     _activeGameHandler = null;
   }
 
+  bool get hasActiveGame => _activeGameHandler != null;
+
   Future<void> execute(VoiceCommand command) async {
     lastCommand.value = command;
 
     switch (command.intent) {
+      case VoiceIntent.openGame:
+        final gameName = command.gameName;
+        if (gameName != null) {
+          _gameRoutes[_normalizeGameName(gameName)]?.call();
+        }
+        break;
       case VoiceIntent.openBlinkingGame:
       case VoiceIntent.openMemoryGame:
       case VoiceIntent.goHome:
-        _routeHandlers[command.intent]?.call();
+      case VoiceIntent.exitGame:
+        if (command.intent == VoiceIntent.exitGame) {
+          _routeHandlers[VoiceIntent.exitGame]?.call();
+        } else {
+          _routeHandlers[command.intent]?.call();
+        }
         break;
       case VoiceIntent.pauseGame:
       case VoiceIntent.resumeGame:
       case VoiceIntent.tapNumber:
-        if (command.intent == VoiceIntent.tapNumber && command.parameter == null) {
+        if (command.intent == VoiceIntent.tapNumber &&
+            command.parameter == null) {
           return;
         }
         _activeGameHandler?.call(command);
@@ -57,6 +77,9 @@ class VoiceCommandController {
         break;
     }
   }
+
+  String _normalizeGameName(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
   NavigatorState? get navigator => _navigatorKey?.currentState;
 }

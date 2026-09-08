@@ -54,6 +54,23 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       VoiceIntent.openMemoryGame,
       () => _openRoute(const PatternMemoryGameScreen()),
     );
+    VoiceCommandController.instance.registerGameRoute(
+      'blinking game',
+      () => _openRoute(const BlinkGameScreen()),
+    );
+    VoiceCommandController.instance.registerGameRoute(
+      'pattern memory game',
+      () => _openRoute(const PatternMemoryGameScreen()),
+    );
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.exitGame,
+      () {
+        final navigator = _navigatorKey.currentState;
+        if (navigator != null && navigator.canPop()) {
+          navigator.pop();
+        }
+      },
+    );
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.goHome,
       () {
@@ -425,7 +442,8 @@ class GameHubPage extends StatelessWidget {
               ),
               Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   color: Colors.white.withValues(alpha: .78),
                   child: Text(
                     title,
@@ -543,7 +561,8 @@ class LandingPage extends StatelessWidget {
                     _iconTile(Icons.favorite_rounded, cream, green),
                     const SizedBox(width: 13),
                     const Expanded(
-                      child: Text('Making care more human,\naccessible and meaningful.',
+                      child: Text(
+                          'Making care more human,\naccessible and meaningful.',
                           style: TextStyle(
                               color: darkGreen,
                               fontSize: 14,
@@ -574,15 +593,19 @@ class LandingPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Row(children: [
-                      _feature(Icons.favorite_rounded, 'Compassionate', 'Care with empathy'),
+                      _feature(Icons.favorite_rounded, 'Compassionate',
+                          'Care with empathy'),
                       const SizedBox(width: 14),
-                      _feature(Icons.person_rounded, 'Personal', 'Built around you'),
+                      _feature(
+                          Icons.person_rounded, 'Personal', 'Built around you'),
                     ]),
                     const SizedBox(height: 14),
                     Row(children: [
-                      _feature(Icons.shield_rounded, 'Trusted', 'Safe and reliable'),
+                      _feature(
+                          Icons.shield_rounded, 'Trusted', 'Safe and reliable'),
                       const SizedBox(width: 14),
-                      _feature(Icons.groups_rounded, 'Connected', 'Never alone'),
+                      _feature(
+                          Icons.groups_rounded, 'Connected', 'Never alone'),
                     ]),
                   ],
                 ),
@@ -605,7 +628,8 @@ class LandingPage extends StatelessWidget {
                             height: 1.15,
                             fontWeight: FontWeight.w700)),
                     SizedBox(height: 13),
-                    Text('It is how we make people feel - heard, supported and valued.',
+                    Text(
+                        'It is how we make people feel - heard, supported and valued.',
                         style: TextStyle(
                             color: lightGreen, fontSize: 14, height: 1.5)),
                   ],
@@ -623,18 +647,24 @@ class LandingPage extends StatelessWidget {
                             fontSize: 27,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 9),
-                    const Text('Take the first step towards\nbetter, more connected care.',
+                    const Text(
+                        'Take the first step towards\nbetter, more connected care.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: textGrey, fontSize: 14, height: 1.5)),
+                        style: TextStyle(
+                            color: textGrey, fontSize: 14, height: 1.5)),
                     const SizedBox(height: 20),
-                    SizedBox(width: 180, child: _primaryButton(context, 'Play Memory Game', compact: true)),
+                    SizedBox(
+                        width: 180,
+                        child: _primaryButton(context, 'Play Memory Game',
+                            compact: true)),
                   ],
                 ),
               ),
               const SizedBox(height: 45),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 25),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 25),
                 color: cream,
                 child: const Column(
                   children: [
@@ -672,7 +702,8 @@ class LandingPage extends StatelessWidget {
                 letterSpacing: .8)),
       );
 
-  Widget _primaryButton(BuildContext context, String label, {bool compact = false}) =>
+  Widget _primaryButton(BuildContext context, String label,
+          {bool compact = false}) =>
       SizedBox(
         width: compact ? null : double.infinity,
         height: 55,
@@ -680,13 +711,15 @@ class LandingPage extends StatelessWidget {
           onPressed: () => _openGame(context),
           icon: const Icon(Icons.arrow_forward_rounded, size: 19),
           label: Text(label,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              style:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           style: ElevatedButton.styleFrom(
             backgroundColor: compact ? green : darkGreen,
             foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
           ),
         ),
       );
@@ -718,7 +751,8 @@ class LandingPage extends StatelessWidget {
                       height: 90,
                       width: 90,
                       decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .75), shape: BoxShape.circle),
+                          color: Colors.white.withValues(alpha: .75),
+                          shape: BoxShape.circle),
                       child: const Icon(Icons.diversity_1_rounded,
                           size: 46, color: darkGreen),
                     ),
@@ -742,7 +776,8 @@ class LandingPage extends StatelessWidget {
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       );
 
-  Widget _iconTile(IconData icon, Color background, Color foreground) => Container(
+  Widget _iconTile(IconData icon, Color background, Color foreground) =>
+      Container(
         height: 45,
         width: 45,
         decoration: BoxDecoration(
@@ -771,10 +806,13 @@ class LandingPage extends StatelessWidget {
               const Spacer(),
               Text(title,
                   style: const TextStyle(
-                      color: darkGreen, fontSize: 14, fontWeight: FontWeight.w700)),
+                      color: darkGreen,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
               Text(subtitle,
-                  style: const TextStyle(color: Color(0xFF7A8580), fontSize: 10)),
+                  style:
+                      const TextStyle(color: Color(0xFF7A8580), fontSize: 10)),
             ],
           ),
         ),

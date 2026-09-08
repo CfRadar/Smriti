@@ -1,7 +1,9 @@
 enum VoiceIntent {
+  openGame,
   openBlinkingGame,
   openMemoryGame,
   goHome,
+  exitGame,
   pauseGame,
   resumeGame,
   tapNumber,
@@ -13,6 +15,7 @@ class VoiceCommand {
     required this.intent,
     required this.originalText,
     this.parameter,
+    this.gameName,
     this.confidence = 0.0,
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
@@ -20,6 +23,7 @@ class VoiceCommand {
   final VoiceIntent intent;
   final String originalText;
   final int? parameter;
+  final String? gameName;
   final double confidence;
   final DateTime timestamp;
 
@@ -28,6 +32,7 @@ class VoiceCommand {
         'recognizedText': originalText,
         'intent': intent.name,
         'parameter': parameter,
+        'gameName': gameName,
         'confidence': confidence,
       };
 }
