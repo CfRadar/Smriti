@@ -65,10 +65,9 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.exitGame,
       () {
-        final navigator = _navigatorKey.currentState;
-        if (navigator != null && navigator.canPop()) {
-          navigator.pop();
-        }
+        final context = _navigatorKey.currentContext;
+        if (context == null || !context.mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       },
     );
     VoiceCommandController.instance.registerRoute(
@@ -76,10 +75,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       () {
         final context = _navigatorKey.currentContext;
         if (context == null || !context.mounted) return;
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const GameHubPage()),
-          (route) => false,
-        );
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       },
     );
   }
@@ -110,25 +106,16 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
         colorScheme: ColorScheme.fromSeed(seedColor: LandingPage.darkGreen),
         fontFamily: 'Arial',
       ),
+      routes: {
+        '/home': (context) => const GameHubPage(),
+      },
       home: const SplashPage(),
       builder: (context, child) {
         if (child == null) {
           return const SizedBox.shrink();
         }
 
-        return Stack(
-          children: [
-            child,
-            const Positioned(
-              bottom: 18,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: VoiceStatusIndicator(),
-              ),
-            ),
-          ],
-        );
+        return child;
       },
     );
   }
@@ -303,6 +290,8 @@ class GameHubPage extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          const VoiceStatusIndicator(compact: true),
+          const SizedBox(width: 12),
           IconButton(
             tooltip: 'Accessibility settings',
             onPressed: () {},
