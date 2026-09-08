@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Bell,
@@ -10,7 +10,6 @@ import {
 
 import { api } from "../services/api";
 
-// Update interface in caregiverLayout.tsx:
 interface Patient {
     _id: string;
     id?: string;
@@ -21,10 +20,18 @@ interface Patient {
     name?: string;
 }
 
-
 export default function CaregiverLayout() {
+    const navigate = useNavigate();
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedPatient, setSelectedPatient] = useState("");
+
+    const user = (() => {
+        try {
+            return JSON.parse(localStorage.getItem("user") || "{}");
+        } catch {
+            return {};
+        }
+    })();
 
     useEffect(() => {
         loadPatients();
@@ -33,21 +40,35 @@ export default function CaregiverLayout() {
     const loadPatients = async () => {
         try {
             const data = await api.get("/patients");
-            setPatients(data);
-
             if (data && data.length > 0) {
+                setPatients(data);
                 const firstId = data[0]._id || data[0].id;
                 setSelectedPatient(firstId);
+            } else {
+                const demoPatient = {
+                    _id: "demo-patient-001",
+                    name: "Shri Biren Bora (Assam)",
+                    userId: { name: "Shri Biren Bora (Assam)" }
+                };
+                setPatients([demoPatient]);
+                setSelectedPatient(demoPatient._id);
             }
-
         } catch (error) {
             console.error("Failed to load patients:", error);
+            const demoPatient = {
+                _id: "demo-patient-001",
+                name: "Shri Biren Bora (Assam)",
+                userId: { name: "Shri Biren Bora (Assam)" }
+            };
+            setPatients([demoPatient]);
+            setSelectedPatient(demoPatient._id);
         }
     };
 
     const handleLogout = () => {
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        localStorage.removeItem("user");
+        navigate("/login");
     };
 
     const navItems = [
@@ -116,8 +137,8 @@ export default function CaregiverLayout() {
                 {/* Caregiver / Logout */}
                 <div className="p-4 border-t">
                     <div className="text-sm mb-3">
-                        <p className="font-medium">Caregiver</p>
-                        <p className="text-gray-500">Family member</p>
+                        <p className="font-medium text-gray-900">{user.name || "Caregiver Anita"}</p>
+                        <p className="text-xs text-gray-500">{user.email || "caregiver@smriti.org"}</p>
                     </div>
 
                     <button
