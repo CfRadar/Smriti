@@ -4,9 +4,12 @@ import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
 import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
+import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
+import 'services/reminder_service.dart';
 import 'services/voice_service.dart';
 import 'widgets/voice_status_indicator.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const SmritiApp());
@@ -296,7 +299,7 @@ class _SplashPageState extends State<SplashPage>
   }
 }
 
-class GameHubPage extends StatelessWidget {
+class GameHubPage extends StatefulWidget {
   const GameHubPage({super.key});
 
   static const Color ivory = Color(0xFFF8F5EC);
@@ -305,6 +308,123 @@ class GameHubPage extends StatelessWidget {
   static const Color lightGreen = Color(0xFFDCE8DA);
   static const Color cream = Color(0xFFEDE7D7);
   static const Color textGrey = Color(0xFF66736C);
+
+  @override
+  State<GameHubPage> createState() => _GameHubPageState();
+}
+
+class _GameHubPageState extends State<GameHubPage> {
+  List<PatientReminder> _reminders = [];
+  bool _loadingReminders = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
+
+  Future<void> _loadReminders() async {
+    setState(() => _loadingReminders = true);
+    try {
+      final list = await ReminderService.instance.fetchReminders();
+      if (mounted) {
+        setState(() {
+          _reminders = list;
+          _loadingReminders = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadingReminders = false);
+      }
+    }
+  }
+
+  Future<void> _acknowledgeReminder(PatientReminder reminder) async {
+    await ReminderService.instance.acknowledgeReminder(reminder.id);
+    if (mounted) {
+      setState(() {
+        _reminders = _reminders.map((r) {
+          if (r.id == reminder.id) {
+            return PatientReminder(
+              id: r.id,
+              title: r.title,
+              description: r.description,
+              type: r.type,
+              scheduledTime: r.scheduledTime,
+              repeat: r.repeat,
+              isVoicePromptEnabled: r.isVoicePromptEnabled,
+              voicePromptText: r.voicePromptText,
+              status: 'acknowledged',
+            );
+          }
+          return r;
+        }).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('বঢ়িয়া! (Well done!) ${reminder.title} marked completed.'),
+          backgroundColor: GameHubPage.darkGreen,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _speakReminder(PatientReminder reminder) {
+    final promptText = reminder.voicePromptText ??
+        'দেউতা, এয়া আপোনাৰ ${reminder.title} সময় হ\'ল। (Time for your ${reminder.title})';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: GameHubPage.cream,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: GameHubPage.lightGreen,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.record_voice_over_rounded,
+                  color: GameHubPage.darkGreen, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Voice Reminder',
+              style: TextStyle(
+                color: GameHubPage.darkGreen,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          promptText,
+          style: const TextStyle(
+            color: GameHubPage.darkGreen,
+            fontSize: 18,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Close / বন্ধ কৰক',
+              style: TextStyle(
+                color: GameHubPage.green,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _openBlinkGame(BuildContext context) {
     Navigator.of(context).push(
@@ -327,13 +447,14 @@ class GameHubPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ivory,
+      backgroundColor: GameHubPage.ivory,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHeader()),
+            SliverToBoxAdapter(child: _buildRemindersSection()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 34, 22, 40),
+              padding: const EdgeInsets.fromLTRB(22, 28, 22, 40),
               sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
             ),
           ],
@@ -351,7 +472,7 @@ class GameHubPage extends StatelessWidget {
             height: 48,
             width: 48,
             decoration: BoxDecoration(
-              color: darkGreen,
+              color: GameHubPage.darkGreen,
               borderRadius: BorderRadius.circular(15),
             ),
             child: const Icon(Icons.psychology_alt_rounded,
@@ -361,7 +482,7 @@ class GameHubPage extends StatelessWidget {
           const Text(
             'SMRITI',
             style: TextStyle(
-              color: darkGreen,
+              color: GameHubPage.darkGreen,
               fontSize: 25,
               fontWeight: FontWeight.bold,
               letterSpacing: 2.5,
@@ -374,12 +495,215 @@ class GameHubPage extends StatelessWidget {
             tooltip: 'Accessibility settings',
             onPressed: () {},
             style: IconButton.styleFrom(
-              backgroundColor: lightGreen,
+              backgroundColor: GameHubPage.lightGreen,
               fixedSize: const Size(48, 48),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15)),
             ),
-            icon: const Icon(Icons.tune_rounded, color: darkGreen, size: 25),
+            icon: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 25),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemindersSection() {
+    final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
+    final completedReminders = _reminders.where((r) => r.isAcknowledged).toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Today\'s Routine (দৈনিক দিনচৰ্যা)',
+                style: TextStyle(
+                  color: GameHubPage.darkGreen,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: GameHubPage.green),
+                tooltip: 'Refresh routine',
+                onPressed: _loadReminders,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (_loadingReminders)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: CircularProgressIndicator(color: GameHubPage.darkGreen),
+              ),
+            )
+          else if (_reminders.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: GameHubPage.cream,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: GameHubPage.lightGreen),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: GameHubPage.green, size: 28),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'No routine tasks right now. Relax and enjoy your day! (কোনো বাকী কাম নাই)',
+                      style: TextStyle(
+                        color: GameHubPage.darkGreen,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            ...pendingReminders.map((reminder) => _reminderCard(reminder, isCompleted: false)),
+            if (completedReminders.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ...completedReminders.map((reminder) => _reminderCard(reminder, isCompleted: true)),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  IconData _getTypeIcon(String type) {
+    switch (type) {
+      case 'medication':
+        return Icons.medication_rounded;
+      case 'hydration':
+        return Icons.water_drop_rounded;
+      case 'meal':
+        return Icons.restaurant_rounded;
+      case 'activity':
+        return Icons.directions_walk_rounded;
+      case 'appointment':
+        return Icons.local_hospital_rounded;
+      default:
+        return Icons.access_time_rounded;
+    }
+  }
+
+  Widget _reminderCard(PatientReminder reminder, {required bool isCompleted}) {
+    final timeStr = DateFormat('h:mm a').format(reminder.scheduledTime);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isCompleted ? const Color(0xFFEBE6D8) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCompleted ? Colors.transparent : GameHubPage.lightGreen,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isCompleted ? GameHubPage.lightGreen.withOpacity(0.5) : GameHubPage.lightGreen,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              _getTypeIcon(reminder.type),
+              color: isCompleted ? GameHubPage.textGrey : GameHubPage.darkGreen,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reminder.title,
+                  style: TextStyle(
+                    color: isCompleted ? GameHubPage.textGrey : GameHubPage.darkGreen,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded, size: 14, color: GameHubPage.textGrey),
+                    const SizedBox(width: 4),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        color: GameHubPage.textGrey,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (reminder.description != null && reminder.description!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          reminder.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: GameHubPage.textGrey, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (reminder.isVoicePromptEnabled && !isCompleted) ...[
+            IconButton(
+              icon: const Icon(Icons.volume_up_rounded, color: GameHubPage.green, size: 26),
+              tooltip: 'Listen to prompt',
+              onPressed: () => _speakReminder(reminder),
+            ),
+          ],
+          const SizedBox(width: 6),
+          ElevatedButton(
+            onPressed: isCompleted ? null : () => _acknowledgeReminder(reminder),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isCompleted ? Colors.transparent : GameHubPage.darkGreen,
+              foregroundColor: isCompleted ? GameHubPage.textGrey : Colors.white,
+              elevation: isCompleted ? 0 : 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isCompleted ? Icons.check_circle_rounded : Icons.check_rounded,
+                  size: 18,
+                  color: isCompleted ? GameHubPage.green : Colors.white,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isCompleted ? 'Done' : 'Done / কৰা হ\'ল',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isCompleted ? GameHubPage.green : Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -393,7 +717,7 @@ class GameHubPage extends StatelessWidget {
         const Text(
           'Choose an activity',
           style: TextStyle(
-            color: darkGreen,
+            color: GameHubPage.darkGreen,
             fontSize: 26,
             fontWeight: FontWeight.w700,
           ),
@@ -401,7 +725,7 @@ class GameHubPage extends StatelessWidget {
         const SizedBox(height: 7),
         const Text(
           'Small exercises for memory and attention.',
-          style: TextStyle(color: textGrey, fontSize: 15),
+          style: TextStyle(color: GameHubPage.textGrey, fontSize: 15),
         ),
         const SizedBox(height: 20),
         LayoutBuilder(
@@ -450,18 +774,18 @@ class GameHubPage extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: cream,
+            color: GameHubPage.cream,
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Row(
             children: [
-              Icon(Icons.favorite_rounded, color: green, size: 25),
+              Icon(Icons.favorite_rounded, color: GameHubPage.green, size: 25),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'There is no rush. Go at your own pace.',
                   style: TextStyle(
-                    color: darkGreen,
+                    color: GameHubPage.darkGreen,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
@@ -490,10 +814,10 @@ class GameHubPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         child: Container(
           decoration: BoxDecoration(
-            color: isAvailable ? lightGreen : const Color(0xFFE5E1D7),
+            color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE5E1D7),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isAvailable ? lightGreen : const Color(0xFFE3DED1),
+              color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE3DED1),
               width: 1.5,
             ),
           ),
@@ -504,8 +828,8 @@ class GameHubPage extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: isAvailable
-                      ? darkGreen.withValues(alpha: .24)
-                      : textGrey.withValues(alpha: .22),
+                      ? GameHubPage.darkGreen.withValues(alpha: .24)
+                      : GameHubPage.textGrey.withValues(alpha: .22),
                   size: 92,
                 ),
               ),
@@ -518,7 +842,7 @@ class GameHubPage extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: isAvailable ? darkGreen : textGrey,
+                      color: isAvailable ? GameHubPage.darkGreen : GameHubPage.textGrey,
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
