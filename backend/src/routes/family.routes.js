@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.get('/patient/:patientId', familyController.getMemories);
+router.get(['/patient/:patientId', '/:patientId', '/memories/:patientId'], familyController.getMemories);
 router.post('/', familyController.addMemory);
 router.delete('/:id', familyController.deleteMemory);
 
