@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import {
-  Bell,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  Volume2,
-  Pill,
-  Droplets,
-  Utensils,
-  Calendar,
-  Activity,
-  X,
-  AlertCircle
-} from "lucide-react";
 import { api } from "../../services/api";
+
+interface PatientContext {
+  selectedPatient: string;
+  patients: Array<{
+    _id: string;
+    id?: string;
+    name?: string;
+    userId?: { name: string };
+  }>;
+}
 
 interface ReminderItem {
   _id: string;
@@ -30,10 +25,7 @@ interface ReminderItem {
 }
 
 export default function RemindersPage() {
-  const { selectedPatient, patients } = useOutletContext<{
-    selectedPatient: string;
-    patients: Array<{ _id: string; name?: string; userId?: { name: string } }>;
-  }>();
+  const { selectedPatient, patients } = useOutletContext<PatientContext>();
 
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,9 +44,10 @@ export default function RemindersPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const currentPatient = patients?.find(
-    (p) => (p._id || (p as unknown as { id: string }).id) === selectedPatient
+    (p) => (p._id || p.id) === selectedPatient
   );
-  const patientName = currentPatient?.userId?.name || currentPatient?.name || "Patient";
+  const patientName =
+    currentPatient?.userId?.name || currentPatient?.name || "Shri Biren Bora";
 
   useEffect(() => {
     if (!selectedPatient) return;
@@ -103,7 +96,6 @@ export default function RemindersPage() {
 
     setSubmitting(true);
     try {
-      // Build ISO time for today at the selected time
       const [hours, minutes] = time.split(":").map(Number);
       const scheduledDate = new Date();
       scheduledDate.setHours(hours || 0, minutes || 0, 0, 0);
@@ -146,15 +138,15 @@ export default function RemindersPage() {
   const getTypeIcon = (itemType: string) => {
     switch (itemType) {
       case "medication":
-        return <Pill size={18} className="text-red-500" />;
+        return "medication";
       case "hydration":
-        return <Droplets size={18} className="text-blue-500" />;
+        return "water_drop";
       case "meal":
-        return <Utensils size={18} className="text-amber-500" />;
+        return "restaurant";
       case "appointment":
-        return <Calendar size={18} className="text-indigo-500" />;
+        return "calendar_month";
       default:
-        return <Activity size={18} className="text-green-500" />;
+        return "fitness_center";
     }
   };
 
@@ -164,33 +156,43 @@ export default function RemindersPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reminders & Routine</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Schedule medication, hydration, and daily care tasks with voice guidance for {patientName}.
+          <div className="flex items-center gap-2 text-[#8b716a] text-[11px] font-bold tracking-widest uppercase font-literata">
+            <span>Assistive Clinical Routine</span>
+            <span>/</span>
+            <span className="text-primary font-bold">Daily Reminders</span>
+          </div>
+          <h1 className="text-[34px] font-bold text-[#2b160e] tracking-tight mt-1 font-newsreader">
+            Reminders &amp; Daily Routine
+          </h1>
+          <p className="text-[15px] text-[#6e5449] font-literata">
+            Schedule medication, hydration, meals, and walks with regional voice guidance for {patientName}.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow-sm transition"
-        >
-          <Plus size={18} />
-          <span>New Reminder</span>
-        </button>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[20px_24px_16px_22px] bg-gradient-to-r from-[#b84b25] to-[#c85a32] text-white text-[13px] font-bold hover:from-[#a03d1c] hover:to-[#b84b25] tactile-clay-btn"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span>New Reminder</span>
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-          <AlertCircle size={18} />
+        <div className="p-4 rounded-[16px_12px_14px_10px] bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm flex items-center gap-2 font-medium">
+          <span className="material-symbols-outlined text-[18px]">warning</span>
           <span>{error}</span>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[#dfcfc0]/70">
         {[
           { id: "all", label: "All Types" },
           { id: "medication", label: "Medication" },
@@ -202,10 +204,10 @@ export default function RemindersPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition whitespace-nowrap ${
+            className={`px-4 py-2 text-xs font-bold rounded-[16px_12px_14px_10px] transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-[#c85a32] text-white shadow-xs"
+                : "text-[#6e5449] hover:bg-[#f5eee5] hover:text-[#2b160e]"
             }`}
           >
             {tab.label}
@@ -215,27 +217,29 @@ export default function RemindersPage() {
 
       {/* Reminders List */}
       {loading ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-sm text-gray-400">
+        <div className="terracotta-clay-card rounded-[28px] p-12 text-center text-sm text-[#8b716a]">
           Loading routine schedule...
         </div>
       ) : filteredReminders.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <Bell size={24} />
+        <div className="terracotta-clay-card rounded-[28px] p-12 text-center border-dashed border-[#dfcfc0]">
+          <div className="w-12 h-12 bg-[#ffede8] text-primary rounded-[16px_12px_14px_10px] flex items-center justify-center mx-auto mb-3">
+            <span className="material-symbols-outlined text-[26px]">alarm</span>
           </div>
-          <h3 className="text-base font-semibold text-gray-900">No reminders in this category</h3>
-          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-[#2b160e] font-newsreader">
+            No reminders in this category
+          </h3>
+          <p className="text-xs text-[#6e5449] mt-1 max-w-sm mx-auto font-literata">
             Add medication times, water alerts, or lunch reminders to keep routine structured for dementia care.
           </p>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="mt-4 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium transition"
+            className="mt-4 px-4 py-2 bg-[#f5eee5] hover:bg-[#ebe0d4] text-primary rounded-[14px_10px_12px_8px] text-xs font-bold transition border border-[#dfcfc0]"
           >
             + Create First Reminder
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredReminders.map((reminder) => {
             const isAck = reminder.status === "acknowledged";
             const timeStr = reminder.scheduledTime
@@ -248,24 +252,30 @@ export default function RemindersPage() {
             return (
               <div
                 key={reminder._id}
-                className={`bg-white rounded-2xl border p-5 transition flex flex-col justify-between ${
-                  isAck
-                    ? "border-gray-200 bg-gray-50/70 opacity-80"
-                    : "border-gray-200 hover:border-indigo-200 hover:shadow-md"
+                className={`terracotta-clay-card rounded-[24px_18px_22px_16px] p-5 flex flex-col justify-between ${
+                  isAck ? "opacity-75 bg-[#f5eee5]/50" : ""
                 }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
-                        {getTypeIcon(reminder.type)}
+                      <div className="p-2.5 rounded-[14px_10px_12px_8px] bg-[#f5eee5] text-primary border border-[#dfcfc0]/70">
+                        <span className="material-symbols-outlined text-[20px]">
+                          {getTypeIcon(reminder.type)}
+                        </span>
                       </div>
                       <div>
-                        <h3 className={`text-base font-semibold ${isAck ? "line-through text-gray-400" : "text-gray-900"}`}>
+                        <h3
+                          className={`text-[16px] font-bold font-newsreader ${
+                            isAck ? "line-through text-[#8b716a]" : "text-[#2b160e]"
+                          }`}
+                        >
                           {reminder.title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                          <span className="capitalize font-medium text-gray-700">{reminder.type}</span>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-[#6e5449]">
+                          <span className="capitalize font-bold text-secondary">
+                            {reminder.type}
+                          </span>
                           <span>•</span>
                           <span className="capitalize">{reminder.repeat || "Daily"}</span>
                         </div>
@@ -274,43 +284,50 @@ export default function RemindersPage() {
 
                     <button
                       onClick={() => handleDelete(reminder._id)}
-                      className="text-gray-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition"
+                      className="text-[#8b716a] hover:text-[#ba1a1a] p-1.5 rounded-full hover:bg-[#ffdad6] transition"
                       title="Delete reminder"
                     >
-                      <Trash2 size={16} />
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
 
                   {reminder.description && (
-                    <p className="mt-3 text-xs text-gray-600 leading-relaxed bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+                    <p className="mt-3 text-xs text-[#6e5449] leading-relaxed bg-[#f5eee5]/60 p-2.5 rounded-[12px] border border-[#dfcfc0]/60 font-literata">
                       {reminder.description}
                     </p>
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <div className="flex items-center gap-1 font-medium text-gray-700">
-                      <Clock size={14} className="text-gray-400" />
+                <div className="mt-4 pt-3 border-t border-[#dfcfc0]/60 flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-xs text-[#6e5449]">
+                    <div className="flex items-center gap-1 font-bold text-[#2b160e]">
+                      <span className="material-symbols-outlined text-[16px] text-secondary">
+                        schedule
+                      </span>
                       <span>{timeStr}</span>
                     </div>
                     {reminder.isVoicePromptEnabled && (
-                      <div className="flex items-center gap-1 text-indigo-600 font-medium" title={reminder.voicePromptText || "Voice prompt active"}>
-                        <Volume2 size={14} />
-                        <span>Voice</span>
+                      <div
+                        className="flex items-center gap-1 text-primary font-bold"
+                        title={reminder.voicePromptText || "Voice prompt active"}
+                      >
+                        <span className="material-symbols-outlined text-[15px]">volume_up</span>
+                        <span>Voice Prompt</span>
                       </div>
                     )}
                   </div>
 
                   <button
                     onClick={() => handleToggleStatus(reminder)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition ${
                       isAck
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                        ? "bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30"
+                        : "bg-[#ffede8] text-primary border border-primary/20 hover:bg-primary hover:text-white"
                     }`}
                   >
-                    <CheckCircle2 size={14} />
+                    <span className="material-symbols-outlined text-[16px]">
+                      {isAck ? "check_circle" : "radio_button_unchecked"}
+                    </span>
                     <span>{isAck ? "Completed" : "Mark Done"}</span>
                   </button>
                 </div>
@@ -323,44 +340,44 @@ export default function RemindersPage() {
       {/* Modal: Create Reminder */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 animate-fadeIn">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Bell size={20} className="text-indigo-600" />
+          <div className="bg-white rounded-[28px_20px_26px_22px] max-w-lg w-full p-6 shadow-2xl border border-[#dfcfc0]">
+            <div className="flex items-center justify-between pb-4 border-b border-[#dfcfc0]/70">
+              <h2 className="text-[20px] font-bold text-[#2b160e] font-newsreader flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[24px]">alarm</span>
                 Add Daily Reminder
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+                className="text-[#8b716a] hover:text-[#2b160e] p-1 rounded-full hover:bg-[#f5eee5]"
               >
-                <X size={18} />
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleCreateReminder} className="mt-4 space-y-4">
+            <form onSubmit={handleCreateReminder} className="mt-4 space-y-4 font-literata">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Reminder Title *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Morning Donepezil & Water"
+                  placeholder="e.g. Morning Blood Pressure & Water"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[16px_10px_14px_12px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     Category
                   </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as ReminderItem["type"])}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                   >
                     <option value="medication">Medication</option>
                     <option value="hydration">Hydration</option>
@@ -372,7 +389,7 @@ export default function RemindersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     Scheduled Time
                   </label>
                   <input
@@ -380,19 +397,19 @@ export default function RemindersPage() {
                     required
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Frequency
                 </label>
                 <select
                   value={repeat}
                   onChange={(e) => setRepeat(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -401,7 +418,7 @@ export default function RemindersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Instructions / Dosage Note
                 </label>
                 <textarea
@@ -409,47 +426,49 @@ export default function RemindersPage() {
                   placeholder="e.g. 1 tablet after breakfast with full glass of water."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none"
+                  className="w-full px-3.5 py-2 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2] resize-none"
                 />
               </div>
 
               {/* Voice Prompt Option */}
-              <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+              <div className="p-3.5 rounded-[16px_12px_14px_10px] bg-[#ffede8]/60 border border-primary/20 space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-indigo-900 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#2b160e] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={voiceEnabled}
                       onChange={(e) => setVoiceEnabled(e.target.checked)}
-                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                      className="rounded text-primary focus:ring-primary"
                     />
-                    Enable Smriti Voice Prompt for Patient
+                    Enable Smriti Voice Guidance for Patient
                   </label>
-                  <Volume2 size={16} className="text-indigo-600" />
+                  <span className="material-symbols-outlined text-[18px] text-primary">
+                    volume_up
+                  </span>
                 </div>
                 {voiceEnabled && (
                   <input
                     type="text"
-                    placeholder="Custom spoken prompt (e.g., Namaste, please take your morning tablet)"
+                    placeholder="Spoken prompt text (e.g., Namaste, please take your morning tablet)"
                     value={voicePromptText}
                     onChange={(e) => setVoicePromptText(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-white border border-[#dfcfc0] rounded-[10px] text-xs focus:outline-none focus:border-primary"
                   />
                 )}
               </div>
 
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#dfcfc0]/70 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition"
+                  className="px-4 py-2 text-sm text-[#6e5449] hover:bg-[#f5eee5] rounded-[14px] transition font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition shadow-sm disabled:opacity-50"
+                  className="px-5 py-2 bg-gradient-to-r from-[#b84b25] to-[#c85a32] text-white rounded-[16px_20px_14px_18px] text-sm font-bold transition shadow-sm disabled:opacity-50 tactile-clay-btn"
                 >
                   {submitting ? "Saving..." : "Save Reminder"}
                 </button>
