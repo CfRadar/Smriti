@@ -209,15 +209,30 @@ class VoiceCommandParser {
 
     if (_matchesNavigation(normalized, 'home', 'game hub', 'main menu') ||
         _matchesAny(normalized, const [
+          'go home',
+          'go to home',
+          'go to the home',
+          'go to main menu',
+          'go to the main menu',
+          'home menu',
+          'main menu',
+          'back to home',
+          'return home',
+          'return to home',
+          'main screen',
+          'home screen',
           'घर वापस जाओ',
           'होम पर जाओ',
           'वापस जाओ',
           'ghar wapas jao',
           'home par jao',
           'wapas jao',
-          'পিছলৈ যোৱা',
+          'पिछলৈ যোৱা',
           'ঘৰলৈ উভতি যোৱা',
+          'হোমলৈ যাও',
           'হোমলৈ যোৱা',
+          'main menu par jao',
+          'home menu par jao',
         ])) {
       return VoiceCommand(
         intent: VoiceIntent.goHome,
@@ -363,15 +378,25 @@ class VoiceCommandParser {
 
   static bool _matchesNavigation(
       String normalized, String first, String second, String third) {
-    return normalized == first ||
-        normalized == second ||
-        normalized == third ||
-        normalized.startsWith('go $first') ||
-        normalized.startsWith('take me home') ||
-        normalized.startsWith('take me to home') ||
-        normalized.startsWith('go to home') ||
-        normalized.startsWith('go to the home') ||
-        normalized.startsWith('take me to the home');
+    final targets = [first, second, third];
+
+    return targets.any((target) {
+      final direct = target == 'main menu' ? 'main menu' : target;
+      return normalized == target ||
+          normalized == direct ||
+          normalized.startsWith('go $target') ||
+          normalized.startsWith('go to $target') ||
+          normalized.startsWith('go to the $target') ||
+          normalized.startsWith('take me home') ||
+          normalized.startsWith('take me to home') ||
+          normalized.startsWith('take me to the home') ||
+          normalized.startsWith('take me to $target') ||
+          normalized.startsWith('take me $target') ||
+          normalized.startsWith('return to $target') ||
+          normalized.startsWith('return to the $target') ||
+          normalized.startsWith('back to $target') ||
+          normalized.startsWith('back to the $target');
+    });
   }
 
   static bool _matchesCommand(String normalized,

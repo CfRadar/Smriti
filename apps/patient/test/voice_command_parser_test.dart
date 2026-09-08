@@ -30,6 +30,9 @@ void main() {
     test('parses go home phrases', () {
       final command = VoiceCommandParser.parse('Take me home');
       expect(command.intent, VoiceIntent.goHome);
+      expect(VoiceCommandParser.parse('go to main menu').intent,
+          VoiceIntent.goHome);
+      expect(VoiceCommandParser.parse('main menu').intent, VoiceIntent.goHome);
     });
 
     test('parses pause and resume', () {

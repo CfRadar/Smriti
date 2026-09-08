@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/voice_service.dart';
 
 class VoiceStatusIndicator extends StatelessWidget {
-  const VoiceStatusIndicator({super.key});
+  const VoiceStatusIndicator({super.key, this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -11,6 +13,40 @@ class VoiceStatusIndicator extends StatelessWidget {
       valueListenable: VoiceService.instance.statusNotifier,
       builder: (context, status, _) {
         final data = _statusData(status);
+
+        if (compact) {
+          return Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: data.color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: data.color.withValues(alpha: 0.38),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
         return SafeArea(
           child: Align(

@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:patient/controllers/voice_command_controller.dart';
 import 'package:patient/models/voice_command.dart';
+import 'package:patient/widgets/voice_status_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Game phases during a trial
@@ -867,7 +868,9 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: textDark),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+          },
         ),
         title: const Text(
           'Pattern Memory',
@@ -879,6 +882,8 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
         ),
         centerTitle: true,
         actions: [
+          const VoiceStatusIndicator(compact: true),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Difficulty Settings',
             icon: const Icon(Icons.tune_rounded, color: darkGreen),
