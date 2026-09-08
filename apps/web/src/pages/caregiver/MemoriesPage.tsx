@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import {
-  Image as ImageIcon,
-  Plus,
-  Trash2,
-  Users,
-  Calendar,
-  Volume2,
-  X,
-  AlertCircle,
-  Sparkles
-} from "lucide-react";
 import { api } from "../../services/api";
+
+interface PatientContext {
+  selectedPatient: string;
+  patients: Array<{
+    _id: string;
+    id?: string;
+    name?: string;
+    userId?: { name: string };
+  }>;
+}
 
 interface AssociatedPerson {
   name: string;
@@ -25,7 +24,6 @@ interface FamilyMemoryItem {
   mediaUrl?: string;
   associatedPeople?: AssociatedPerson[];
   eventDate?: string;
-  audioPromptUrl?: string;
 }
 
 const PRESET_PHOTOS = [
@@ -34,7 +32,7 @@ const PRESET_PHOTOS = [
     name: "Aarav & Priya",
     relation: "Grandchildren",
     url: "https://images.unsplash.com/photo-1609137144822-42173f274a27?auto=format&fit=crop&w=600&q=80",
-    description: "Lighting diyas with grandchildren during the festival of lights.",
+    description: "Lighting diyas with grandchildren during the festival of lights in Guwahati.",
   },
   {
     title: "Tea Garden Morning",
@@ -45,18 +43,15 @@ const PRESET_PHOTOS = [
   },
   {
     title: "Family Picnic at Umiam Lake",
-    name: "Sunita & Ankit",
+    name: "Anita & Ankit",
     relation: "Daughter & Son-in-law",
     url: "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80",
-    description: "Quiet picnic near Shillong with home-cooked snacks.",
+    description: "Quiet afternoon picnic with home-cooked Assamese snacks.",
   },
 ];
 
 export default function MemoriesPage() {
-  const { selectedPatient, patients } = useOutletContext<{
-    selectedPatient: string;
-    patients: Array<{ _id: string; name?: string; userId?: { name: string } }>;
-  }>();
+  const { selectedPatient, patients } = useOutletContext<PatientContext>();
 
   const [memories, setMemories] = useState<FamilyMemoryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,9 +67,10 @@ export default function MemoriesPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const currentPatient = patients?.find(
-    (p) => (p._id || (p as unknown as { id: string }).id) === selectedPatient
+    (p) => (p._id || p.id) === selectedPatient
   );
-  const patientName = currentPatient?.userId?.name || currentPatient?.name || "Patient";
+  const patientName =
+    currentPatient?.userId?.name || currentPatient?.name || "Shri Biren Bora";
 
   useEffect(() => {
     if (!selectedPatient) return;
@@ -153,48 +149,60 @@ export default function MemoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Family Memories & Reminiscence</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Photographs and personalized prompts powering face recall and memory therapy for {patientName}.
+          <div className="flex items-center gap-2 text-[#8b716a] text-[11px] font-bold tracking-widest uppercase font-literata">
+            <span>Reminiscence &amp; Visual Recall</span>
+            <span>/</span>
+            <span className="text-primary font-bold">Family Memory Bank</span>
+          </div>
+          <h1 className="text-[34px] font-bold text-[#2b160e] tracking-tight mt-1 font-newsreader">
+            Family Memories &amp; Visual Prompts
+          </h1>
+          <p className="text-[15px] text-[#6e5449] font-literata">
+            Photographs and familiar context prompts powering face recall and memory therapy for {patientName}.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow-sm transition"
-        >
-          <Plus size={18} />
-          <span>Upload Memory</span>
-        </button>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[20px_24px_16px_22px] bg-gradient-to-r from-[#b84b25] to-[#c85a32] text-white text-[13px] font-bold hover:from-[#a03d1c] hover:to-[#b84b25] tactile-clay-btn"
+          >
+            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+            <span>Upload Memory</span>
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-          <AlertCircle size={18} />
+        <div className="p-4 rounded-[16px_12px_14px_10px] bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#93000a] text-sm flex items-center gap-2 font-medium">
+          <span className="material-symbols-outlined text-[18px]">warning</span>
           <span>{error}</span>
         </div>
       )}
 
       {/* Gallery Grid */}
       {loading ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center text-sm text-gray-400">
+        <div className="terracotta-clay-card rounded-[28px] p-12 text-center text-sm text-[#8b716a]">
           Loading memory album...
         </div>
       ) : memories.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-          <div className="w-12 h-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <ImageIcon size={24} />
+        <div className="terracotta-clay-card rounded-[28px] p-12 text-center border-dashed border-[#dfcfc0]">
+          <div className="w-12 h-12 bg-[#ffede8] text-primary rounded-[16px_12px_14px_10px] flex items-center justify-center mx-auto mb-3">
+            <span className="material-symbols-outlined text-[26px]">photo_library</span>
           </div>
-          <h3 className="text-base font-semibold text-gray-900">No memories added yet</h3>
-          <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-            Upload cherished family pictures, children's faces, and familiar places. The Smriti mobile app uses these in interactive cognitive recall games.
+          <h3 className="text-base font-bold text-[#2b160e] font-newsreader">
+            No memories added yet
+          </h3>
+          <p className="text-xs text-[#6e5449] mt-1 max-w-sm mx-auto font-literata">
+            Upload cherished family pictures, grandchildren faces, and familiar places. The Smriti mobile app uses these in interactive face recall games.
           </p>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="mt-4 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium transition"
+            className="mt-4 px-4 py-2 bg-[#f5eee5] hover:bg-[#ebe0d4] text-primary rounded-[14px_10px_12px_8px] text-xs font-bold transition border border-[#dfcfc0]"
           >
             + Add First Memory
           </button>
@@ -208,10 +216,10 @@ export default function MemoriesPage() {
             return (
               <div
                 key={mem._id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col group"
+                className="terracotta-clay-card rounded-[28px_20px_26px_22px] overflow-hidden flex flex-col justify-between group"
               >
                 {/* Image Preview */}
-                <div className="relative h-48 bg-gray-100 overflow-hidden">
+                <div className="relative h-52 bg-[#ebe0d4] overflow-hidden">
                   <img
                     src={imageUrl}
                     alt={mem.title}
@@ -223,45 +231,51 @@ export default function MemoriesPage() {
                   <div className="absolute top-3 right-3">
                     <button
                       onClick={() => handleDelete(mem._id)}
-                      className="p-1.5 bg-black/60 hover:bg-red-600 text-white rounded-lg backdrop-blur-sm transition"
+                      className="p-1.5 bg-black/60 hover:bg-[#ba1a1a] text-white rounded-full backdrop-blur-sm transition"
                       title="Delete memory"
                     >
-                      <Trash2 size={14} />
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
                     </button>
                   </div>
                   {firstPerson && (
-                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-800 shadow-sm flex items-center gap-1.5">
-                      <Users size={12} className="text-indigo-600" />
+                    <div className="absolute bottom-3 left-3 bg-[#ffffff]/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-[#2b160e] shadow-sm flex items-center gap-1.5 border border-[#dfcfc0]">
+                      <span className="material-symbols-outlined text-[14px] text-primary">
+                        person
+                      </span>
                       <span>{firstPerson.name}</span>
-                      <span className="text-gray-500 font-normal">({firstPerson.relation})</span>
+                      <span className="text-[#6e5449] font-normal">({firstPerson.relation})</span>
                     </div>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between">
+                <div className="p-6 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-gray-900">{mem.title}</h3>
+                    <h3 className="text-[18px] font-bold text-[#2b160e] font-newsreader">
+                      {mem.title}
+                    </h3>
                     {mem.description && (
-                      <p className="text-xs text-gray-600 mt-2 leading-relaxed">
+                      <p className="text-xs text-[#6e5449] mt-2 leading-relaxed font-literata">
                         {mem.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-4 pt-3 border-t border-[#dfcfc0]/60 flex items-center justify-between text-xs text-[#6e5449]">
                     <div className="flex items-center gap-1">
-                      <Calendar size={13} className="text-gray-400" />
+                      <span className="material-symbols-outlined text-[15px] text-[#8b716a]">
+                        calendar_today
+                      </span>
                       <span>
                         {mem.eventDate
                           ? new Date(mem.eventDate).toLocaleDateString()
-                          : "Photo Album"}
+                          : "Photo Bank"}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 text-pink-600 font-medium bg-pink-50 px-2 py-0.5 rounded">
-                      <Volume2 size={12} />
-                      <span>AI Recall Ready</span>
+                    <div className="flex items-center gap-1 text-primary font-bold bg-[#ffede8] px-2.5 py-0.5 rounded-full border border-primary/20">
+                      <span className="material-symbols-outlined text-[14px]">psychology</span>
+                      <span>Recall Ready</span>
                     </div>
                   </div>
                 </div>
@@ -274,24 +288,26 @@ export default function MemoriesPage() {
       {/* Modal: Add Memory */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 animate-fadeIn max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <ImageIcon size={20} className="text-indigo-600" />
+          <div className="bg-white rounded-[28px_20px_26px_22px] max-w-lg w-full p-6 shadow-2xl border border-[#dfcfc0] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-[#dfcfc0]/70">
+              <h2 className="text-[20px] font-bold text-[#2b160e] font-newsreader flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[24px]">
+                  add_photo_alternate
+                </span>
                 Add Family Memory
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg"
+                className="text-[#8b716a] hover:text-[#2b160e] p-1 rounded-full hover:bg-[#f5eee5]"
               >
-                <X size={18} />
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
             {/* Quick Demo Presets */}
-            <div className="mt-4 p-3 rounded-xl bg-indigo-50/60 border border-indigo-100">
-              <span className="text-xs font-semibold text-indigo-900 flex items-center gap-1.5 mb-2">
-                <Sparkles size={14} className="text-indigo-600" />
+            <div className="mt-4 p-3.5 rounded-[16px_12px_14px_10px] bg-[#f5eee5] border border-[#dfcfc0]">
+              <span className="text-xs font-bold text-secondary flex items-center gap-1.5 mb-2">
+                <span className="material-symbols-outlined text-[16px] text-primary">auto_awesome</span>
                 Quick Preset Memories (Click to Auto-fill)
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -300,7 +316,7 @@ export default function MemoriesPage() {
                     key={idx}
                     type="button"
                     onClick={() => applyPreset(p)}
-                    className="px-2.5 py-1 bg-white hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs text-indigo-700 transition font-medium"
+                    className="px-2.5 py-1 bg-white hover:bg-[#ebe0d4] border border-[#dfcfc0] rounded-[10px] text-xs text-primary transition font-bold"
                   >
                     {p.title}
                   </button>
@@ -308,24 +324,24 @@ export default function MemoriesPage() {
               </div>
             </div>
 
-            <form onSubmit={handleCreateMemory} className="mt-4 space-y-4">
+            <form onSubmit={handleCreateMemory} className="mt-4 space-y-4 font-literata">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Memory Title *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Grandson Aarav at School"
+                  placeholder="e.g. Grandson Aarav at Tezpur College"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     Person Name
                   </label>
                   <input
@@ -333,12 +349,12 @@ export default function MemoriesPage() {
                     placeholder="e.g. Aarav"
                     value={personName}
                     onChange={(e) => setPersonName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                     Relationship
                   </label>
                   <input
@@ -346,13 +362,13 @@ export default function MemoriesPage() {
                     placeholder="e.g. Grandson, Daughter"
                     value={relation}
                     onChange={(e) => setRelation(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Photo URL
                 </label>
                 <input
@@ -360,12 +376,12 @@ export default function MemoriesPage() {
                   placeholder="https://images.unsplash.com/..."
                   value={mediaUrl}
                   onChange={(e) => setMediaUrl(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Story / Familiar Context
                 </label>
                 <textarea
@@ -373,22 +389,22 @@ export default function MemoriesPage() {
                   placeholder="e.g. Aarav holding the silver trophy he won at the Guwahati sports festival."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none"
+                  className="w-full px-3.5 py-2 border border-[#dfcfc0] rounded-[14px_10px_12px_8px] text-sm focus:outline-none focus:border-primary bg-[#fbf7f2] resize-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#dfcfc0]/70 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition"
+                  className="px-4 py-2 text-sm text-[#6e5449] hover:bg-[#f5eee5] rounded-[14px] transition font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition shadow-sm disabled:opacity-50"
+                  className="px-5 py-2 bg-gradient-to-r from-[#b84b25] to-[#c85a32] text-white rounded-[16px_20px_14px_18px] text-sm font-bold transition shadow-sm disabled:opacity-50 tactile-clay-btn"
                 >
                   {submitting ? "Saving..." : "Save Memory"}
                 </button>

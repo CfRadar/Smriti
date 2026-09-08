@@ -1,1199 +1,1548 @@
 <!DOCTYPE html>
 
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Smriti Cognitive Care - Peach &amp; Beach Dashboard</title>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&amp;family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<style>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <style>
     @layer base {
-      html, body { margin: 0; padding: 0; }
-      body { overscroll-behavior: none; }
-      main > :first-child { margin-top: 0 !important; }
-      main > :last-child { margin-bottom: 0 !important; }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        overscroll-behavior: none;
+      }
+
+      main> :first-child {
+        margin-top: 0 !important;
+      }
+
+      main> :last-child {
+        margin-bottom: 0 !important;
+      }
     }
-    ::-webkit-scrollbar { display: none; }
+
+    ::-webkit-scrollbar {
+      display: none;
+    }
+
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
     }
-    
-    /* Peach & Beach Pixel Graphic System */
-    .pixel-box {
-      box-shadow: 2px 2px 0px #FFB89D, 4px 4px 0px rgba(250, 114, 104, 0.18);
-    }
-    .pixel-box-sm {
-      box-shadow: 1px 1px 0px #FFAB8E, 2px 2px 0px rgba(250, 114, 104, 0.12);
-    }
-    .pixel-box-teal {
-      box-shadow: 2px 2px 0px #80D8DA, 4px 4px 0px rgba(46, 139, 139, 0.15);
-    }
-    .pixel-tag {
-      box-shadow: 1px 1px 0px #FF9E80;
-    }
-    .pixel-btn {
-      box-shadow: 2px 2px 0px #263238;
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
-    }
-    .pixel-btn:hover {
-      transform: translate(-1px, -1px);
-      box-shadow: 3px 3px 0px #263238;
-    }
-    .pixel-btn:active {
-      transform: translate(1px, 1px);
-      box-shadow: 1px 1px 0px #263238;
-    }
 
-    /* Pixelated Stepped Progress Strip */
-    .pixel-stripes {
-      background-size: 8px 8px;
-      background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.2) 0, rgba(255,255,255,0.2) 4px, transparent 0, transparent 8px);
-    }
-
-    /* Bento Animations */
+    /* Bento CSS animations & visual enhancements */
     @keyframes barGrow {
-      0% { transform: scaleY(0); }
-      100% { transform: scaleY(1); }
+      0% {
+        transform: scaleY(0);
+      }
+
+      100% {
+        transform: scaleY(1);
+      }
     }
+
     .animate-bar {
       transform-origin: bottom;
       animation: barGrow 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
     @keyframes pathDraw {
-      0% { stroke-dashoffset: 600; }
-      100% { stroke-dashoffset: 0; }
+      0% {
+        stroke-dashoffset: 600;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
     }
+
     .animate-path {
       stroke-dasharray: 600;
       stroke-dashoffset: 600;
       animation: pathDraw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       animation-delay: 0.2s;
     }
-    @keyframes pixelBlink {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(1.15); }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(1.35);
+      }
     }
+
     .live-pulse {
-      animation: pixelBlink 1.8s infinite steps(2, start);
+      animation: pulseGlow 2.2s infinite ease-in-out;
     }
+
     @media (prefers-reduced-motion: reduce) {
-      .animate-bar, .animate-path, .live-pulse {
+
+      .animate-bar,
+      .animate-path,
+      .live-pulse {
         animation: none !important;
         stroke-dashoffset: 0 !important;
         transform: none !important;
       }
     }
-</style>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
+
+    /* Terracotta Dusk Organic Blobby & Physical Clay Containers */
+    .blob-card-1 {
+      border-radius: 36px 26px 42px 30px;
+    }
+
+    .blob-card-2 {
+      border-radius: 40px 48px 28px 44px;
+    }
+
+    .blob-card-3 {
+      border-radius: 32px 42px 34px 46px;
+    }
+
+    .blob-card-4 {
+      border-radius: 44px 30px 40px 28px;
+    }
+
+    .blob-subtile {
+      border-radius: 24px 32px 22px 30px;
+    }
+
+    .blob-subtile-alt {
+      border-radius: 28px 22px 30px 24px;
+    }
+
+    .pebble-chip {
+      border-radius: 9999px 24px 9999px 26px;
+    }
+
+    .pebble-chip-alt {
+      border-radius: 24px 9999px 26px 9999px;
+    }
+
+    .terracotta-clay-card {
+      background: #ffffff;
+      box-shadow:
+        0 12px 28px -6px rgba(112, 58, 34, 0.08),
+        0 4px 12px -2px rgba(112, 58, 34, 0.04),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(223, 207, 192, 0.7);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .terracotta-clay-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 18px 36px -8px rgba(112, 58, 34, 0.12),
+        0 6px 16px -2px rgba(112, 58, 34, 0.06),
+        inset 0 1.5px 0 rgba(255, 255, 255, 1);
+    }
+
+    .tactile-clay-btn {
+      box-shadow: 0 4px 10px rgba(112, 58, 34, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tactile-clay-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(112, 58, 34, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .tactile-clay-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(112, 58, 34, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .tactile-clay-subtle {
+      box-shadow: 0 2px 6px rgba(112, 58, 34, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tactile-clay-subtle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(112, 58, 34, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+    }
+
+    .tactile-clay-subtle:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(112, 58, 34, 0.06);
+    }
+  </style>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
-          colors: {
-            "beach-bg": "#FFF5EE",
-            "beach-sand": "#FCEEE3",
-            "beach-card": "#FFFBF8",
-            "beach-card-alt": "#FFF1E7",
-            "beach-border": "#F3D2C1",
-            "beach-border-coral": "#FFA692",
-            "peach-primary": "#FF7A59",
-            "peach-dark": "#E65A46",
-            "peach-light": "#FFE8DE",
-            "coral-accent": "#FA7268",
-            "seafoam-teal": "#2E8B8B",
-            "seafoam-light": "#D8F3F1",
-            "seafoam-bg": "#EBF8F7",
-            "coastal-blue": "#3E92CC",
-            "coastal-sky": "#80D8DA",
-            "sand-gold": "#F5A623",
-            "sand-gold-light": "#FEF5E7",
-            "marine-slate": "#263238",
-            "marine-muted": "#546E7A",
-            "marine-border": "#CFD8DC",
-            "berry-error": "#D32F2F",
-            "berry-error-bg": "#FEECEC",
+          "colors": {
+            "tertiary-container": "#6d704c",
+            "secondary-fixed-dim": "#ffb598",
+            "surface-variant": "#ffdbce",
+            "secondary": "#8e4d32",
+            "on-tertiary-container": "#f2f4c7",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed-variant": "#842601",
+            "on-tertiary-fixed": "#1b1d03",
+            "tertiary": "#545836",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#2b160e",
+            "on-background": "#2b160e",
+            "primary-fixed-dim": "#ffb59d",
+            "on-secondary-fixed": "#370e00",
+            "inverse-primary": "#ffb59d",
+            "on-primary-fixed": "#390b00",
+            "on-secondary": "#ffffff",
+            "background": "#fbf7f2",
+            "on-secondary-container": "#783c22",
+            "inverse-surface": "#422b21",
+            "surface-tint": "#a43d17",
+            "on-tertiary-fixed-variant": "#464929",
+            "on-error": "#ffffff",
+            "surface-bright": "#fbf7f2",
+            "tertiary-fixed": "#e3e6ba",
+            "surface-dim": "#f5eee5",
+            "on-surface-variant": "#6e5449",
+            "surface-container-low": "#f5eee5",
+            "secondary-container": "#feaa88",
+            "secondary-fixed": "#ffdbce",
+            "primary": "#b84b25",
+            "outline": "#8b716a",
+            "error": "#ba1a1a",
+            "on-secondary-fixed-variant": "#71361d",
+            "surface": "#fbf7f2",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#ffdbce",
+            "outline-variant": "#dec0b7",
+            "primary-container": "#c85a32",
+            "on-primary-container": "#ffede8",
+            "surface-container": "#ebe0d4",
+            "inverse-on-surface": "#ffede7",
+            "tertiary-fixed-dim": "#c7ca9f",
+            "surface-container-high": "#dfcfc0",
+            "primary-fixed": "#ffdbd0",
+            "clay-sand": "#fbf7f2",
+            "clay-cream": "#f5eee5",
+            "clay-warm": "#ebe0d4",
+            "clay-border": "#dfcfc0",
+            "clay-ochre": "#c8864d",
+            "clay-deep": "#703a22",
+            "eucalyptus": "#7d8772",
+            "eucalyptus-soft": "#e8ebe2",
+            "eucalyptus-text": "#3a4430"
           },
-          fontFamily: {
-            "public-sans": ["Public Sans", "sans-serif"],
-            "space": ["Space Grotesk", "sans-serif"],
-            "pixel": ["JetBrains Mono", "monospace"]
+          "fontFamily": {
+            "newsreader": ["Newsreader", "serif"],
+            "literata": ["Literata", "serif"]
           }
         }
       }
     };
-</script>
+  </script>
 </head>
-<body class="bg-beach-bg font-public-sans text-marine-slate antialiased selection:bg-peach-light selection:text-peach-dark">
-<!-- Sidebar Navigation (Peach & Beach Theme) -->
-<aside class="fixed left-0 top-0 h-full w-[260px] bg-beach-card border-r-2 border-beach-border z-50 flex flex-col justify-between shadow-[2px_0px_0px_rgba(243,210,193,0.4)]">
-<div class="flex flex-col">
-<!-- Logo Header -->
-<div class="h-16 px-4 flex items-center justify-between border-b-2 border-beach-border bg-beach-card-alt/60">
-<div class="flex items-center gap-2.5">
-<!-- Pixel stylized logo badge -->
-<div class="w-9 h-9 rounded-sm bg-gradient-to-br from-peach-primary to-coral-accent border-2 border-marine-slate flex items-center justify-center pixel-box-sm text-white font-pixel font-black text-sm">
-        SM
-      </div>
-<div class="flex flex-col">
-<div class="flex items-center gap-1">
-<span class="font-space font-bold text-[17px] tracking-tight text-marine-slate leading-tight">Smriti</span>
-<span class="font-pixel text-[9px] font-extrabold px-1 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 rounded-none">CARE</span>
-</div>
-<span class="font-pixel text-[10px] uppercase tracking-wider font-semibold text-marine-muted">Cognitive Beach</span>
-</div>
-</div>
-<!-- Little pixel sun / shell badge -->
-<span class="font-pixel text-[11px] text-coral-accent select-none" title="Sunny Beach Calibration">☀︎</span>
-</div>
-<!-- Nav Header -->
-<div class="px-4 pt-4 pb-2 flex items-center justify-between">
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[CLINICAL_PORTAL]</span>
-<span class="w-2 h-2 bg-seafoam-teal animate-pulse"></span>
-</div>
-<!-- Nav Links -->
-<nav class="flex flex-col gap-1.5 px-2.5">
-<a aria-current="page" class="flex items-center justify-between px-3 py-2 rounded-sm border-2 border-marine-slate bg-peach-light text-peach-dark font-pixel font-bold text-[13px] pixel-box-sm" data-path="overview" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-peach-dark">grid_view</span>
-<span>Overview</span>
-</div>
-<span class="font-pixel text-[10px] text-peach-dark font-black">▶</span>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="patient-activity" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-seafoam-teal">vital_signs</span>
-<span>Patient Activity</span>
-</div>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="games-and-progress" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-sand-gold">psychology</span>
-<span>Games &amp; Progress</span>
-</div>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="reminders" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-coastal-blue">alarm</span>
-<span>Reminders</span>
-</div>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="family-memory" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-coral-accent">photo_library</span>
-<span>Family Memory</span>
-</div>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="alerts" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-berry-error">notifications_active</span>
-<span>Alerts</span>
-</div>
-<span class="font-pixel px-1.5 py-0.2 rounded-none text-[10px] font-bold bg-berry-error-bg text-berry-error border border-berry-error/40">2!</span>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="patient-profile" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-seafoam-teal">person</span>
-<span>Patient Profile</span>
-</div>
-</a>
-<a class="flex items-center justify-between px-3 py-2 rounded-sm border border-transparent hover:border-beach-border-coral text-marine-muted hover:text-marine-slate hover:bg-beach-card-alt font-medium transition-colors text-[13px]" data-path="settings" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[19px] text-marine-muted">tune</span>
-<span>Settings</span>
-</div>
-</a>
-</nav>
-</div>
-<!-- Caregiver Footer Profile -->
-<div class="p-3 border-t-2 border-beach-border bg-beach-card-alt/80">
-<div class="flex items-center justify-between p-2 rounded-sm bg-beach-card border-2 border-beach-border pixel-box-sm">
-<div class="flex items-center gap-2.5 min-w-0">
-<img alt="Sunita Rao Profile" class="w-9 h-9 rounded-sm object-cover shrink-0 border-2 border-peach-primary" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA"/>
-<div class="flex flex-col truncate">
-<span class="text-[13px] font-bold text-marine-slate truncate leading-tight font-space">Sunita Rao</span>
-<span class="text-[10px] font-pixel text-marine-muted truncate">Daughter (Primary)</span>
-</div>
-</div>
-<a class="text-marine-muted hover:text-peach-dark p-1 rounded-sm hover:bg-peach-light transition-colors shrink-0" data-path="settings" href="#" title="Account Settings">
-<span class="material-symbols-outlined text-[18px]">settings</span>
-</a>
-</div>
-</div>
-</aside>
-<!-- Main View Area -->
-<div class="pl-[260px]">
-<!-- Top Global Header -->
-<header class="fixed top-0 left-[260px] right-0 h-16 bg-beach-card/95 backdrop-blur-md border-b-2 border-beach-border z-40 px-6 flex items-center justify-between shadow-[0_2px_0_rgba(243,210,193,0.35)]">
-<div class="flex items-center gap-4">
-<!-- Patient Selector Dropdown -->
-<div class="flex items-center gap-2 py-1.5 px-3 rounded-sm bg-beach-card-alt border-2 border-marine-slate pixel-box-sm cursor-pointer hover:bg-peach-light transition-colors">
-<span class="material-symbols-outlined text-coral-accent text-[20px]">beach_access</span>
-<div class="flex items-center gap-2">
-<span class="text-[13px] font-bold font-space text-marine-slate">Kalyan Rao (Father, 76)</span>
-<span class="font-pixel text-[10px] text-marine-muted">▼</span>
-</div>
-</div>
-<!-- Status chips -->
-<div class="hidden xl:flex items-center gap-2 text-marine-muted text-[12px]">
-<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-seafoam-light border border-seafoam-teal/40 text-seafoam-teal font-pixel font-bold text-[10px]">
-<span class="w-2 h-2 bg-seafoam-teal live-pulse"></span>
-          [ACTIVE_TABLET]
+
+<body
+  class="bg-[#fbf7f2] font-literata text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+  <!-- Background Boho Organic Clay Floating Blobs -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-40">
+    <div
+      class="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-[58%_42%_65%_35%/48%_55%_45%_52%] bg-gradient-to-br from-[#ebe0d4] to-transparent blur-2xl">
+    </div>
+    <div
+      class="absolute top-1/3 -right-40 w-[600px] h-[600px] rounded-[42%_58%_35%_65%/55%_45%_55%_45%] bg-gradient-to-bl from-[#ffdbce]/40 to-transparent blur-3xl">
+    </div>
+    <div
+      class="absolute -bottom-40 left-1/4 w-[550px] h-[550px] rounded-[60%_40%_48%_52%/40%_60%_40%_60%] bg-gradient-to-tr from-[#f5eee5] to-transparent blur-2xl">
+    </div>
+  </div>
+  <!-- Sidebar Navigation with Fluid Organic Contours -->
+  <aside
+    class="fixed left-0 top-0 h-full w-[268px] bg-[#ffffff]/90 backdrop-blur-md border-r border-[#dfcfc0]/80 z-50 flex flex-col justify-between shadow-[4px_0_24px_rgba(112,58,34,0.04)]">
+    <div class="flex flex-col">
+      <!-- Logo Header with Earthy Boho Depth Indicator -->
+      <div
+        class="h-20 px-5 flex items-center gap-3 border-b border-[#dfcfc0]/60 bg-gradient-to-b from-white to-[#fbf7f2]/50">
+        <img alt="Smriti Care Logo" class="h-9 w-auto object-contain rounded-2xl drop-shadow-sm"
+          src="https://lh3.googleusercontent.com/aida/AEtjO1UFHEbUHIgdHptfilkX2f0Gnp4TtFKHxd1VaWOUHGqr94oFs5XGUZeHM9gVd2PYng9fkTO8T4GwahaRmeW7xqiC4bm_IJm1c09iH8pTXToGxn0v0ekZBrVOIEPGdv6HCV3nA236iRKmQMAi4OtJD1nGRG2orFIiBHanS_0vaOu-tg0aenL_vdL7Zkux23mCIJnTnRQedfmiLAYqBWLCYuw5AsWTsqWyUHBFXrpVQ_kAXfMvmf0wBGDl1J4" />
+        <div class="flex flex-col ml-0.5">
+          <span class="font-newsreader font-bold text-[20px] tracking-tight text-on-surface leading-none">Smriti</span>
+          <span class="text-[10px] uppercase tracking-widest font-semibold text-secondary mt-1 font-literata">Cognitive
+            Care</span>
         </div>
-<span class="text-beach-border-coral">/</span>
-<span class="inline-flex items-center gap-1 font-pixel text-[11px] text-marine-slate">
-<span class="material-symbols-outlined text-[15px] text-coral-accent">schedule</span>
-          Last synced: 12m ago
-        </span>
-<span class="text-beach-border-coral">/</span>
-<span class="inline-flex items-center gap-1 font-pixel text-[11px] text-seafoam-teal font-semibold">
-<span class="material-symbols-outlined text-[15px]">wifi</span>
-          Wi-Fi: Coastal_Home
-        </span>
-</div>
-</div>
-<!-- Header actions -->
-<div class="flex items-center gap-2.5">
-<button class="pixel-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border-2 border-marine-slate bg-beach-card font-pixel text-[11px] font-bold text-marine-slate hover:bg-peach-light transition-colors" type="button">
-<span class="material-symbols-outlined text-[16px] text-peach-dark">sync</span>
-<span>SYNC_NOW</span>
-</button>
-<button aria-label="Care Alerts" class="relative p-2 rounded-sm border border-beach-border bg-beach-card hover:bg-beach-card-alt transition-colors" type="button">
-<span class="material-symbols-outlined text-[20px] text-marine-slate">notifications</span>
-<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-coral-accent border border-marine-slate"></span>
-</button>
-<div class="flex items-center gap-1 px-2.5 py-1.5 rounded-sm border border-beach-border bg-beach-card font-pixel text-[11px] font-bold text-marine-slate cursor-pointer hover:bg-peach-light">
-<span class="material-symbols-outlined text-[16px] text-seafoam-teal">translate</span>
-<span>EN</span>
-<span class="text-[9px] text-marine-muted">▾</span>
-</div>
-<div class="h-6 w-0.5 bg-beach-border mx-1"></div>
-<img alt="Sunita Rao Profile" class="w-8 h-8 rounded-sm object-cover border-2 border-marine-slate" src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA"/>
-</div>
-</header>
-<!-- Bento Dashboard Main Content -->
-<main class="relative pt-16 bg-beach-bg min-h-screen">
-<div class="w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-6">
-<!-- Top Title Bar -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 bg-gradient-to-r from-beach-card via-beach-card-alt to-beach-card border-2 border-beach-border rounded-sm pixel-box">
-<div class="flex flex-col">
-<div class="flex items-center gap-2 font-pixel text-[11px] font-bold uppercase tracking-wider text-marine-muted">
-<span>COASTAL CLINICAL CARE</span>
-<span class="text-coral-accent">/</span>
-<span class="text-peach-dark bg-peach-light px-1.5 py-0.5 border border-peach-primary/30">[ACTIVE_MONITORING]</span>
-</div>
-<h1 class="text-[26px] md:text-[30px] font-space font-bold text-marine-slate tracking-tight mt-1 flex items-center gap-2">
-            Good morning, Sunita 
-            <span class="inline-block font-pixel text-[12px] font-normal px-2 py-0.5 bg-sand-gold-light border border-sand-gold/40 text-sand-gold rounded-sm">☀ 28°C Coastal Breeze</span>
-</h1>
-<p class="text-[13px] text-marine-muted mt-0.5">Here is what you need to know about Kalyan Rao today, Wednesday Oct 24.</p>
-</div>
-<div class="flex items-center gap-2.5 shrink-0">
-<button class="pixel-btn inline-flex items-center gap-2 px-3.5 py-2 rounded-sm bg-beach-card border-2 border-marine-slate text-marine-slate font-pixel text-[12px] font-bold hover:bg-beach-card-alt" type="button">
-<span class="material-symbols-outlined text-[17px] text-seafoam-teal">edit_note</span>
-<span>LOG_OBSERVATION</span>
-</button>
-<button class="pixel-btn inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-peach-primary border-2 border-marine-slate text-white font-pixel text-[12px] font-bold hover:bg-peach-dark" type="button">
-<span class="material-symbols-outlined text-[17px]">ios_share</span>
-<span>EXPORT_REPORT</span>
-</button>
-</div>
-</div>
-<!-- ==============================================
-           BENTO BOX GRID CONTAINER
-           ============================================== -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5">
-<!-- BENTO TILE 1: Hero Patient Real-Time Status & Live Telemetry (lg:col-span-8) -->
-<div class="lg:col-span-8 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box flex flex-col justify-between relative overflow-hidden">
-<!-- Subtle pixel art corner accent -->
-<div class="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none opacity-20">
-<div class="w-full h-full bg-gradient-to-bl from-coral-accent to-transparent"></div>
-</div>
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-<!-- Patient Info -->
-<div class="flex items-center gap-4">
-<div class="relative shrink-0">
-<img class="w-16 h-16 rounded-sm object-cover border-2 border-marine-slate pixel-box-sm" data-alt="Warm photograph of Kalyan Rao, 76-year-old father" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtGCucPbexyHQfKrDal2THFB83yoCGhWtEDTBgK9IjycX76SsAf3IQk11QX8-gVxsdkL0Zrr5PU-rC9epop7zOnXa0jWidLUkDG6EkhmFX6QhhDQbnNPqFuiAu_XG3kvKPslTMoE3c3XOAxgM-q7Lka9DEmBjV5zKDkMHlY-TWWqI4S7oCXvsksma8ZDFsxBuMLL28SDkFNB7dgy6vDoYabyVifLCuxL4J3XhJ4O3mXDPlYiWwsGFe"/>
-<!-- Pixel indicator dot -->
-<span class="absolute -bottom-1 -right-1 w-4 h-4 bg-seafoam-teal border-2 border-white flex items-center justify-center">
-<span class="w-1.5 h-1.5 bg-white live-pulse"></span>
-</span>
-</div>
-<div class="flex flex-col">
-<div class="flex flex-wrap items-center gap-2">
-<h2 class="text-[20px] font-space font-bold text-marine-slate">Kalyan Rao</h2>
-<span class="text-beach-border-coral">•</span>
-<span class="text-[13px] text-marine-muted font-medium">Age 76, Father</span>
-<span class="px-2 py-0.5 rounded-none font-pixel bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold uppercase tracking-wider">
-                    [STATUS: ACTIVE]
+      </div>
+      <!-- Nav Header -->
+      <div class="px-5 pt-5 pb-2">
+        <span class="text-[10.5px] font-bold uppercase tracking-widest text-[#8b716a]">Clinical Management</span>
+      </div>
+      <!-- Nav Links with Smooth Organic Contours -->
+      <nav class="flex flex-col gap-1.5 px-3.5">
+        <a aria-current="page"
+          class="flex items-center justify-between px-4 py-2.5 rounded-[22px_14px_22px_16px] transition-all bg-[#c85a32] text-white font-semibold shadow-[0_4px_12px_rgba(184,75,37,0.25),inset_0_1px_0_rgba(255,255,255,0.3)]"
+          data-path="overview" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px]">grid_view</span>
+            <span class="text-[14px]">Overview</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[18px_24px_16px_22px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="patient-activity" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">vital_signs</span>
+            <span>Patient Activity</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[22px_16px_24px_18px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="games-and-progress" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">psychology</span>
+            <span>Games &amp; Progress</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[18px_22px_16px_24px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="reminders" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">alarm</span>
+            <span>Reminders</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[24px_18px_22px_16px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="family-memory" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">photo_library</span>
+            <span>Family Memory</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[18px_24px_16px_22px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="alerts" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-primary">notifications_active</span>
+            <span>Alerts</span>
+          </div>
+          <span
+            class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-error-container text-on-error-container leading-none shadow-xs">2</span>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[22px_16px_24px_18px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="patient-profile" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">person</span>
+            <span>Patient Profile</span>
+          </div>
+        </a>
+        <a class="flex items-center justify-between px-4 py-2.5 rounded-[18px_22px_16px_24px] text-on-surface-variant hover:bg-[#f5eee5] hover:text-on-surface transition-all duration-150 text-[14px]"
+          data-path="settings" href="#">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-secondary">tune</span>
+            <span>Settings</span>
+          </div>
+        </a>
+      </nav>
+    </div>
+    <!-- Caregiver Footer Profile in Blobby Clay Inset -->
+    <div class="p-3.5 border-t border-[#dfcfc0]/70 bg-[#ffffff]">
+      <div
+        class="flex items-center justify-between p-3 rounded-[26px_18px_24px_20px] bg-[#f5eee5] border border-[#dfcfc0] shadow-sm">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img alt="Sunita Rao Profile"
+            class="w-10 h-10 rounded-[16px_12px_18px_14px] object-cover shrink-0 ring-2 ring-[#c85a32]/30 shadow-xs"
+            src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA" />
+          <div class="flex flex-col truncate">
+            <span class="text-[13px] font-bold text-on-surface truncate leading-tight font-newsreader">Sunita Rao</span>
+            <span class="text-[11px] text-on-surface-variant truncate">Primary Caregiver (Daughter)</span>
+          </div>
+        </div>
+        <a class="text-[#8b716a] hover:text-on-surface p-1.5 rounded-full hover:bg-[#ebe0d4] transition-colors shrink-0"
+          data-path="settings" href="#" title="Account Settings">
+          <span class="material-symbols-outlined text-[18px]">settings</span>
+        </a>
+      </div>
+    </div>
+  </aside>
+  <!-- Main View Area -->
+  <div class="pl-[268px] relative z-10">
+    <!-- Floating Elevated Global Header -->
+    <header
+      class="fixed top-0 left-[268px] right-0 h-18 bg-[#ffffff]/90 backdrop-blur-md border-b border-[#dfcfc0]/70 z-40 px-8 flex items-center justify-between shadow-[0_4px_20px_-4px_rgba(112,58,34,0.05)]">
+      <div class="flex items-center gap-4">
+        <!-- Patient Selector Pebble Dropdown -->
+        <div
+          class="flex items-center gap-2.5 py-2 px-4 rounded-[24px_16px_22px_18px] bg-[#f5eee5] border border-[#dfcfc0] cursor-pointer hover:bg-[#ebe0d4] transition-all tactile-clay-subtle">
+          <span class="material-symbols-outlined text-primary text-[20px]">family_restroom</span>
+          <div class="flex items-center gap-2">
+            <span class="text-[14px] font-bold text-on-surface font-newsreader">Kalyan Rao (Father, 76)</span>
+            <span class="material-symbols-outlined text-[16px] text-[#8b716a]">unfold_more</span>
+          </div>
+        </div>
+        <!-- Status chips -->
+        <div class="hidden xl:flex items-center gap-2.5 text-on-surface-variant text-[13px]">
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shadow-xs">
+            <span class="w-2 h-2 rounded-full bg-[#7d8772] live-pulse"></span>
+            Active • Using Tablet
+          </div>
+          <span class="text-[#dec0b7]">•</span>
+          <span class="inline-flex items-center gap-1 text-on-surface-variant">
+            <span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+            Last synced: 12m ago
+          </span>
+          <span class="text-[#dec0b7]">•</span>
+          <span class="inline-flex items-center gap-1 text-on-surface-variant">
+            <span class="material-symbols-outlined text-[16px] text-primary">wifi</span>
+            Online (Wi-Fi)
+          </span>
+        </div>
+      </div>
+      <!-- Header actions -->
+      <div class="flex items-center gap-2.5">
+        <button
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-[20px_14px_18px_16px] border border-[#dfcfc0] bg-white text-on-surface text-[13px] font-bold hover:bg-[#f5eee5] tactile-clay-subtle"
+          type="button">
+          <span class="material-symbols-outlined text-[18px] text-primary">sync</span>
+          <span>Sync Now</span>
+        </button>
+        <button aria-label="Care Alerts"
+          class="relative p-2.5 rounded-[18px_12px_16px_14px] text-on-surface-variant hover:bg-[#f5eee5] transition-colors"
+          type="button">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-error ring-2 ring-white"></span>
+        </button>
+        <div
+          class="flex items-center gap-1 px-3 py-1.5 rounded-[18px_12px_16px_14px] text-on-surface-variant hover:bg-[#f5eee5] cursor-pointer transition-colors text-[13px]">
+          <span class="material-symbols-outlined text-[18px] text-secondary">translate</span>
+          <span class="text-[12px] font-bold text-on-surface">English</span>
+          <span class="material-symbols-outlined text-[16px] text-[#8b716a]">arrow_drop_down</span>
+        </div>
+        <div class="h-6 w-px bg-[#dfcfc0] mx-1"></div>
+        <img alt="Sunita Rao Profile"
+          class="w-9 h-9 rounded-[14px_10px_16px_12px] object-cover ring-2 ring-[#c85a32]/30 shadow-xs"
+          src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA" />
+      </div>
+    </header>
+    <!-- Bento Dashboard Main Content -->
+    <main class="relative pt-20 bg-transparent min-h-screen">
+      <div class="w-full max-w-[1600px] mx-auto p-6 md:p-8 space-y-6">
+        <!-- Header Section with Boho Warm Flourish -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex flex-col">
+            <div
+              class="flex items-center gap-2 text-[#8b716a] text-[11px] font-bold tracking-widest uppercase font-literata">
+              <span>Clinical Care Portal</span>
+              <span>/</span>
+              <span class="text-primary font-bold">Active Monitoring</span>
+            </div>
+            <h1 class="text-[34px] font-bold text-[#2b160e] tracking-tight mt-1 font-newsreader">Good morning, Sunita
+            </h1>
+            <p class="text-[15px] text-[#6e5449] font-literata">Here is what you need to know about Kalyan Rao today,
+              Wednesday Oct 24.</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <button
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[22px_14px_20px_16px] bg-white border border-[#dfcfc0] text-[#2b160e] text-[13px] font-bold hover:bg-[#f5eee5] tactile-clay-subtle"
+              type="button">
+              <span class="material-symbols-outlined text-[18px] text-secondary">edit_note</span>
+              <span>Log Offline Observation</span>
+            </button>
+            <button
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-[20px_24px_16px_22px] bg-gradient-to-r from-[#b84b25] to-[#c85a32] text-white text-[13px] font-bold hover:from-[#a03d1c] hover:to-[#b84b25] tactile-clay-btn"
+              type="button">
+              <span class="material-symbols-outlined text-[18px]">ios_share</span>
+              <span>Export Summary</span>
+            </button>
+          </div>
+        </div>
+        <!-- ==============================================
+     BENTO BOX GRID CONTAINER - TERRACOTTA DUSK BLOBBY AESTHETIC
+============================================== -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+          <!-- BENTO TILE 1: Hero Patient Real-Time Status & Live Telemetry (lg:col-span-8) -->
+          <div
+            class="lg:col-span-8 terracotta-clay-card blob-card-1 p-7 flex flex-col justify-between relative overflow-hidden">
+            <div
+              class="absolute -top-12 -right-12 w-40 h-40 rounded-[50%_50%_40%_60%] bg-[#ffe9e2]/40 pointer-events-none">
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+              <!-- Patient Info -->
+              <div class="flex items-center gap-4">
+                <div class="relative shrink-0">
+                  <img class="w-18 h-18 rounded-[28px_20px_30px_22px] object-cover ring-3 ring-[#c85a32]/25 shadow-md"
+                    data-alt="Warm photograph of Kalyan Rao, 76-year-old father"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtGCucPbexyHQfKrDal2THFB83yoCGhWtEDTBgK9IjycX76SsAf3IQk11QX8-gVxsdkL0Zrr5PU-rC9epop7zOnXa0jWidLUkDG6EkhmFX6QhhDQbnNPqFuiAu_XG3kvKPslTMoE3c3XOAxgM-q7Lka9DEmBjV5zKDkMHlY-TWWqI4S7oCXvsksma8ZDFsxBuMLL28SDkFNB7dgy6vDoYabyVifLCuxL4J3XhJ4O3mXDPlYiWwsGFe" />
+                  <span class="absolute -bottom-1 -right-1 flex h-4 w-4">
+                    <span
+                      class="live-pulse absolute inline-flex h-full w-full rounded-full bg-[#7d8772] opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-4 w-4 bg-[#7d8772] ring-2 ring-white"></span>
                   </span>
-</div>
-<div class="flex flex-wrap items-center gap-y-1 gap-x-3 mt-1.5 text-[13px] text-marine-muted">
-<span class="inline-flex items-center gap-1.5 text-marine-slate font-semibold">
-<span class="material-symbols-outlined text-peach-dark text-[18px]">psychology</span>
-<span>Currently playing <span class="text-peach-dark underline decoration-coral-accent decoration-2 font-bold">Memory Puzzle</span></span>
-</span>
-<span class="text-beach-border-coral hidden sm:inline">•</span>
-<span class="inline-flex items-center gap-1 font-pixel text-[11px]">
-<span class="material-symbols-outlined text-[15px] text-coral-accent">history</span>
-<span>Synced just now (09:42 AM)</span>
-</span>
-</div>
-</div>
-</div>
-<!-- Quick Status Badges -->
-<div class="flex flex-wrap sm:flex-col lg:flex-row items-start sm:items-end lg:items-center gap-2">
-<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-beach-card-alt border border-beach-border font-pixel text-[11px] text-marine-slate">
-<span class="material-symbols-outlined text-[17px] text-seafoam-teal">battery_charging_full</span>
-<span class="font-bold">84%</span>
-<span class="text-marine-muted">[Docked]</span>
-</div>
-<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-sand-gold-light border border-sand-gold/50 font-pixel text-[11px] text-sand-gold font-bold">
-<span class="material-symbols-outlined text-[16px]">schedule</span>
-<span>1 ROUTINE PENDING</span>
-</div>
-</div>
-</div>
-<!-- Real-time Live Engagement Bar in Tile -->
-<div class="mt-4 pt-3 border-t-2 border-dashed border-beach-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[12px]">
-<div class="flex items-center gap-2 font-pixel">
-<span class="w-2.5 h-2.5 bg-peach-primary live-pulse"></span>
-<span class="text-marine-muted">Current Session:</span>
-<span class="font-bold text-marine-slate bg-peach-light px-1.5 py-0.5 border border-peach-primary/30">Level 3 Grid (Round 2 of 3)</span>
-</div>
-<div class="flex items-center gap-4 text-marine-muted font-pixel text-[11px]">
-<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-seafoam-teal">wifi</span> Signal: 98%</span>
-<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-coral-accent">tablet_mac</span> Samsung Tab A8</span>
-</div>
-</div>
-</div>
-<!-- BENTO TILE 2: Device Health & 100% Sync Reliability Gauge (lg:col-span-4) -->
-<div class="lg:col-span-4 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box flex flex-col justify-between">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<div class="w-7 h-7 bg-seafoam-light border border-seafoam-teal/40 flex items-center justify-center text-seafoam-teal">
-<span class="material-symbols-outlined text-[18px]">cloud_done</span>
-</div>
-<h3 class="text-[14px] font-space font-bold text-marine-slate uppercase tracking-wide">Device &amp; Telemetry</h3>
-</div>
-<span class="font-pixel inline-flex items-center gap-1 text-[10px] font-bold text-seafoam-teal px-2 py-0.5 bg-seafoam-light border border-seafoam-teal/50">
-              ● SYNC_OK
-            </span>
-</div>
-<div class="flex items-center justify-between my-2">
-<!-- Animated SVG Arc Gauge in Beach & Peach Palette -->
-<div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
-<svg class="w-24 h-24 -rotate-90 transform" viewbox="0 0 36 36">
-<!-- Background circle -->
-<path class="text-beach-sand" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
-<!-- Progress Arc 100% -->
-<path class="text-seafoam-teal animate-path" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="square" stroke-width="4"></path>
-</svg>
-<div class="absolute flex flex-col items-center justify-center text-center">
-<span class="font-pixel text-[17px] font-extrabold text-marine-slate leading-none">100%</span>
-<span class="font-pixel text-[9px] uppercase font-bold text-coral-accent mt-0.5">RELIABLE</span>
-</div>
-</div>
-<div class="flex flex-col gap-1.5 pl-3 text-[12px] font-pixel">
-<div class="flex justify-between items-center gap-2">
-<span class="text-marine-muted">Battery:</span>
-<span class="font-bold text-marine-slate">84% [DOCK]</span>
-</div>
-<div class="flex justify-between items-center gap-2">
-<span class="text-marine-muted">Voice Mic:</span>
-<span class="font-bold text-seafoam-teal flex items-center gap-0.5">
-<span class="material-symbols-outlined text-[13px]">mic</span> ON
-                </span>
-</div>
-<div class="flex justify-between items-center gap-2">
-<span class="text-marine-muted">Buffer:</span>
-<span class="font-bold text-peach-dark">0 packets</span>
-</div>
-</div>
-</div>
-<div class="pt-2 border-t-2 border-dashed border-beach-border flex items-center justify-between font-pixel text-[10px] text-marine-muted">
-<span>Audio: En / Hi</span>
-<span class="font-bold text-marine-slate bg-beach-card-alt px-1 border border-beach-border">Android 13</span>
-</div>
-</div>
-<!-- BENTO TILE 3: Today's 4 Snapshot Metrics (lg:col-span-12) -->
-<div class="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-<!-- Metric 1 -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-4 pixel-box-sm hover:border-seafoam-teal transition-all">
-<div class="flex items-center justify-between">
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[ACTIVITIES]</span>
-<div class="w-7 h-7 bg-seafoam-light border border-seafoam-teal/40 flex items-center justify-center text-seafoam-teal">
-<span class="material-symbols-outlined text-[17px]">task_alt</span>
-</div>
-</div>
-<div class="mt-2 flex items-baseline gap-2">
-<span class="font-space text-[26px] font-bold text-marine-slate leading-none">4 / 6</span>
-<span class="font-pixel text-[11px] font-bold text-seafoam-teal">+1 vs yest</span>
-</div>
-<div class="mt-2.5">
-<!-- Pixelated Progress Bar -->
-<div class="w-full h-2.5 bg-beach-sand border border-beach-border overflow-hidden">
-<div class="h-full bg-seafoam-teal pixel-stripes" style="width: 67%;"></div>
-</div>
-<p class="font-pixel text-[11px] text-marine-muted mt-1.5">67% daily goal reached</p>
-</div>
-</div>
-<!-- Metric 2 -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-4 pixel-box-sm hover:border-peach-primary transition-all">
-<div class="flex items-center justify-between">
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[COGNITIVE_TIME]</span>
-<div class="w-7 h-7 bg-peach-light border border-peach-primary/40 flex items-center justify-center text-peach-dark">
-<span class="material-symbols-outlined text-[17px]">timer</span>
-</div>
-</div>
-<div class="mt-2 flex items-baseline gap-2">
-<span class="font-space text-[26px] font-bold text-peach-dark leading-none">38 mins</span>
-<span class="font-pixel text-[11px] font-medium text-marine-muted">3 runs</span>
-</div>
-<div class="mt-2.5">
-<div class="w-full h-2.5 bg-beach-sand border border-beach-border overflow-hidden">
-<div class="h-full bg-peach-primary pixel-stripes" style="width: 76%;"></div>
-</div>
-<p class="font-pixel text-[11px] text-marine-muted mt-1.5">Blink &amp; Memory Puzzle</p>
-</div>
-</div>
-<!-- Metric 3 -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-4 pixel-box-sm hover:border-coral-accent transition-all">
-<div class="flex items-center justify-between">
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[REMINDERS]</span>
-<div class="w-7 h-7 bg-sand-gold-light border border-sand-gold/40 flex items-center justify-center text-sand-gold">
-<span class="material-symbols-outlined text-[17px]">event_available</span>
-</div>
-</div>
-<div class="mt-2 flex items-baseline gap-2">
-<span class="font-space text-[26px] font-bold text-marine-slate leading-none">3 of 4</span>
-<span class="font-pixel text-[11px] font-bold text-berry-error">1 Missed</span>
-</div>
-<div class="mt-2.5">
-<div class="w-full h-2.5 bg-beach-sand border border-beach-border overflow-hidden">
-<div class="h-full bg-coastal-blue pixel-stripes" style="width: 75%;"></div>
-</div>
-<p class="font-pixel text-[11px] text-marine-muted mt-1.5">08:30 BP taken • 13:00 Due</p>
-</div>
-</div>
-<!-- Metric 4 -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-4 pixel-box-sm hover:border-coastal-sky transition-all">
-<div class="flex items-center justify-between">
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[AVG_LATENCY]</span>
-<div class="w-7 h-7 bg-seafoam-light border border-seafoam-teal/40 flex items-center justify-center text-seafoam-teal">
-<span class="material-symbols-outlined text-[17px]">speed</span>
-</div>
-</div>
-<div class="mt-2 flex items-baseline gap-2">
-<span class="font-space text-[26px] font-bold text-marine-slate leading-none">410 ms</span>
-<span class="font-pixel text-[11px] font-bold text-seafoam-teal">-15ms steady</span>
-</div>
-<div class="mt-2.5">
-<div class="w-full h-2.5 bg-beach-sand border border-beach-border overflow-hidden">
-<div class="h-full bg-seafoam-teal pixel-stripes" style="width: 88%;"></div>
-</div>
-<p class="font-pixel text-[11px] text-marine-muted mt-1.5">Motor reaction stable 14d</p>
-</div>
-</div>
-</div>
-<!-- =======================================================
-             CLINICAL BENTO MODULE 1: BETA EXERCISES & ROLLOUT CONTROL (v2.4-RC)
-             ======================================================= -->
-<div class="lg:col-span-12 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box transition-all">
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-3">
-<div class="w-9 h-9 bg-peach-light border-2 border-peach-primary text-peach-dark flex items-center justify-center shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[20px]">science</span>
-</div>
-<div>
-<div class="flex items-center gap-2">
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Beta Exercises &amp; Rollout Control</h3>
-<span class="px-2 py-0.5 bg-peach-primary text-white font-pixel font-bold text-[10px] border border-marine-slate">
-                    v2.4-RC
-                  </span>
-</div>
-<p class="text-[12px] text-marine-muted mt-0.5">Experimental clinical cognitive activities staged for review prior to patient deployment</p>
-</div>
-</div>
-<!-- Rollout safeguards summary & instant rollback -->
-<div class="flex flex-wrap items-center gap-2">
-<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-seafoam-light border border-seafoam-teal/40 font-pixel text-[11px] text-seafoam-teal font-bold">
-<span class="material-symbols-outlined text-[15px]">verified_user</span>
-<span>[CONTROLLED_STAGED_ROLLOUT]</span>
-</div>
-<button class="pixel-btn inline-flex items-center gap-1 px-3 py-1 rounded-sm bg-berry-error-bg text-berry-error border-2 border-berry-error font-pixel text-[11px] font-bold hover:bg-berry-error hover:text-white transition-colors" title="Emergency instant revert to stable production build" type="button">
-<span class="material-symbols-outlined text-[15px]">history_toggle_off</span>
-<span>INSTANT_ROLLBACK</span>
-</button>
-</div>
-</div>
-<!-- 2 Staged Beta Games Cards -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-<!-- Beta Activity 1: Spatial Recall Matrix -->
-<div class="p-4 rounded-sm bg-beach-card-alt border-2 border-beach-border flex flex-col justify-between gap-3.5 hover:border-peach-primary transition-colors">
-<div class="flex items-start justify-between gap-3">
-<div class="flex items-start gap-3">
-<div class="w-10 h-10 bg-beach-card border-2 border-marine-slate text-peach-dark flex items-center justify-center shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[22px]">grid_goldenratio</span>
-</div>
-<div>
-<div class="flex items-center gap-2">
-<h4 class="text-[14px] font-space font-bold text-marine-slate">Spatial Recall Matrix</h4>
-<span class="text-[10px] font-pixel text-marine-muted bg-beach-card px-1 border border-beach-border">Beta v0.9</span>
-</div>
-<p class="text-[12px] text-marine-muted mt-1 leading-relaxed">
-                      Visuospatial working memory &amp; orientation navigation. Calibrated for mild cognitive stability through progressive 3x3 to 4x4 spatial cues.
-                    </p>
-</div>
-</div>
-<span class="px-2 py-0.5 rounded-none font-pixel bg-seafoam-light text-seafoam-teal border border-seafoam-teal text-[10px] font-bold shrink-0 inline-flex items-center gap-1">
-                  ✓ APPROVED
-                </span>
-</div>
-<div class="pt-3 border-t border-beach-border flex flex-wrap items-center justify-between gap-2">
-<div class="flex items-center gap-3 font-pixel text-[11px] text-marine-muted">
-<span class="inline-flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] text-seafoam-teal">check</span> Caregiver: 98%
-                  </span>
-<span class="inline-flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] text-peach-dark">devices</span> Tab Dock
-                  </span>
-</div>
-<div class="flex items-center gap-2">
-<button class="pixel-btn px-3 py-1.5 rounded-sm bg-seafoam-teal text-white border-2 border-marine-slate font-pixel text-[11px] font-bold inline-flex items-center gap-1.5" type="button">
-<span class="material-symbols-outlined text-[15px]">send_to_mobile</span>
-<span>DEPLOY_TO_KALYAN</span>
-</button>
-</div>
-</div>
-</div>
-<!-- Beta Activity 2: Audio Story Sequence -->
-<div class="p-4 rounded-sm bg-beach-card-alt border-2 border-beach-border flex flex-col justify-between gap-3.5 hover:border-coral-accent transition-colors">
-<div class="flex items-start justify-between gap-3">
-<div class="flex items-start gap-3">
-<div class="w-10 h-10 bg-beach-card border-2 border-marine-slate text-coral-accent flex items-center justify-center shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[22px]">record_voice_over</span>
-</div>
-<div>
-<div class="flex items-center gap-2">
-<h4 class="text-[14px] font-space font-bold text-marine-slate">Audio Story Sequence</h4>
-<span class="text-[10px] font-pixel text-marine-muted bg-beach-card px-1 border border-beach-border">Beta v1.1</span>
-<span class="px-1.5 py-0.2 font-pixel bg-sand-gold text-white text-[9px] uppercase font-bold">PREVIEW</span>
-</div>
-<p class="text-[12px] text-marine-muted mt-1 leading-relaxed">
-                      Auditory narrative retention &amp; chronological recall. Native Hindi/English conversational snippets followed by picture-sequencing verification.
-                    </p>
-</div>
-</div>
-<span class="px-2 py-0.5 rounded-none font-pixel bg-sand-gold-light text-sand-gold border border-sand-gold text-[10px] font-bold shrink-0 inline-flex items-center gap-1">
-                  ⏳ AWAITING TEST
-                </span>
-</div>
-<div class="pt-3 border-t border-beach-border flex flex-wrap items-center justify-between gap-2">
-<div class="flex items-center gap-3 font-pixel text-[11px] text-marine-muted">
-<span class="inline-flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] text-coral-accent">hourglass_empty</span> Unvalidated
-                  </span>
-<span class="inline-flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px] text-coastal-blue">volume_up</span> 3.5m audio
-                  </span>
-</div>
-<div class="flex items-center gap-2">
-<button class="pixel-btn px-3 py-1.5 rounded-sm bg-beach-card text-marine-slate border-2 border-marine-slate font-pixel text-[11px] font-bold inline-flex items-center gap-1.5" type="button">
-<span class="material-symbols-outlined text-[15px] text-coral-accent">play_circle</span>
-<span>SANDBOX_TRIAL</span>
-</button>
-</div>
-</div>
-</div>
-</div>
-<!-- Deployment Safeguards Strip -->
-<div class="mt-3 pt-3 border-t-2 border-dashed border-beach-border flex flex-wrap items-center justify-between gap-2 font-pixel text-[11px]">
-<div class="flex items-center gap-2 text-marine-slate">
-<span class="material-symbols-outlined text-seafoam-teal text-[16px]">shield</span>
-<span>Safety Protocol: <strong class="text-peach-dark font-bold">[AUTO-REVERT ENABLED]</strong> (latency &gt; 800ms / 3 pauses)</span>
-</div>
-<div class="flex items-center gap-3 text-marine-muted">
-<span>SANDBOX_RUNTIME: ISOLATED</span>
-<span>•</span>
-<span class="text-seafoam-teal font-bold">ZERO DISRUPTION</span>
-</div>
-</div>
-</div>
-<!-- =======================================================
-             CLINICAL BENTO MODULE 2: REAL-TIME ML INFERENCE & MODEL ACCURACY TELEMETRY
-             ======================================================= -->
-<div class="lg:col-span-12 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box transition-all">
-<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-3">
-<div class="w-9 h-9 bg-seafoam-light border-2 border-seafoam-teal text-seafoam-teal flex items-center justify-center shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[20px]">neurology</span>
-</div>
-<div>
-<div class="flex items-center gap-2">
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Assistive ML Evaluation &amp; Model Accuracy Telemetry</h3>
-<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-seafoam-teal text-white font-pixel font-bold text-[10px] border border-marine-slate">
-<span class="w-1.5 h-1.5 bg-white live-pulse"></span> [LIVE EDGE TPU]
-                  </span>
-</div>
-<p class="text-[12px] text-marine-muted mt-0.5">High-precision behavioral state inference and edge neural processor telemetry</p>
-</div>
-</div>
-<!-- Model Engine Key Stats -->
-<div class="flex flex-wrap items-center gap-2 text-[11px] font-pixel">
-<div class="px-2.5 py-1 bg-beach-card-alt border border-beach-border flex items-center gap-1.5">
-<span class="text-marine-muted uppercase font-bold">Engine:</span>
-<span class="font-bold text-marine-slate">Smriti v3.2-edge</span>
-</div>
-<div class="px-2.5 py-1 bg-seafoam-light border border-seafoam-teal/40 flex items-center gap-1.5">
-<span class="text-seafoam-teal uppercase font-bold">Accuracy:</span>
-<span class="font-bold text-seafoam-teal">96.8% (±0.4%)</span>
-</div>
-<div class="px-2.5 py-1 bg-peach-light border border-peach-primary/40 flex items-center gap-1.5">
-<span class="text-peach-dark uppercase font-bold">Inference:</span>
-<span class="font-bold text-peach-dark">16ms</span>
-</div>
-</div>
-</div>
-<!-- Timestamp-Level Behavioral State Assessment Log (hh:mm:ss precision, strictly observable) -->
-<div class="mt-4 space-y-2">
-<!-- Entry 1: 10:28:14 AM -->
-<div class="p-3 bg-beach-card-alt border border-beach-border flex flex-col md:flex-row md:items-center justify-between gap-2 hover:border-seafoam-teal transition-colors">
-<div class="flex items-start sm:items-center gap-3">
-<span class="px-2 py-0.5 bg-beach-card border-2 border-marine-slate text-marine-slate font-pixel text-[11px] font-bold shrink-0">
-                  10:28:14 AM
-                </span>
-<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-<span class="text-[13px] font-space font-bold text-marine-slate">Optimal Cognitive Alignment</span>
-<span class="hidden sm:inline text-beach-border-coral">•</span>
-<span class="text-[12px] text-marine-muted">Motor Tremor Index: <span class="font-bold text-seafoam-teal font-pixel">Nominal</span> • Reaction Baseline: <span class="font-bold text-seafoam-teal font-pixel">-12ms</span></span>
-</div>
-</div>
-<div class="flex items-center gap-2 self-end md:self-auto shrink-0">
-<span class="font-pixel text-[10px] text-seafoam-teal bg-seafoam-light px-2 py-0.5 border border-seafoam-teal/40 font-bold">
-                  TPU: 97.4%
-                </span>
-<span class="material-symbols-outlined text-[16px] text-seafoam-teal">verified</span>
-</div>
-</div>
-<!-- Entry 2: 10:15:32 AM -->
-<div class="p-3 bg-beach-card-alt border border-beach-border flex flex-col md:flex-row md:items-center justify-between gap-2 hover:border-seafoam-teal transition-colors">
-<div class="flex items-start sm:items-center gap-3">
-<span class="px-2 py-0.5 bg-beach-card border-2 border-marine-slate text-marine-slate font-pixel text-[11px] font-bold shrink-0">
-                  10:15:32 AM
-                </span>
-<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-<span class="text-[13px] font-space font-bold text-marine-slate">High Saccadic Focus Detected</span>
-<span class="hidden sm:inline text-beach-border-coral">•</span>
-<span class="text-[12px] text-marine-muted">Saccade Velocity: <span class="font-bold text-seafoam-teal font-pixel">Stable</span> • Touch Latency: <span class="font-bold text-marine-slate font-pixel">412ms</span></span>
-</div>
-</div>
-<div class="flex items-center gap-2 self-end md:self-auto shrink-0">
-<span class="font-pixel text-[10px] text-seafoam-teal bg-seafoam-light px-2 py-0.5 border border-seafoam-teal/40 font-bold">
-                  TPU: 98.2%
-                </span>
-<span class="material-symbols-outlined text-[16px] text-seafoam-teal">verified</span>
-</div>
-</div>
-<!-- Entry 3: 09:10:04 AM -->
-<div class="p-3 bg-beach-card-alt border border-beach-border flex flex-col md:flex-row md:items-center justify-between gap-2 hover:border-sand-gold transition-colors">
-<div class="flex items-start sm:items-center gap-3">
-<span class="px-2 py-0.5 bg-beach-card border-2 border-marine-slate text-marine-slate font-pixel text-[11px] font-bold shrink-0">
-                  09:10:04 AM
-                </span>
-<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-<span class="text-[13px] font-space font-bold text-sand-gold">Mild Processing Hesitation Observed</span>
-<span class="hidden sm:inline text-beach-border-coral">•</span>
-<span class="text-[12px] text-marine-muted">Auditory Prompt Replay: <span class="font-bold text-marine-slate font-pixel">1x</span> • Routine Deviation: <span class="font-bold text-sand-gold font-pixel">+42s</span></span>
-</div>
-</div>
-<div class="flex items-center gap-2 self-end md:self-auto shrink-0">
-<span class="font-pixel text-[10px] text-sand-gold bg-sand-gold-light px-2 py-0.5 border border-sand-gold/40 font-bold">
-                  TPU: 94.6%
-                </span>
-<span class="material-symbols-outlined text-[16px] text-sand-gold">info</span>
-</div>
-</div>
-<!-- Entry 4: 08:30:19 AM -->
-<div class="p-3 bg-beach-card-alt border border-beach-border flex flex-col md:flex-row md:items-center justify-between gap-2 hover:border-seafoam-teal transition-colors">
-<div class="flex items-start sm:items-center gap-3">
-<span class="px-2 py-0.5 bg-beach-card border-2 border-marine-slate text-marine-slate font-pixel text-[11px] font-bold shrink-0">
-                  08:30:19 AM
-                </span>
-<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-<span class="text-[13px] font-space font-bold text-marine-slate">Baseline Sensor Calibration Established</span>
-<span class="hidden sm:inline text-beach-border-coral">•</span>
-<span class="text-[12px] text-marine-muted">Wi-Fi RSSI: <span class="font-bold text-seafoam-teal font-pixel">-48dBm</span> • Device Angle: <span class="font-bold text-marine-slate font-pixel">Docked 18°</span></span>
-</div>
-</div>
-<div class="flex items-center gap-2 self-end md:self-auto shrink-0">
-<span class="font-pixel text-[10px] text-seafoam-teal bg-seafoam-light px-2 py-0.5 border border-seafoam-teal/40 font-bold">
-                  TPU: 98.8%
-                </span>
-<span class="material-symbols-outlined text-[16px] text-seafoam-teal">verified</span>
-</div>
-</div>
-</div>
-<!-- Explanatory Clinical Note Footer -->
-<div class="mt-3 pt-3 border-t-2 border-dashed border-beach-border flex flex-wrap items-center justify-between gap-2 font-pixel text-[11px] text-marine-muted">
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-coral-accent text-[15px]">clinical_notes</span>
-<span>Observational edge ML telemetry calibrated against patient 30-day baseline. Non-diagnostic.</span>
-</div>
-<div class="flex items-center gap-1 text-marine-slate font-bold">
-<span>[ZERO CLOUD AUDIO RETENTION]</span>
-</div>
-</div>
-</div>
-<!-- BENTO TILE 4: Weekly Cognitive Engagement Animated Bar Chart (lg:col-span-7) -->
-<div class="lg:col-span-7 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box flex flex-col justify-between">
-<div class="flex items-center justify-between pb-2 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-peach-dark text-[20px]">bar_chart</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Weekly Cognitive Engagement</h3>
-</div>
-<div class="flex items-center gap-3 font-pixel text-[11px]">
-<span class="inline-flex items-center gap-1 font-bold text-peach-dark">
-<span class="w-2.5 h-2.5 bg-peach-primary border border-marine-slate"></span> Today
+                </div>
+                <div class="flex flex-col">
+                  <div class="flex flex-wrap items-center gap-2.5">
+                    <h2 class="text-[24px] font-bold text-[#2b160e] tracking-tight font-newsreader">Kalyan Rao</h2>
+                    <span class="text-[#dec0b7]">•</span>
+                    <span class="text-[14px] text-[#6e5449] font-medium">Age 76, Father</span>
+                    <span
+                      class="px-3 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold uppercase tracking-wider shadow-xs">Active</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-y-1 gap-x-3 mt-1.5 text-[13.5px] text-[#6e5449]">
+                    <span class="inline-flex items-center gap-1.5 text-[#2b160e] font-semibold">
+                      <span class="material-symbols-outlined text-primary text-[18px]">psychology</span>
+                      <span>Currently playing <span
+                          class="text-primary underline decoration-primary/40 font-bold">Memory Puzzle</span></span>
+                    </span>
+                    <span class="text-[#dec0b7] hidden sm:inline">•</span>
+                    <span class="inline-flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[16px] text-[#8b716a]">history</span>
+                      <span>Synced just now (09:42 AM)</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <!-- Quick Status Badges with Pebble Pill contours -->
+              <div class="flex flex-wrap sm:flex-col lg:flex-row items-start sm:items-end lg:items-center gap-2">
+                <div
+                  class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[18px_12px_16px_14px] bg-[#f5eee5] text-secondary border border-[#dfcfc0] shadow-xs">
+                  <span class="material-symbols-outlined text-[18px] text-[#c8864d]">battery_charging_full</span>
+                  <span class="text-[13px] font-bold text-on-surface">84%</span>
+                  <span class="text-[11px] text-on-surface-variant">Docked</span>
+                </div>
+                <div
+                  class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-[16px_18px_14px_16px] bg-[#ffede8] text-primary border border-primary/20 shadow-xs">
+                  <span class="material-symbols-outlined text-[16px]">schedule</span>
+                  <span class="text-[11px] font-bold uppercase tracking-wider">1 Routine Pending</span>
+                </div>
+              </div>
+            </div>
+            <!-- Real-time Live Engagement Bar in Tile -->
+            <div
+              class="mt-6 pt-4 border-t border-[#dfcfc0]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[13px] relative z-10">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#7d8772] live-pulse"></span>
+                <span class="text-[#6e5449]">Current Tablet Session:</span>
+                <span
+                  class="font-bold text-on-surface bg-[#f5eee5] px-2.5 py-1 rounded-[14px_10px_14px_10px] border border-[#dfcfc0]">Level
+                  3 Grid (Round 2 of 3)</span>
+              </div>
+              <div class="flex items-center gap-4 text-[#6e5449] text-[12px]">
+                <span class="inline-flex items-center gap-1"><span
+                    class="material-symbols-outlined text-[15px] text-[#7d8772]">wifi</span> Home Wi-Fi (Strong)</span>
+                <span class="inline-flex items-center gap-1"><span
+                    class="material-symbols-outlined text-[15px] text-primary">tablet_mac</span> Samsung Tab A8</span>
+              </div>
+            </div>
+          </div>
+          <!-- BENTO TILE 2: Device Health & 100% Sync Reliability Gauge (lg:col-span-4) -->
+          <div class="lg:col-span-4 terracotta-clay-card blob-card-2 p-7 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[20px]">cloud_done</span>
+                <h3 class="text-[17px] font-bold text-on-surface font-newsreader tracking-tight">Device &amp; Telemetry
+                </h3>
+              </div>
+              <span
+                class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#3a4430] px-3 py-0.5 rounded-full bg-[#e8ebe2] border border-[#7d8772]/30 shadow-xs">
+                Sync Healthy
               </span>
-<span class="inline-flex items-center gap-1 font-bold text-seafoam-teal">
-<span class="w-2.5 h-2.5 bg-seafoam-teal border border-marine-slate"></span> Prior
-              </span>
-<span class="hidden sm:inline-block px-1.5 py-0.5 bg-beach-card-alt border border-beach-border text-marine-muted">TARGET: 30M</span>
-</div>
-</div>
-<!-- Pure CSS / SVG Animated Stepped Bar Chart -->
-<div class="mt-4 pt-2">
-<div class="relative h-44 w-full flex items-end justify-between px-2 sm:px-6">
-<!-- Target 30m dashed guideline -->
-<div class="absolute inset-x-0 bottom-[60%] border-b-2 border-dashed border-coral-accent/60 z-0 flex items-center justify-end pr-2">
-<span class="font-pixel text-[9px] text-peach-dark font-bold bg-beach-card px-1 border border-peach-primary/30">30 min baseline</span>
-</div>
-<!-- Mon: 32 mins -->
-<div class="relative z-10 flex flex-col items-center gap-1 group">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 rounded-none whitespace-nowrap">
-                  32 mins
+            </div>
+            <div class="flex items-center justify-between my-2">
+              <!-- Animated Terracotta Arc Gauge -->
+              <div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                <svg class="w-24 h-24 -rotate-90 transform drop-shadow-sm" viewbox="0 0 36 36">
+                  <path class="text-[#ebe0d4]"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                    stroke="currentColor" stroke-width="3.5"></path>
+                  <path class="text-[#b84b25] animate-path"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                    stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3.5"></path>
+                </svg>
+                <div class="absolute flex flex-col items-center justify-center text-center">
+                  <span class="text-[19px] font-bold text-on-surface leading-none font-newsreader">100%</span>
+                  <span class="text-[9px] uppercase font-bold text-secondary mt-0.5 tracking-wider">Reliable</span>
                 </div>
-<div class="w-7 sm:w-10 bg-seafoam-teal hover:brightness-110 border-2 border-marine-slate transition-colors animate-bar" style="height: 106px; animation-delay: 0.1s;"></div>
-<span class="font-pixel text-[11px] font-bold text-marine-muted mt-1">Mon</span>
-<span class="font-pixel text-[9px] text-marine-muted">32m</span>
-</div>
-<!-- Tue: 28 mins -->
-<div class="relative z-10 flex flex-col items-center gap-1 group">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 rounded-none whitespace-nowrap">
-                  28 mins
+              </div>
+              <div class="flex flex-col gap-2 pl-3 text-[12.5px]">
+                <div class="flex justify-between items-center gap-3">
+                  <span class="text-[#6e5449]">Battery:</span>
+                  <span class="font-bold text-[#2b160e]">84% (Docked)</span>
                 </div>
-<div class="w-7 sm:w-10 bg-seafoam-teal hover:brightness-110 border-2 border-marine-slate transition-colors animate-bar" style="height: 92px; animation-delay: 0.2s;"></div>
-<span class="font-pixel text-[11px] font-bold text-marine-muted mt-1">Tue</span>
-<span class="font-pixel text-[9px] text-marine-muted">28m</span>
-</div>
-<!-- Wed (TODAY): 38 mins (Peach & Beach Coral Highlight) -->
-<div class="relative z-10 flex flex-col items-center gap-1 group">
-<div class="absolute -top-7 font-pixel text-[10px] font-bold bg-peach-primary text-white px-2 py-0.5 border border-marine-slate whitespace-nowrap">
-                  Today: 38m
+                <div class="flex justify-between items-center gap-3">
+                  <span class="text-[#6e5449]">Voice Prompt:</span>
+                  <span class="font-bold text-[#7d8772] flex items-center gap-0.5">
+                    <span class="material-symbols-outlined text-[14px]">mic</span> Active
+                  </span>
                 </div>
-<div class="w-7 sm:w-10 bg-peach-primary border-2 border-marine-slate transition-all animate-bar pixel-box-sm" style="height: 126px; animation-delay: 0.3s;"></div>
-<span class="font-pixel text-[11px] font-black text-peach-dark mt-1">Wed</span>
-<span class="font-pixel text-[9px] font-bold text-peach-dark">38m</span>
-</div>
-<!-- Thu: 35m -->
-<div class="relative z-10 flex flex-col items-center gap-1 group opacity-60">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 whitespace-nowrap">
-                  35 mins
+                <div class="flex justify-between items-center gap-3">
+                  <span class="text-[#6e5449]">Buffer:</span>
+                  <span class="font-bold text-[#2b160e]">0 unsynced packets</span>
                 </div>
-<div class="w-7 sm:w-10 bg-beach-sand border-2 border-beach-border transition-colors animate-bar" style="height: 114px; animation-delay: 0.4s;"></div>
-<span class="font-pixel text-[11px] text-marine-muted mt-1">Thu</span>
-<span class="font-pixel text-[9px] text-marine-muted">--</span>
-</div>
-<!-- Fri: 30m -->
-<div class="relative z-10 flex flex-col items-center gap-1 group opacity-60">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 whitespace-nowrap">
-                  30 mins
+              </div>
+            </div>
+            <div
+              class="pt-3 border-t border-[#dfcfc0]/70 flex items-center justify-between text-[11.5px] text-[#6e5449]">
+              <span>English &amp; Hindi Audio</span>
+              <span class="font-bold text-secondary">Android 13 • Tab A8</span>
+            </div>
+          </div>
+          <!-- BENTO TILE 3: Today's 4 Snapshot Metrics (lg:col-span-12) -->
+          <div class="lg:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Metric 1 -->
+            <div class="terracotta-clay-card rounded-[28px_20px_32px_22px] p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">Activities Completed</span>
+                <div
+                  class="w-10 h-10 rounded-[16px_12px_18px_14px] bg-[#f5eee5] flex items-center justify-center text-primary shadow-xs">
+                  <span class="material-symbols-outlined text-[20px]">task_alt</span>
                 </div>
-<div class="w-7 sm:w-10 bg-beach-sand border-2 border-beach-border transition-colors animate-bar" style="height: 98px; animation-delay: 0.5s;"></div>
-<span class="font-pixel text-[11px] text-marine-muted mt-1">Fri</span>
-<span class="font-pixel text-[9px] text-marine-muted">--</span>
-</div>
-<!-- Sat: 42m -->
-<div class="relative z-10 flex flex-col items-center gap-1 group opacity-60">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 whitespace-nowrap">
-                  42 mins
+              </div>
+              <div class="mt-3 flex items-baseline gap-2">
+                <span class="text-[28px] font-bold text-[#2b160e] leading-none font-newsreader">4 / 6</span>
+                <span class="text-[12px] font-bold text-[#7d8772]">+1 vs yesterday</span>
+              </div>
+              <div class="mt-3">
+                <div class="w-full h-2.5 bg-[#ebe0d4] rounded-full overflow-hidden shadow-inner">
+                  <div class="h-full bg-gradient-to-r from-[#b84b25] to-[#c8864d] rounded-full" style="width: 67%;">
+                  </div>
                 </div>
-<div class="w-7 sm:w-10 bg-beach-sand border-2 border-beach-border transition-colors animate-bar" style="height: 136px; animation-delay: 0.6s;"></div>
-<span class="font-pixel text-[11px] text-marine-muted mt-1">Sat</span>
-<span class="font-pixel text-[9px] text-marine-muted">--</span>
-</div>
-<!-- Sun: 40m -->
-<div class="relative z-10 flex flex-col items-center gap-1 group opacity-60">
-<div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 font-pixel text-[10px] font-bold bg-marine-slate text-white px-1.5 py-0.5 whitespace-nowrap">
-                  40 mins
+                <p class="text-[12px] text-[#6e5449] mt-2">67% of daily cognitive target</p>
+              </div>
+            </div>
+            <!-- Metric 2 -->
+            <div class="terracotta-clay-card rounded-[22px_30px_20px_32px] p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">Cognitive Engagement</span>
+                <div
+                  class="w-10 h-10 rounded-[14px_18px_12px_16px] bg-[#ffede8] flex items-center justify-center text-primary shadow-xs">
+                  <span class="material-symbols-outlined text-[20px]">timer</span>
                 </div>
-<div class="w-7 sm:w-10 bg-beach-sand border-2 border-beach-border transition-colors animate-bar" style="height: 128px; animation-delay: 0.7s;"></div>
-<span class="font-pixel text-[11px] text-marine-muted mt-1">Sun</span>
-<span class="font-pixel text-[9px] text-marine-muted">--</span>
-</div>
-</div>
-</div>
-<!-- Footer Baseline Insight -->
-<div class="mt-3 pt-3 border-t-2 border-dashed border-beach-border flex flex-wrap items-center justify-between gap-2 text-[12px] font-pixel">
-<div class="flex items-center gap-1.5 text-seafoam-teal font-bold">
-<span class="material-symbols-outlined text-[16px]">trending_up</span>
-<span>3 consecutive days above the 30 min daily threshold</span>
-</div>
-<span class="font-bold text-marine-slate bg-beach-card-alt px-2 py-0.5 border border-beach-border">AVG: 34m/day</span>
-</div>
-</div>
-<!-- BENTO TILE 5: Game Accuracy & Latency SVG Sparkline Graph (lg:col-span-5) -->
-<div class="lg:col-span-5 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box flex flex-col justify-between">
-<div class="flex items-center justify-between pb-2 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-coral-accent text-[20px]">show_chart</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Cognitive Accuracy Trend</h3>
-</div>
-<span class="font-pixel text-[10px] font-bold text-seafoam-teal bg-seafoam-light border border-seafoam-teal/50 px-2 py-0.5">
-              86% 7-DAY AVG
-            </span>
-</div>
-<div class="mt-2">
-<div class="flex items-baseline justify-between">
-<div>
-<span class="font-space text-[24px] font-bold text-marine-slate leading-none">88%</span>
-<span class="font-pixel text-[11px] text-seafoam-teal font-bold ml-1.5">▲ +4% this week</span>
-</div>
-<div class="font-pixel text-[11px] text-marine-muted text-right">
-<span>Blink latency: </span>
-<span class="font-bold text-marine-slate">410ms [STABLE]</span>
-</div>
-</div>
-<!-- SVG Smooth Wave in Peach & Teal -->
-<div class="relative w-full h-32 mt-3">
-<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 320 100">
-<defs>
-<lineargradient id="beachGradient" x1="0%" x2="0%" y1="0%" y2="100%">
-<stop offset="0%" stop-color="#FF7A59" stop-opacity="0.35"></stop>
-<stop offset="100%" stop-color="#80D8DA" stop-opacity="0.05"></stop>
-</lineargradient>
-</defs>
-<!-- Grid Guidelines -->
-<line stroke="#F3D2C1" stroke-dasharray="4 4" stroke-width="1.5" x1="0" x2="320" y1="20" y2="20"></line>
-<line stroke="#F3D2C1" stroke-dasharray="4 4" stroke-width="1.5" x1="0" x2="320" y1="50" y2="50"></line>
-<line stroke="#F3D2C1" stroke-dasharray="4 4" stroke-width="1.5" x1="0" x2="320" y1="80" y2="80"></line>
-<!-- Shaded Area Below Curve -->
-<path d="M 0,65 C 50,70 70,52 110,48 C 160,42 190,56 230,35 C 270,18 290,26 320,20 L 320,100 L 0,100 Z" fill="url(#beachGradient)"></path>
-<!-- Animated Curve Stroke -->
-<path class="animate-path" d="M 0,65 C 50,70 70,52 110,48 C 160,42 190,56 230,35 C 270,18 290,26 320,20" fill="none" stroke="#FF7A59" stroke-linecap="square" stroke-linejoin="round" stroke-width="3.5"></path>
-<!-- Pixel / Square Markers for Data Points -->
-<rect fill="#FFFFFF" height="6" stroke="#2E8B8B" stroke-width="2" width="6" x="-3" y="62"></rect>
-<rect fill="#FFFFFF" height="6" stroke="#2E8B8B" stroke-width="2" width="6" x="107" y="45"></rect>
-<rect fill="#FFFFFF" height="6" stroke="#2E8B8B" stroke-width="2" width="6" x="227" y="32"></rect>
-<rect fill="#FA7268" height="8" stroke="#263238" stroke-width="2" width="8" x="316" y="16"></rect>
-</svg>
-</div>
-<!-- Day Markers under sparkline -->
-<div class="flex justify-between font-pixel text-[10px] text-marine-muted mt-2 px-1">
-<span>Thu</span>
-<span>Fri</span>
-<span>Sat</span>
-<span>Sun</span>
-<span>Mon</span>
-<span>Tue</span>
-<span class="font-bold text-peach-dark">Today</span>
-</div>
-</div>
-<!-- Mini Footnote inside Bento -->
-<div class="mt-3 pt-3 border-t-2 border-dashed border-beach-border flex items-center justify-between font-pixel text-[10px]">
-<span class="text-marine-muted">Cognitive Baselines:</span>
-<span class="font-bold text-seafoam-teal">Blink 92% • Memory 82%</span>
-</div>
-</div>
-<!-- BENTO TILE 6: Attention Needed / Actionable Care Notices (lg:col-span-12) -->
-<div class="lg:col-span-12 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box">
-<div class="flex items-center justify-between pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-coral-accent text-[20px]">warning</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Attention Needed (2 Notices)</h3>
-</div>
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[AUTOMATED_CARE_TRIAGING]</span>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-<!-- Alert 1: Hydration -->
-<div class="p-4 rounded-sm bg-berry-error-bg border-2 border-berry-error/50 flex flex-col justify-between gap-3">
-<div class="flex items-start gap-3">
-<div class="p-2 bg-white border-2 border-berry-error text-berry-error shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[20px]">water_bottle</span>
-</div>
-<div class="flex flex-col">
-<div class="flex items-center gap-2">
-<span class="text-[13px] font-space font-bold text-marine-slate">Hydration reminder at 13:00 unacknowledged</span>
-<span class="px-2 py-0.2 font-pixel bg-berry-error text-white text-[10px] font-bold">OVERDUE</span>
-</div>
-<p class="text-[12px] text-marine-muted mt-1 leading-relaxed">
-                    Audio prompt timed out after 15 minutes with no tablet touch registered. Follow-up required to confirm afternoon water intake.
-                  </p>
-</div>
-</div>
-<div class="flex items-center justify-end gap-2 pt-1 font-pixel">
-<button class="pixel-btn px-3 py-1.5 rounded-sm bg-white border-2 border-marine-slate text-marine-slate text-[11px] font-bold hover:bg-peach-light" type="button">
-                  Send Gentle Chime
+              </div>
+              <div class="mt-3 flex items-baseline gap-2">
+                <span class="text-[28px] font-bold text-[#2b160e] leading-none font-newsreader">38 mins</span>
+                <span class="text-[12px] font-medium text-[#6e5449]">3 sessions</span>
+              </div>
+              <div class="mt-3">
+                <div class="w-full h-2.5 bg-[#ebe0d4] rounded-full overflow-hidden shadow-inner">
+                  <div class="h-full bg-primary rounded-full" style="width: 76%;"></div>
+                </div>
+                <p class="text-[12px] text-[#6e5449] mt-2">Blink Game &amp; Memory Puzzle</p>
+              </div>
+            </div>
+            <!-- Metric 3 -->
+            <div class="terracotta-clay-card rounded-[30px_22px_32px_20px] p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">Reminders Followed</span>
+                <div
+                  class="w-10 h-10 rounded-[16px_14px_18px_12px] bg-[#f5eee5] flex items-center justify-center text-secondary shadow-xs">
+                  <span class="material-symbols-outlined text-[20px]">event_available</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-baseline gap-2">
+                <span class="text-[28px] font-bold text-[#2b160e] leading-none font-newsreader">3 of 4</span>
+                <span class="text-[12px] font-bold text-error">1 Missed</span>
+              </div>
+              <div class="mt-3">
+                <div class="w-full h-2.5 bg-[#ebe0d4] rounded-full overflow-hidden shadow-inner">
+                  <div class="h-full bg-[#c8864d] rounded-full" style="width: 75%;"></div>
+                </div>
+                <p class="text-[12px] text-[#6e5449] mt-2">08:30 BP taken • 13:00 Overdue</p>
+              </div>
+            </div>
+            <!-- Metric 4 -->
+            <div class="terracotta-clay-card rounded-[20px_32px_22px_30px] p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-secondary">Average Latency</span>
+                <div
+                  class="w-10 h-10 rounded-[18px_12px_16px_14px] bg-[#f5eee5] flex items-center justify-center text-[#7d8772] shadow-xs">
+                  <span class="material-symbols-outlined text-[20px]">speed</span>
+                </div>
+              </div>
+              <div class="mt-3 flex items-baseline gap-2">
+                <span class="text-[28px] font-bold text-[#2b160e] leading-none font-newsreader">410 ms</span>
+                <span class="text-[12px] font-bold text-[#7d8772]">-15ms steady</span>
+              </div>
+              <div class="mt-3">
+                <div class="w-full h-2.5 bg-[#ebe0d4] rounded-full overflow-hidden shadow-inner">
+                  <div class="h-full bg-[#7d8772] rounded-full" style="width: 88%;"></div>
+                </div>
+                <p class="text-[12px] text-[#6e5449] mt-2">Motor reaction stable 14-day</p>
+              </div>
+            </div>
+          </div>
+          <!-- =======================================================
+     CLINICAL BENTO MODULE 1: BETA EXERCISES & ROLLOUT CONTROL (v2.4-RC)
+     ======================================================= -->
+          <div class="lg:col-span-12 terracotta-clay-card blob-card-3 p-7">
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-3.5">
+                <div
+                  class="w-11 h-11 rounded-[18px_12px_16px_14px] bg-[#ffede8] text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
+                  <span class="material-symbols-outlined text-[24px]">science</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2.5">
+                    <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Beta Exercises &amp;
+                      Rollout Control</h3>
+                    <span
+                      class="px-2.5 py-0.5 rounded-[12px_8px_10px_6px] bg-[#ffede8] text-primary border border-primary/30 text-[11px] font-bold font-mono">v2.4-RC</span>
+                  </div>
+                  <p class="text-[13px] text-[#6e5449] mt-0.5 font-literata">Experimental clinical cognitive activities
+                    staged for review prior to patient deployment</p>
+                </div>
+              </div>
+              <!-- Rollout safeguards summary & instant rollback -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <div
+                  class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f5eee5] border border-[#dfcfc0] text-[11.5px] text-[#6e5449] font-medium shadow-xs">
+                  <span class="material-symbols-outlined text-[#7d8772] text-[16px]">verified_user</span>
+                  <span>Controlled Staged Rollout</span>
+                </div>
+                <button
+                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-[18px_12px_16px_14px] bg-[#fbf7f2] text-error hover:bg-error-container hover:text-on-error-container border border-error/30 text-[12px] font-bold tactile-clay-subtle"
+                  title="Emergency instant revert to stable production build" type="button">
+                  <span class="material-symbols-outlined text-[16px]">history_toggle_off</span>
+                  <span>Instant Rollback</span>
                 </button>
-<button class="pixel-btn px-3 py-1.5 rounded-sm bg-peach-primary text-white border-2 border-marine-slate text-[11px] font-bold hover:bg-peach-dark" type="button">
-                  Mark Followed Up
+              </div>
+            </div>
+            <!-- 2 Staged Beta Games Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+              <!-- Beta Game 1: Spatial Recall Matrix -->
+              <div
+                class="p-5 blob-subtile bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col justify-between gap-4 hover:border-primary/40 transition-all shadow-xs">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-start gap-3.5">
+                    <div
+                      class="w-12 h-12 rounded-[18px_14px_20px_16px] bg-white border border-[#dfcfc0] text-[#7d8772] flex items-center justify-center shrink-0 shadow-sm">
+                      <span class="material-symbols-outlined text-[24px]">grid_goldenratio</span>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h4 class="text-[15px] font-bold text-[#2b160e] font-newsreader">Spatial Recall Matrix</h4>
+                        <span class="text-[11px] font-mono text-[#8b716a]">Beta v0.9</span>
+                      </div>
+                      <p class="text-[12.5px] text-[#6e5449] mt-1 leading-relaxed">
+                        Visuospatial working memory &amp; orientation navigation. Calibrated for mild cognitive
+                        stability through progressive 3x3 to 4x4 spatial cues.
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-1 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shrink-0 inline-flex items-center gap-1 shadow-xs">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    Tested &amp; Approved
+                  </span>
+                </div>
+                <div class="pt-3.5 border-t border-[#dfcfc0]/70 flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 text-[11.5px] text-[#6e5449]">
+                    <span class="inline-flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#7d8772]">check</span> Caregiver Tested:
+                      98%
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#8b716a]">devices</span> Target: Tablet
+                      Dock
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      class="px-4 py-2 rounded-[18px_12px_16px_14px] bg-[#c85a32] text-white text-[12px] font-bold hover:bg-[#b84b25] tactile-clay-btn inline-flex items-center gap-1.5"
+                      type="button">
+                      <span class="material-symbols-outlined text-[16px]">send_to_mobile</span>
+                      <span>Deploy to Kalyan's Tablet</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Beta Game 2: Audio Story Sequence -->
+              <div
+                class="p-5 blob-subtile-alt bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col justify-between gap-4 hover:border-primary/40 transition-all shadow-xs">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-start gap-3.5">
+                    <div
+                      class="w-12 h-12 rounded-[16px_20px_14px_18px] bg-white border border-[#dfcfc0] text-primary flex items-center justify-center shrink-0 shadow-sm">
+                      <span class="material-symbols-outlined text-[24px]">record_voice_over</span>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h4 class="text-[15px] font-bold text-[#2b160e] font-newsreader">Audio Story Sequence</h4>
+                        <span class="text-[11px] font-mono text-[#8b716a]">Beta v1.1</span>
+                        <span
+                          class="px-2 py-0.5 rounded-[8px] bg-[#ebe0d4] text-[#6e5449] text-[10px] uppercase font-bold tracking-wider">Preview</span>
+                      </div>
+                      <p class="text-[12.5px] text-[#6e5449] mt-1 leading-relaxed">
+                        Auditory narrative retention &amp; chronological recall. Native Hindi/English conversational
+                        snippets followed by picture-sequencing verification.
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-1 rounded-full bg-[#ffede8] text-primary border border-primary/20 text-[11px] font-bold shrink-0 inline-flex items-center gap-1 shadow-xs">
+                    <span class="material-symbols-outlined text-[14px]">pending</span>
+                    Awaiting Caregiver Test
+                  </span>
+                </div>
+                <div class="pt-3.5 border-t border-[#dfcfc0]/70 flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-3 text-[11.5px] text-[#6e5449]">
+                    <span class="inline-flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#8b716a]">hourglass_empty</span>
+                      Unvalidated
+                    </span>
+                    <span class="inline-flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[15px] text-[#8b716a]">volume_up</span> 3.5 min audio
+                      trial
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      class="px-4 py-2 rounded-[16px_18px_14px_16px] bg-white border border-[#dfcfc0] text-[#2b160e] text-[12px] font-bold hover:bg-[#f5eee5] tactile-clay-subtle inline-flex items-center gap-1.5"
+                      type="button">
+                      <span class="material-symbols-outlined text-[16px] text-primary">play_circle</span>
+                      <span>Test in Caregiver Sandbox</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Deployment Safeguards Strip -->
+            <div
+              class="mt-5 pt-3.5 border-t border-[#dfcfc0]/70 flex flex-wrap items-center justify-between gap-2 text-[12px]">
+              <div class="flex items-center gap-2 text-[#6e5449]">
+                <span class="material-symbols-outlined text-[#7d8772] text-[16px]">shield</span>
+                <span>Safety Protocol: <strong class="text-on-surface font-semibold">Auto-revert enabled</strong>
+                  (frustration/agitation threshold &gt; 3 pauses or latency spike &gt; 800ms)</span>
+              </div>
+              <div class="flex items-center gap-3 text-[11px] text-[#8b716a]">
+                <span>Rollout Sandbox: Sandboxed Device Runtime</span>
+                <span class="text-[#dec0b7]">•</span>
+                <span>Zero disruption guarantee</span>
+              </div>
+            </div>
+          </div>
+          <!-- =======================================================
+     CLINICAL BENTO MODULE 2: REAL-TIME ML INFERENCE & MODEL ACCURACY TELEMETRY
+     ======================================================= -->
+          <div class="lg:col-span-12 terracotta-clay-card blob-card-4 p-7">
+            <div
+              class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-3.5">
+                <div
+                  class="w-11 h-11 rounded-[16px_20px_14px_18px] bg-[#e8ebe2] text-[#3a4430] flex items-center justify-center shrink-0 shadow-sm border border-[#7d8772]/30">
+                  <span class="material-symbols-outlined text-[24px]">neurology</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2.5">
+                    <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Assistive ML
+                      Evaluation &amp; Model Accuracy Telemetry</h3>
+                    <span
+                      class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold uppercase tracking-wider shadow-xs">
+                      <span class="w-2 h-2 rounded-full bg-[#7d8772] live-pulse"></span> Live Edge TPU
+                    </span>
+                  </div>
+                  <p class="text-[13px] text-[#6e5449] mt-0.5 font-literata">High-precision behavioral state inference
+                    and edge neural processor telemetry</p>
+                </div>
+              </div>
+              <!-- Model Engine Key Stats -->
+              <div class="flex flex-wrap items-center gap-3 text-[12px]">
+                <div
+                  class="px-3.5 py-1.5 rounded-[16px_12px_14px_10px] bg-[#f5eee5] border border-[#dfcfc0] flex items-center gap-2 shadow-xs">
+                  <span class="text-[#8b716a] uppercase text-[10px] font-bold tracking-wider">Engine</span>
+                  <span class="font-bold text-on-surface font-mono">Smriti v3.2-edge</span>
+                </div>
+                <div
+                  class="px-3.5 py-1.5 rounded-[14px_16px_10px_12px] bg-[#f5eee5] border border-[#dfcfc0] flex items-center gap-2 shadow-xs">
+                  <span class="text-[#8b716a] uppercase text-[10px] font-bold tracking-wider">Accuracy</span>
+                  <span class="font-bold text-[#7d8772] font-mono">96.8% (±0.4%)</span>
+                </div>
+                <div
+                  class="px-3.5 py-1.5 rounded-[16px_12px_14px_10px] bg-[#f5eee5] border border-[#dfcfc0] flex items-center gap-2 shadow-xs">
+                  <span class="text-[#8b716a] uppercase text-[10px] font-bold tracking-wider">Inference</span>
+                  <span class="font-bold text-primary font-mono">16ms</span>
+                </div>
+              </div>
+            </div>
+            <!-- Timestamp-Level Behavioral State Assessment Log -->
+            <div class="mt-4 space-y-2.5">
+              <!-- Entry 1: 10:28:14 AM -->
+              <div
+                class="p-4 rounded-[20px_14px_18px_16px] bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col md:flex-row md:items-center justify-between gap-2.5 hover:bg-[#f5eee5] transition-all shadow-xs">
+                <div class="flex items-start sm:items-center gap-3">
+                  <span
+                    class="px-2.5 py-1 rounded-[10px] bg-white border border-[#dfcfc0] text-[#2b160e] font-mono text-[12px] font-bold shrink-0 shadow-xs">
+                    10:28:14 AM
+                  </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span class="text-[13.5px] font-bold text-[#2b160e]">Optimal Cognitive Alignment</span>
+                    <span class="hidden sm:inline text-[#dec0b7]">•</span>
+                    <span class="text-[12.5px] text-[#6e5449]">Motor Tremor Index: <span
+                        class="font-bold text-[#7d8772]">Nominal</span> • Reaction Baseline: <span
+                        class="font-bold text-[#7d8772]">-12ms</span></span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 self-end md:self-auto shrink-0">
+                  <div
+                    class="inline-flex items-center gap-1 text-[11px] font-mono text-[#3a4430] bg-[#e8ebe2] border border-[#7d8772]/30 px-2.5 py-0.5 rounded-full font-bold shadow-xs">
+                    <span>TPU Confidence: 97.4%</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-[#7d8772]">verified</span>
+                </div>
+              </div>
+              <!-- Entry 2: 10:15:32 AM -->
+              <div
+                class="p-4 rounded-[16px_20px_14px_18px] bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col md:flex-row md:items-center justify-between gap-2.5 hover:bg-[#f5eee5] transition-all shadow-xs">
+                <div class="flex items-start sm:items-center gap-3">
+                  <span
+                    class="px-2.5 py-1 rounded-[10px] bg-white border border-[#dfcfc0] text-[#2b160e] font-mono text-[12px] font-bold shrink-0 shadow-xs">
+                    10:15:32 AM
+                  </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span class="text-[13.5px] font-bold text-[#2b160e]">High Saccadic Focus Detected</span>
+                    <span class="hidden sm:inline text-[#dec0b7]">•</span>
+                    <span class="text-[12.5px] text-[#6e5449]">Saccade Velocity: <span
+                        class="font-bold text-[#7d8772]">Stable</span> • Touch Latency: <span
+                        class="font-bold text-[#2b160e]">412ms</span></span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 self-end md:self-auto shrink-0">
+                  <div
+                    class="inline-flex items-center gap-1 text-[11px] font-mono text-[#3a4430] bg-[#e8ebe2] border border-[#7d8772]/30 px-2.5 py-0.5 rounded-full font-bold shadow-xs">
+                    <span>TPU Confidence: 98.2%</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-[#7d8772]">verified</span>
+                </div>
+              </div>
+              <!-- Entry 3: 09:10:04 AM -->
+              <div
+                class="p-4 rounded-[20px_14px_18px_16px] bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col md:flex-row md:items-center justify-between gap-2.5 hover:bg-[#f5eee5] transition-all shadow-xs">
+                <div class="flex items-start sm:items-center gap-3">
+                  <span
+                    class="px-2.5 py-1 rounded-[10px] bg-white border border-[#dfcfc0] text-[#2b160e] font-mono text-[12px] font-bold shrink-0 shadow-xs">
+                    09:10:04 AM
+                  </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span class="text-[13.5px] font-bold text-[#703a22]">Mild Processing Hesitation Observed</span>
+                    <span class="hidden sm:inline text-[#dec0b7]">•</span>
+                    <span class="text-[12.5px] text-[#6e5449]">Auditory Prompt Replay: <span
+                        class="font-bold text-[#2b160e]">1x</span> • Routine Deviation: <span
+                        class="font-bold text-[#c8864d]">+42s</span></span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 self-end md:self-auto shrink-0">
+                  <div
+                    class="inline-flex items-center gap-1 text-[11px] font-mono text-[#703a22] bg-[#ebe0d4] border border-[#dfcfc0] px-2.5 py-0.5 rounded-full font-bold shadow-xs">
+                    <span>TPU Confidence: 94.6%</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-[#c8864d]">info</span>
+                </div>
+              </div>
+              <!-- Entry 4: 08:30:19 AM -->
+              <div
+                class="p-4 rounded-[16px_20px_14px_18px] bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col md:flex-row md:items-center justify-between gap-2.5 hover:bg-[#f5eee5] transition-all shadow-xs">
+                <div class="flex items-start sm:items-center gap-3">
+                  <span
+                    class="px-2.5 py-1 rounded-[10px] bg-white border border-[#dfcfc0] text-[#2b160e] font-mono text-[12px] font-bold shrink-0 shadow-xs">
+                    08:30:19 AM
+                  </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span class="text-[13.5px] font-bold text-[#2b160e]">Baseline Sensor Calibration Established</span>
+                    <span class="hidden sm:inline text-[#dec0b7]">•</span>
+                    <span class="text-[12.5px] text-[#6e5449]">Wi-Fi RSSI: <span
+                        class="font-bold text-[#7d8772]">-48dBm</span> • Device Rest Angle: <span
+                        class="font-bold text-[#2b160e]">Docked 18°</span></span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 self-end md:self-auto shrink-0">
+                  <div
+                    class="inline-flex items-center gap-1 text-[11px] font-mono text-[#3a4430] bg-[#e8ebe2] border border-[#7d8772]/30 px-2.5 py-0.5 rounded-full font-bold shadow-xs">
+                    <span>TPU Confidence: 98.8%</span>
+                  </div>
+                  <span class="material-symbols-outlined text-[18px] text-[#7d8772]">verified</span>
+                </div>
+              </div>
+            </div>
+            <!-- Explanatory Clinical Note Footer -->
+            <div
+              class="mt-4 pt-3.5 border-t border-[#dfcfc0]/70 flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-[#6e5449]">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-primary text-[16px]">clinical_notes</span>
+                <span>Observational edge ML telemetry calibrated against patient's 30-day baseline. Assistive triaging,
+                  non-diagnostic.</span>
+              </div>
+              <div class="flex items-center gap-1 font-mono text-[#8b716a]">
+                <span>Local Privacy Guard: Zero cloud audio persistence</span>
+              </div>
+            </div>
+          </div>
+          <!-- BENTO TILE 4: Weekly Cognitive Engagement Animated Bar Chart (lg:col-span-7) -->
+          <div class="lg:col-span-7 terracotta-clay-card blob-card-1 p-7 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[22px]">bar_chart</span>
+                <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Weekly Cognitive
+                  Engagement</h3>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1 text-[11.5px] font-bold text-[#6e5449]">
+                  <span class="w-3 h-3 rounded-full bg-primary shadow-xs"></span> Today (Wed)
+                </span>
+                <span class="inline-flex items-center gap-1 text-[11.5px] font-bold text-[#6e5449]">
+                  <span class="w-3 h-3 rounded-full bg-[#c8864d] shadow-xs"></span> Prior Days
+                </span>
+                <span
+                  class="hidden sm:inline-block text-[11px] uppercase tracking-wider font-bold text-[#703a22] px-3 py-0.5 rounded-full bg-[#ebe0d4]">Target:
+                  30m</span>
+              </div>
+            </div>
+            <!-- Pure CSS / SVG Animated Organic Bar Chart -->
+            <div class="mt-6 pt-2">
+              <div class="relative h-44 w-full flex items-end justify-between px-2 sm:px-6">
+                <!-- Target 30m dashed guideline -->
+                <div
+                  class="absolute inset-x-0 bottom-[60%] border-b border-dashed border-[#8b716a]/50 z-0 flex items-center justify-end pr-2">
+                  <span
+                    class="text-[10px] text-[#703a22] font-bold bg-[#f5eee5] px-2 py-0.5 rounded-full border border-[#dfcfc0]">30
+                    min baseline</span>
+                </div>
+                <!-- Monday: 32 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    32 mins
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#c8864d] hover:brightness-105 rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 106px; animation-delay: 0.1s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Mon</span>
+                  <span class="text-[10px] text-[#8b716a]">32m</span>
+                </div>
+                <!-- Tuesday: 28 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    28 mins
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#c8864d] hover:brightness-105 rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 92px; animation-delay: 0.2s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Tue</span>
+                  <span class="text-[10px] text-[#8b716a]">28m</span>
+                </div>
+                <!-- Wednesday (TODAY): 38 mins (Burnt Orange Terracotta Highlight) -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group">
+                  <div
+                    class="absolute -top-8 text-[10px] font-bold bg-primary text-white px-3 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                    Today: 38m
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-gradient-to-t from-[#a03d1c] to-[#b84b25] rounded-full shadow-md transition-all hover:brightness-110 animate-bar ring-3 ring-primary/25"
+                    style="height: 126px; animation-delay: 0.3s;"></div>
+                  <span class="text-[12.5px] font-bold text-primary mt-1">Wed</span>
+                  <span class="text-[10.5px] font-bold text-primary">38m</span>
+                </div>
+                <!-- Thursday: 35 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group opacity-65">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    Last Thu: 35m
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#dfcfc0] hover:bg-[#c8864d] rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 114px; animation-delay: 0.4s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Thu</span>
+                  <span class="text-[10px] text-[#8b716a]">--</span>
+                </div>
+                <!-- Friday: 30 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group opacity-65">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    Last Fri: 30m
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#dfcfc0] hover:bg-[#c8864d] rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 98px; animation-delay: 0.5s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Fri</span>
+                  <span class="text-[10px] text-[#8b716a]">--</span>
+                </div>
+                <!-- Saturday: 42 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group opacity-65">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    Last Sat: 42m
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#dfcfc0] hover:bg-[#c8864d] rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 136px; animation-delay: 0.6s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Sat</span>
+                  <span class="text-[10px] text-[#8b716a]">--</span>
+                </div>
+                <!-- Sunday: 40 mins -->
+                <div class="relative z-10 flex flex-col items-center gap-1.5 group opacity-65">
+                  <div
+                    class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-7 text-[10px] font-bold bg-[#2b160e] text-white px-2 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+                    Last Sun: 40m
+                  </div>
+                  <div
+                    class="w-7 sm:w-10 bg-[#dfcfc0] hover:bg-[#c8864d] rounded-full transition-all shadow-xs animate-bar"
+                    style="height: 128px; animation-delay: 0.7s;"></div>
+                  <span class="text-[12px] font-bold text-[#6e5449] mt-1">Sun</span>
+                  <span class="text-[10px] text-[#8b716a]">--</span>
+                </div>
+              </div>
+            </div>
+            <!-- Footer Baseline Insight -->
+            <div
+              class="mt-5 pt-3.5 border-t border-[#dfcfc0]/70 flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[#6e5449]">
+              <div class="flex items-center gap-1.5 text-primary font-bold">
+                <span class="material-symbols-outlined text-[18px]">trending_up</span>
+                <span>Active 3 consecutive days above the recommended 30 min daily threshold</span>
+              </div>
+              <span class="font-bold text-[#2b160e]">Weekly Avg: 34 mins/day</span>
+            </div>
+          </div>
+          <!-- BENTO TILE 5: Game Accuracy & Latency SVG Sparkline Graph (lg:col-span-5) -->
+          <div class="lg:col-span-5 terracotta-clay-card blob-card-2 p-7 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[22px]">show_chart</span>
+                <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Cognitive Accuracy Trend
+                </h3>
+              </div>
+              <div
+                class="flex items-center gap-1.5 text-[11px] font-bold text-[#3a4430] bg-[#e8ebe2] border border-[#7d8772]/30 px-3 py-0.5 rounded-full shadow-xs">
+                <span>86% 7-Day Avg</span>
+              </div>
+            </div>
+            <div class="mt-3">
+              <div class="flex items-baseline justify-between">
+                <div>
+                  <span class="text-[28px] font-bold text-[#2b160e] leading-none font-newsreader">88%</span>
+                  <span class="text-[12px] text-[#7d8772] font-bold ml-1.5">▲ +4% this week</span>
+                </div>
+                <div class="text-[11.5px] text-[#6e5449] text-right">
+                  <span>Blink latency: </span>
+                  <span class="font-bold text-[#2b160e]">410ms (Stable)</span>
+                </div>
+              </div>
+              <!-- SVG Smooth Curve Chart with Terracotta Burnt-Orange Styling -->
+              <div class="relative w-full h-32 mt-3">
+                <svg class="w-full h-full overflow-visible drop-shadow-sm" preserveaspectratio="none"
+                  viewbox="0 0 320 100">
+                  <defs>
+                    <lineargradient id="terracottaGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                      <stop offset="0%" stop-color="#b84b25" stop-opacity="0.25"></stop>
+                      <stop offset="100%" stop-color="#b84b25" stop-opacity="0.0"></stop>
+                    </lineargradient>
+                  </defs>
+                  <!-- Grid Guidelines -->
+                  <line stroke="#dfcfc0" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="320" y1="20" y2="20"></line>
+                  <line stroke="#dfcfc0" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="320" y1="50" y2="50"></line>
+                  <line stroke="#dfcfc0" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="320" y1="80" y2="80"></line>
+                  <!-- Shaded Area Below Curve -->
+                  <path
+                    d="M 0,65 C 50,70 70,52 110,48 C 160,42 190,56 230,35 C 270,18 290,26 320,20 L 320,100 L 0,100 Z"
+                    fill="url(#terracottaGradient)"></path>
+                  <!-- Animated Smooth Bezier Stroke in Warm Burnt Orange -->
+                  <path class="animate-path"
+                    d="M 0,65 C 50,70 70,52 110,48 C 160,42 190,56 230,35 C 270,18 290,26 320,20" fill="none"
+                    stroke="#b84b25" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"></path>
+                  <!-- Dots for Key Data Points -->
+                  <circle cx="0" cy="65" fill="#FFFFFF" r="4" stroke="#b84b25" stroke-width="2.5"></circle>
+                  <circle cx="110" cy="48" fill="#FFFFFF" r="4" stroke="#b84b25" stroke-width="2.5"></circle>
+                  <circle cx="230" cy="35" fill="#FFFFFF" r="4" stroke="#b84b25" stroke-width="2.5"></circle>
+                  <circle class="shadow-sm" cx="320" cy="20" fill="#a03d1c" r="5.5" stroke="#FFFFFF" stroke-width="3">
+                  </circle>
+                </svg>
+              </div>
+              <!-- Day Markers under sparkline -->
+              <div class="flex justify-between text-[11px] text-[#8b716a] mt-2 px-1">
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span class="font-bold text-primary">Today</span>
+              </div>
+            </div>
+            <!-- Mini Footnote inside Bento -->
+            <div class="mt-4 pt-3.5 border-t border-[#dfcfc0]/70 flex items-center justify-between text-[11.5px]">
+              <span class="text-[#6e5449]">Cognitive Baselines:</span>
+              <span class="font-bold text-primary">Blink 92% • Memory 82%</span>
+            </div>
+          </div>
+          <!-- BENTO TILE 6: Attention Needed / Actionable Care Notices (lg:col-span-12) -->
+          <div class="lg:col-span-12 terracotta-clay-card blob-card-3 p-7">
+            <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[22px]">warning</span>
+                <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Attention Needed (2
+                  Notices)</h3>
+              </div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#8b716a]">Automated Caregiver
+                Triaging</span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+              <!-- Alert 1: Hydration -->
+              <div
+                class="p-5 blob-subtile bg-[#fff5f2] border border-[#ffdad6] flex flex-col justify-between gap-4 shadow-xs">
+                <div class="flex items-start gap-3.5">
+                  <div
+                    class="p-3 rounded-[16px_12px_18px_14px] bg-error-container text-on-error-container shrink-0 shadow-xs">
+                    <span class="material-symbols-outlined text-[22px]">water_bottle</span>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[15px] font-bold text-[#2b160e] font-newsreader">Hydration reminder at 13:00
+                        unacknowledged</span>
+                      <span
+                        class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container text-[11px] font-bold shadow-xs">Overdue</span>
+                    </div>
+                    <p class="text-[13px] text-[#6e5449] mt-1 leading-relaxed font-literata">
+                      Audio prompt timed out after 15 minutes with no tablet touch registered. Follow-up required to
+                      confirm afternoon water intake.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-1">
+                  <button
+                    class="px-4 py-2 rounded-[16px_12px_18px_14px] bg-white border border-[#dfcfc0] text-[#2b160e] text-[12px] font-bold hover:bg-[#f5eee5] tactile-clay-subtle"
+                    type="button">
+                    Send Gentle Chime
+                  </button>
+                  <button
+                    class="px-4 py-2 rounded-[18px_14px_16px_12px] bg-[#b84b25] text-white text-[12px] font-bold hover:bg-[#a03d1c] tactile-clay-btn"
+                    type="button">
+                    Mark Followed Up
+                  </button>
+                </div>
+              </div>
+              <!-- Alert 2: Adaptive Difficulty -->
+              <div
+                class="p-5 blob-subtile-alt bg-[#f5eee5]/70 border border-[#dfcfc0] flex flex-col justify-between gap-4 shadow-xs">
+                <div class="flex items-start gap-3.5">
+                  <div class="p-3 rounded-[14px_18px_12px_16px] bg-[#ebe0d4] text-primary shrink-0 shadow-xs">
+                    <span class="material-symbols-outlined text-[22px]">tune</span>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="text-[15px] font-bold text-[#2b160e] font-newsreader">Adaptive Difficulty Shifted to
+                        Level 3</span>
+                      <span
+                        class="px-2.5 py-0.5 rounded-full bg-[#ebe0d4] text-[#703a22] text-[11px] font-bold shadow-xs">Automatic</span>
+                    </div>
+                    <p class="text-[13px] text-[#6e5449] mt-1 leading-relaxed font-literata">
+                      Memory Puzzle shifted from Moderate (Level 4) to Level 3 following 3 consecutive card-flip
+                      timeouts during morning session.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-1">
+                  <button
+                    class="px-4 py-2 rounded-[16px_18px_14px_16px] bg-white border border-[#dfcfc0] text-[#2b160e] text-[12px] font-bold hover:bg-[#f5eee5] tactile-clay-subtle"
+                    type="button">
+                    View Gameplay Detail
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- BENTO TILE 7: Chronological Activity Timeline (lg:col-span-7) -->
+          <div class="lg:col-span-7 terracotta-clay-card blob-card-1 p-7 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[22px]">timeline</span>
+                <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Today's Patient Activity
+                  Timeline</h3>
+              </div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-[#8b716a]">Real-time Feed</span>
+            </div>
+            <!-- Timeline Vertical Flow -->
+            <div
+              class="relative pl-7 space-y-4 my-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#dfcfc0]">
+              <!-- 15:45 Family Memory -->
+              <div class="relative flex flex-col gap-1.5">
+                <span class="absolute -left-7 top-1 flex h-4 w-4">
+                  <span class="live-pulse absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-4 w-4 bg-primary ring-2 ring-white shadow-xs"></span>
+                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">15:45</span>
+                  <span class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Family
+                    Memory</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shadow-xs">Completed</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[18px_12px_16px_14px] bg-[#f5eee5]/70 text-[#6e5449] text-[13px] leading-relaxed border border-[#dfcfc0]/60 shadow-xs">
+                  Reviewed 6 family faces with daughter Sunita. Immediate 100% verbal and touch identification.
+                </div>
+              </div>
+              <!-- 13:00 Hydration Reminder -->
+              <div class="relative flex flex-col gap-1.5">
+                <span class="absolute -left-7 top-1 w-4 h-4 rounded-full bg-error ring-2 ring-white shadow-xs"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">13:00</span>
+                  <span class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Hydration
+                    Reminder</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container text-[11px] font-bold shadow-xs">Missed</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[16px_18px_14px_16px] bg-[#fff5f2] text-[#6e5449] text-[13px] leading-relaxed border border-[#ffdad6] shadow-xs">
+                  Unopened after 15m chime sequence. Caregiver alert generated.
+                </div>
+              </div>
+              <!-- 10:28 Memory Puzzle -->
+              <div class="relative flex flex-col gap-1.5">
+                <span
+                  class="absolute -left-7 top-1 w-4 h-4 rounded-full bg-[#c8864d] ring-2 ring-white shadow-xs"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">10:28</span>
+                  <span class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Memory
+                    Puzzle</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shadow-xs">Completed</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[18px_14px_16px_12px] bg-[#f5eee5]/70 text-[#6e5449] text-[13px] leading-relaxed border border-[#dfcfc0]/60 shadow-xs">
+                  12 pairs matched in 4m 12s, 82% accuracy rating. Adaptive adjustment triggered for next stage.
+                </div>
+              </div>
+              <!-- 10:15 Blink Game -->
+              <div class="relative flex flex-col gap-1.5">
+                <span
+                  class="absolute -left-7 top-1 w-4 h-4 rounded-full bg-[#c8864d] ring-2 ring-white shadow-xs"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">10:15</span>
+                  <span class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Blink
+                    Game</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shadow-xs">Completed</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[16px_18px_12px_16px] bg-[#f5eee5]/70 text-[#6e5449] text-[13px] leading-relaxed border border-[#dfcfc0]/60 shadow-xs">
+                  3 rounds sustained. Average latency: 420ms with 94% motor consistency.
+                </div>
+              </div>
+              <!-- 09:10 Medication -->
+              <div class="relative flex flex-col gap-1.5">
+                <span
+                  class="absolute -left-7 top-1 w-4 h-4 rounded-full bg-[#7d8772] ring-2 ring-white shadow-xs"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">09:10</span>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Medication</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shadow-xs">Voice
+                    Confirmed</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[18px_12px_16px_14px] bg-[#f5eee5]/70 text-[#6e5449] text-[13px] leading-relaxed border border-[#dfcfc0]/60 shadow-xs">
+                  Morning Blood Pressure Medication acknowledged via voice prompt ("Amlodipine taken").
+                </div>
+              </div>
+              <!-- 08:30 Device Awoke -->
+              <div class="relative flex flex-col gap-1.5">
+                <span
+                  class="absolute -left-7 top-1 w-4 h-4 rounded-full bg-[#dfcfc0] ring-2 ring-white shadow-xs"></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[13px] font-bold text-[#2b160e] font-mono">08:30</span>
+                  <span class="px-3 py-0.5 rounded-full bg-[#f5eee5] text-[#2b160e] text-[12px] font-bold">Hardware
+                    Telemetry</span>
+                  <span
+                    class="px-2.5 py-0.5 rounded-full bg-[#ebe0d4] text-[#703a22] text-[11px] font-bold shadow-xs">System
+                    Event</span>
+                </div>
+                <div
+                  class="p-3.5 rounded-[16px_18px_14px_16px] bg-[#f5eee5]/70 text-[#6e5449] text-[13px] leading-relaxed border border-[#dfcfc0]/60 shadow-xs">
+                  Device awoke: Screen unlocked at nightstand dock. Battery status 91%.
+                </div>
+              </div>
+            </div>
+            <div class="pt-3.5 border-t border-[#dfcfc0]/70 flex justify-end">
+              <a class="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-primary hover:underline" href="#">
+                <span>View full 30-day activity log</span>
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+          <!-- BENTO RIGHT COLUMN CLUSTER: Reminders + Family Memory (lg:col-span-5) -->
+          <div class="lg:col-span-5 flex flex-col gap-6">
+            <!-- BENTO TILE 8: Reminders Schedule Checklist -->
+            <div class="terracotta-clay-card blob-card-2 p-7">
+              <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[22px]">alarm</span>
+                  <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Reminders Schedule
+                  </h3>
+                </div>
+                <button
+                  class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-[16px_10px_14px_12px] bg-[#f5eee5] border border-[#dfcfc0] text-[#2b160e] text-[12px] font-bold hover:bg-[#ebe0d4] tactile-clay-subtle"
+                  type="button">
+                  <span class="material-symbols-outlined text-[15px] text-primary">add</span>
+                  <span>Add</span>
                 </button>
-</div>
-</div>
-<!-- Alert 2: Adaptive Difficulty -->
-<div class="p-4 rounded-sm bg-beach-card-alt border-2 border-beach-border flex flex-col justify-between gap-3">
-<div class="flex items-start gap-3">
-<div class="p-2 bg-white border-2 border-marine-slate text-peach-dark shrink-0 pixel-box-sm">
-<span class="material-symbols-outlined text-[20px]">tune</span>
-</div>
-<div class="flex flex-col">
-<div class="flex items-center gap-2">
-<span class="text-[13px] font-space font-bold text-marine-slate">Adaptive Difficulty Shifted to Level 3</span>
-<span class="px-2 py-0.2 font-pixel bg-sand-gold text-white text-[10px] font-bold">AUTOMATIC</span>
-</div>
-<p class="text-[12px] text-marine-muted mt-1 leading-relaxed">
-                    Memory Puzzle shifted from Moderate (Level 4) to Level 3 following 3 consecutive card-flip timeouts during morning session.
-                  </p>
-</div>
-</div>
-<div class="flex items-center justify-end gap-2 pt-1 font-pixel">
-<button class="pixel-btn px-3 py-1.5 rounded-sm bg-white border-2 border-marine-slate text-marine-slate text-[11px] font-bold hover:bg-beach-card-alt" type="button">
-                  View Gameplay Detail
-                </button>
-</div>
-</div>
-</div>
-</div>
-<!-- BENTO TILE 7: Chronological Activity Timeline (lg:col-span-7) -->
-<div class="lg:col-span-7 bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box flex flex-col justify-between">
-<div class="flex items-center justify-between pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-peach-dark text-[20px]">timeline</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Today's Patient Activity Timeline</h3>
-</div>
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[REAL_TIME_FEED]</span>
-</div>
-<!-- Timeline Vertical Flow -->
-<div class="relative pl-6 space-y-3.5 my-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-1 before:bg-beach-border">
-<!-- 15:45 Family Memory -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-coral-accent border-2 border-white pixel-box-sm"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">15:45</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Family Memory</span>
-<span class="px-2 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">[COMPLETED]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                Reviewed 6 family faces with daughter Sunita. Immediate 100% verbal and touch identification.
               </div>
-</div>
-<!-- 13:00 Hydration Reminder -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-berry-error border-2 border-white"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">13:00</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Hydration Reminder</span>
-<span class="px-2 py-0.2 bg-berry-error text-white text-[10px] font-bold">[MISSED]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                Unopened after 15m chime sequence. Caregiver alert generated.
+              <div class="space-y-2.5 mt-4">
+                <!-- Meds 08:30 -->
+                <div
+                  class="p-3.5 rounded-[18px_12px_16px_14px] bg-[#f5eee5] border border-[#dfcfc0]/60 flex items-start justify-between gap-3 shadow-xs">
+                  <div class="flex items-start gap-2.5">
+                    <span class="material-symbols-outlined text-[#7d8772] text-[20px] mt-0.5">medication</span>
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e]">Blood pressure &amp; heart medicine</span>
+                      <span class="text-[12px] text-[#6e5449]">Scheduled: 08:30 AM • Confirmed 08:34 AM</span>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shrink-0 shadow-xs">Done</span>
+                </div>
+                <!-- Hydration 11:00 -->
+                <div
+                  class="p-3.5 rounded-[14px_18px_12px_16px] bg-[#f5eee5] border border-[#dfcfc0]/60 flex items-start justify-between gap-3 shadow-xs">
+                  <div class="flex items-start gap-2.5">
+                    <span class="material-symbols-outlined text-[#7d8772] text-[20px] mt-0.5">water_drop</span>
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e]">Mid-morning water intake</span>
+                      <span class="text-[12px] text-[#6e5449]">Scheduled: 11:00 AM • Confirmed 11:02 AM</span>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-[#e8ebe2] text-[#3a4430] border border-[#7d8772]/30 text-[11px] font-bold shrink-0 shadow-xs">Done</span>
+                </div>
+                <!-- Hydration 13:00 -->
+                <div
+                  class="p-3.5 rounded-[18px_12px_16px_14px] bg-[#fff5f2] border border-[#ffdad6] flex items-start justify-between gap-3 shadow-xs">
+                  <div class="flex items-start gap-2.5">
+                    <span class="material-symbols-outlined text-error text-[20px] mt-0.5">water_drop</span>
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e]">Post-lunch hydration</span>
+                      <span class="text-[12px] text-error font-medium">Scheduled: 01:00 PM • Timed out 01:15 PM</span>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-error-container text-on-error-container text-[11px] font-bold shrink-0 shadow-xs">Missed</span>
+                </div>
+                <!-- Routine 16:30 -->
+                <div
+                  class="p-3.5 rounded-[16px_18px_14px_16px] bg-[#ebe0d4]/70 border border-[#dfcfc0] flex items-start justify-between gap-3 shadow-xs">
+                  <div class="flex items-start gap-2.5">
+                    <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">park</span>
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e]">Afternoon tea &amp; garden walk</span>
+                      <span class="text-[12px] text-[#6e5449]">04:30 PM • Upcoming in 45 mins</span>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-[#ffede8] text-primary border border-primary/20 text-[11px] font-bold shrink-0 shadow-xs">Upcoming</span>
+                </div>
+                <!-- Meds 20:00 -->
+                <div
+                  class="p-3.5 rounded-[14px_16px_12px_18px] bg-[#f5eee5]/70 border border-[#dfcfc0]/60 flex items-start justify-between gap-3 shadow-xs">
+                  <div class="flex items-start gap-2.5">
+                    <span class="material-symbols-outlined text-[#8b716a] text-[20px] mt-0.5">medication</span>
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e]">Evening medication &amp; dinner</span>
+                      <span class="text-[12px] text-[#6e5449]">08:00 PM • Tablet voice prompt ready</span>
+                    </div>
+                  </div>
+                  <span
+                    class="px-3 py-0.5 rounded-full bg-[#ebe0d4] text-[#703a22] text-[11px] font-bold shrink-0 shadow-xs">Scheduled</span>
+                </div>
               </div>
-</div>
-<!-- 10:28 Memory Puzzle -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-seafoam-teal border-2 border-white"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">10:28</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Memory Puzzle</span>
-<span class="px-2 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">[COMPLETED]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                12 pairs matched in 4m 12s, 82% accuracy rating. Adaptive adjustment triggered for next stage.
+            </div>
+            <!-- BENTO TILE 9: Family Memory Bank Roster Tile -->
+            <div class="terracotta-clay-card blob-card-3 p-7">
+              <div class="flex items-center justify-between pb-3.5 border-b border-[#dfcfc0]/70">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[22px]">photo_library</span>
+                  <h3 class="text-[18px] font-bold text-[#2b160e] font-newsreader tracking-tight">Family Memory Roster
+                  </h3>
+                </div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-[#8b716a]">Active Bank</span>
               </div>
-</div>
-<!-- 10:15 Blink Game -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-seafoam-teal border-2 border-white"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">10:15</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Blink Game</span>
-<span class="px-2 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">[COMPLETED]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                3 rounds sustained. Average latency: 420ms with 94% motor consistency.
+              <div class="space-y-3 mt-4">
+                <!-- Member 1: Sunita -->
+                <div
+                  class="p-3.5 rounded-[20px_14px_18px_16px] bg-[#f5eee5] border border-[#dfcfc0]/60 flex items-center justify-between shadow-xs hover:bg-[#ebe0d4] transition-colors">
+                  <div class="flex items-center gap-3">
+                    <img class="w-11 h-11 rounded-[16px_12px_18px_14px] object-cover ring-2 ring-[#c85a32]/30 shadow-xs"
+                      data-alt="Portrait photo of Sunita"
+                      src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA" />
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e] font-newsreader">Sunita (Daughter)</span>
+                      <span class="text-[11.5px] text-[#6e5449]">Visited Sunday • Lives in Pune</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="text-[14px] font-bold text-[#7d8772] font-mono">100%</span>
+                    <span class="text-[10px] uppercase font-bold text-[#8b716a]">High recall</span>
+                  </div>
+                </div>
+                <!-- Member 2: Ramesh -->
+                <div
+                  class="p-3.5 rounded-[16px_20px_14px_18px] bg-[#f5eee5] border border-[#dfcfc0]/60 flex items-center justify-between shadow-xs hover:bg-[#ebe0d4] transition-colors">
+                  <div class="flex items-center gap-3">
+                    <img class="w-11 h-11 rounded-[14px_18px_12px_16px] object-cover ring-2 ring-[#c85a32]/30 shadow-xs"
+                      data-alt="Portrait photo of Ramesh"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuApuCj5W4K213T76uEtEJ30RmXfUXGVh1SNeYNofyHdZ7kw6gc-AP0sd6imIsia5IiXrUkHrQ5vctCppRnvt4lKMW63HqSIAF0J3ZWqQc6rKa7MXagU7ODh9DpsyrnPVNxM37DXgiGxskqgV-5SykRc2j1V9Z3-jZG4pfWdpKKl9o9nd3MXw2G7AwahmfPL9nWWrx7-WlOylEXS9Wux47qzjDkC5pOefMOYn8Y_C9eYj-fpKoZ6zGgP" />
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e] font-newsreader">Ramesh (Brother)</span>
+                      <span class="text-[11.5px] text-[#6e5449]">Retired engineer, Delhi</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="text-[14px] font-bold text-[#7d8772] font-mono">90%</span>
+                    <span class="text-[10px] uppercase font-bold text-[#8b716a]">High recall</span>
+                  </div>
+                </div>
+                <!-- Member 3: Aarav -->
+                <div
+                  class="p-3.5 rounded-[18px_14px_20px_16px] bg-[#f5eee5] border border-[#dfcfc0]/60 flex items-center justify-between shadow-xs hover:bg-[#ebe0d4] transition-colors">
+                  <div class="flex items-center gap-3">
+                    <img class="w-11 h-11 rounded-[16px_14px_18px_12px] object-cover ring-2 ring-[#c85a32]/30 shadow-xs"
+                      data-alt="Portrait photo of Aarav"
+                      src="https://lh3.googleusercontent.com/aida/AEtjO1XRT2oApyPDhgtaCHlMKxGyysB_a-QY9KCwNfGQMKxkGzUJgw08Euegg0wXeMJsqcZR7kPizgThe5wxganvXbFIDdl43SNk5NXYdOGzgz1OqTbPLRippZOsH_F0avk1sZtZMRQIDOnSfVHKS7ziX2Vl8HNqAX0Mrs9wNPDLQEM-yQR3iqnuNNgDHZHMnQS8xM0hvFadmAmYkJows9kVr4hsiyyAX910F7SZJEHnB5BTP9F-Cv6jxA_W6qA" />
+                    <div class="flex flex-col">
+                      <span class="text-[13.5px] font-bold text-[#2b160e] font-newsreader">Aarav (Grandson)</span>
+                      <span class="text-[11.5px] text-[#6e5449]">College student, plays tennis</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="text-[14px] font-bold text-[#7d8772] font-mono">85%</span>
+                    <span class="text-[10px] uppercase font-bold text-[#8b716a]">Good recall</span>
+                  </div>
+                </div>
               </div>
-</div>
-<!-- 09:10 Medication -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-seafoam-teal border-2 border-white"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">09:10</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Medication</span>
-<span class="px-2 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">[VOICE_CONFIRMED]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                Morning Blood Pressure Medication acknowledged via voice prompt ("Amlodipine taken").
+              <div class="mt-5 pt-3.5 border-t border-[#dfcfc0]/70 flex justify-end">
+                <a class="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-primary hover:underline"
+                  href="#">
+                  <span>Manage Family Memory Bank (8 entries)</span>
+                  <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
               </div>
-</div>
-<!-- 08:30 Device Awoke -->
-<div class="relative flex flex-col gap-1">
-<span class="absolute -left-6 top-1 w-3.5 h-3.5 bg-beach-border-coral border-2 border-white"></span>
-<div class="flex items-center gap-2 font-pixel">
-<span class="text-[12px] font-bold text-marine-slate">08:30</span>
-<span class="px-2 py-0.5 bg-beach-card-alt border border-beach-border text-marine-slate text-[11px] font-bold font-space">Hardware Telemetry</span>
-<span class="px-2 py-0.2 bg-beach-sand border border-beach-border text-marine-muted text-[10px] font-bold">[SYSTEM_EVENT]</span>
-</div>
-<div class="p-2.5 rounded-sm bg-beach-card-alt border border-beach-border text-marine-muted text-[12px] leading-relaxed">
-                Device awoke: Screen unlocked at nightstand dock. Battery status 91%.
-              </div>
-</div>
-</div>
-<div class="pt-3 border-t-2 border-dashed border-beach-border flex justify-end">
-<a class="inline-flex items-center gap-1.5 font-pixel text-[12px] font-bold text-peach-dark hover:text-coral-accent" href="#">
-<span>VIEW_30DAY_LOG</span>
-<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</a>
-</div>
-</div>
-<!-- BENTO RIGHT COLUMN CLUSTER: Reminders + Family Memory (lg:col-span-5) -->
-<div class="lg:col-span-5 flex flex-col gap-5">
-<!-- BENTO TILE 8: Reminders Schedule Checklist -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box">
-<div class="flex items-center justify-between pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-peach-dark text-[20px]">alarm</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Reminders Schedule</h3>
-</div>
-<button class="pixel-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-beach-card-alt border-2 border-marine-slate font-pixel text-[11px] font-bold text-marine-slate hover:bg-peach-light" type="button">
-<span class="material-symbols-outlined text-[14px]">add</span>
-<span>ADD</span>
-</button>
-</div>
-<div class="space-y-2 mt-3 font-pixel">
-<!-- Meds 08:30 -->
-<div class="p-2.5 bg-beach-card-alt border border-beach-border flex items-start justify-between gap-3">
-<div class="flex items-start gap-2.5">
-<span class="material-symbols-outlined text-seafoam-teal text-[18px] mt-0.5">medication</span>
-<div class="flex flex-col">
-<span class="text-[12px] font-bold text-marine-slate font-space">Blood pressure &amp; heart medicine</span>
-<span class="text-[10px] text-marine-muted">08:30 AM • Done at 08:34 AM</span>
-</div>
-</div>
-<span class="px-1.5 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">DONE</span>
-</div>
-<!-- Hydration 11:00 -->
-<div class="p-2.5 bg-beach-card-alt border border-beach-border flex items-start justify-between gap-3">
-<div class="flex items-start gap-2.5">
-<span class="material-symbols-outlined text-seafoam-teal text-[18px] mt-0.5">water_drop</span>
-<div class="flex flex-col">
-<span class="text-[12px] font-bold text-marine-slate font-space">Mid-morning water intake</span>
-<span class="text-[10px] text-marine-muted">11:00 AM • Done at 11:02 AM</span>
-</div>
-</div>
-<span class="px-1.5 py-0.2 bg-seafoam-light text-seafoam-teal border border-seafoam-teal/40 text-[10px] font-bold">DONE</span>
-</div>
-<!-- Hydration 13:00 -->
-<div class="p-2.5 bg-berry-error-bg border border-berry-error/50 flex items-start justify-between gap-3">
-<div class="flex items-start gap-2.5">
-<span class="material-symbols-outlined text-berry-error text-[18px] mt-0.5">water_drop</span>
-<div class="flex flex-col">
-<span class="text-[12px] font-bold text-marine-slate font-space">Post-lunch hydration</span>
-<span class="text-[10px] text-berry-error font-medium">01:00 PM • Timed out 01:15 PM</span>
-</div>
-</div>
-<span class="px-1.5 py-0.2 bg-berry-error text-white text-[10px] font-bold">MISSED</span>
-</div>
-<!-- Routine 16:30 -->
-<div class="p-2.5 bg-beach-card-alt border border-beach-border flex items-start justify-between gap-3">
-<div class="flex items-start gap-2.5">
-<span class="material-symbols-outlined text-coral-accent text-[18px] mt-0.5">beach_access</span>
-<div class="flex flex-col">
-<span class="text-[12px] font-bold text-marine-slate font-space">Afternoon tea &amp; garden walk</span>
-<span class="text-[10px] text-marine-muted">04:30 PM • Due in 45 mins</span>
-</div>
-</div>
-<span class="px-1.5 py-0.2 bg-sand-gold-light text-sand-gold border border-sand-gold/40 text-[10px] font-bold">SOON</span>
-</div>
-<!-- Meds 20:00 -->
-<div class="p-2.5 bg-beach-card-alt border border-beach-border flex items-start justify-between gap-3">
-<div class="flex items-start gap-2.5">
-<span class="material-symbols-outlined text-marine-muted text-[18px] mt-0.5">medication</span>
-<div class="flex flex-col">
-<span class="text-[12px] font-bold text-marine-slate font-space">Evening medication &amp; dinner</span>
-<span class="text-[10px] text-marine-muted">08:00 PM • Voice prompt queued</span>
-</div>
-</div>
-<span class="px-1.5 py-0.2 bg-beach-sand text-marine-muted border border-beach-border text-[10px] font-bold">SCHED</span>
-</div>
-</div>
-</div>
-<!-- BENTO TILE 9: Family Memory Bank Roster Tile -->
-<div class="bg-beach-card border-2 border-beach-border rounded-sm p-5 pixel-box">
-<div class="flex items-center justify-between pb-3 border-b-2 border-beach-border">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-coral-accent text-[20px]">photo_library</span>
-<h3 class="text-[15px] font-space font-bold text-marine-slate uppercase">Family Memory Roster</h3>
-</div>
-<span class="font-pixel text-[10px] font-bold uppercase tracking-wider text-marine-muted">[BANK_8_ACTIVE]</span>
-</div>
-<div class="space-y-2.5 mt-3">
-<!-- Member 1: Sunita -->
-<div class="p-2 bg-beach-card-alt border border-beach-border flex items-center justify-between hover:border-peach-primary transition-colors">
-<div class="flex items-center gap-2.5">
-<img class="w-10 h-10 rounded-sm object-cover border border-marine-slate" data-alt="Portrait photo of Sunita" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaFIQSFZIZMS8p8tBvrwsDjGh_ZKqjIkNn-QQ7q2QqhfR9E_fV3MYWV_ei2i0TDLHrAL5ndMQGv95L-fgEbsnKykLxIeh72zpwKSw_P8bkZ4IEuUaB5_oUgVZN5LTssKYDxLWP2AL3xLRUb-yU2cyP6tugqel4lFnmVhn_cj_7gJ6C83hWBGKfWCl2JxizJLIWuMKDcO-sPyG-E8oRL2uQytJkOIoK1BPLcO_WwUoV7c7AIsevgaL9"/>
-<div class="flex flex-col">
-<span class="text-[13px] font-space font-bold text-marine-slate">Sunita (Daughter)</span>
-<span class="text-[11px] text-marine-muted">Visited Sun • Lives in Pune</span>
-</div>
-</div>
-<div class="flex flex-col items-end font-pixel">
-<span class="text-[12px] font-bold text-seafoam-teal">100%</span>
-<span class="text-[9px] uppercase font-bold text-coral-accent">HIGH RECALL</span>
-</div>
-</div>
-<!-- Member 2: Ramesh -->
-<div class="p-2 bg-beach-card-alt border border-beach-border flex items-center justify-between hover:border-peach-primary transition-colors">
-<div class="flex items-center gap-2.5">
-<img class="w-10 h-10 rounded-sm object-cover border border-marine-slate" data-alt="Portrait photo of Ramesh" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApuCj5W4K213T76uEtEJ30RmXfUXGVh1SNeYNofyHdZ7kw6gc-AP0sd6imIsia5IiXrUkHrQ5vctCppRnvt4lKMW63HqSIAF0J3ZWqQc6rKa7MXagU7ODh9DpsyrnPVNxM37DXgiGxskqgV-5SykRc2j1V9Z3-jZG4pfWdpKKl9o9nd3MXw2G7AwahmfPL9nWWrx7-WlOylEXS9Wux47qzjDkC5pOefMOYn8Y_C9eYj-fpKoZ6zGgP"/>
-<div class="flex flex-col">
-<span class="text-[13px] font-space font-bold text-marine-slate">Ramesh (Brother)</span>
-<span class="text-[11px] text-marine-muted">Retired engineer, Delhi</span>
-</div>
-</div>
-<div class="flex flex-col items-end font-pixel">
-<span class="text-[12px] font-bold text-seafoam-teal">90%</span>
-<span class="text-[9px] uppercase font-bold text-coral-accent">HIGH RECALL</span>
-</div>
-</div>
-<!-- Member 3: Aarav -->
-<div class="p-2 bg-beach-card-alt border border-beach-border flex items-center justify-between hover:border-peach-primary transition-colors">
-<div class="flex items-center gap-2.5">
-<img class="w-10 h-10 rounded-sm object-cover border border-marine-slate" data-alt="Portrait photo of Aarav" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIb40s3r2S_47zlu4PaHewg37hFJbBO7-yytKlVrHPWg7aZNVTCZG4jEVecGXCNgZ1vvh0yMEBtju5i9iLf5NY2U1YP1XOCwUENN-95LRt6lSkv5P12qc4HWMw_UojXSGMie5yDwEGyD7dgCB4bPnZm--MonMKpT1ZaqfTJ2Z7sck6BpsJTTmaz0uMWv9im58mZxF4RHnv-qzkNKZ-P4SHqEuruIKmVDdkJq-sJ-7V5-wxUlDYBBzR"/>
-<div class="flex flex-col">
-<span class="text-[13px] font-space font-bold text-marine-slate">Aarav (Grandson)</span>
-<span class="text-[11px] text-marine-muted">College student, tennis</span>
-</div>
-</div>
-<div class="flex flex-col items-end font-pixel">
-<span class="text-[12px] font-bold text-sand-gold">85%</span>
-<span class="text-[9px] uppercase font-bold text-marine-muted">GOOD RECALL</span>
-</div>
-</div>
-</div>
-<div class="mt-3 pt-3 border-t-2 border-dashed border-beach-border flex justify-end">
-<a class="inline-flex items-center gap-1 font-pixel text-[12px] font-bold text-peach-dark hover:text-coral-accent" href="#">
-<span>MANAGE_ROSTER_(8)</span>
-<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</a>
-</div>
-</div>
-</div>
-</div>
-<!-- End Bento Box Grid -->
-</div>
-</main>
-</div>
-</body></html>
+            </div>
+          </div>
+        </div>
+        <!-- End Bento Box Grid -->
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>
