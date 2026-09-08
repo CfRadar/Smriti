@@ -27,6 +27,14 @@ const seedDatabase = async () => {
       Progress.deleteMany({}),
     ]);
 
+    // Drop legacy username index if left from previous schemas
+    try {
+      await User.collection.dropIndex('username_1');
+      console.log('[Seed] Dropped legacy username_1 index');
+    } catch {
+      // index does not exist, ignore
+    }
+
     const passwordHash = await bcrypt.hash('Password@123', 10);
 
     // 1. Create Core Users
