@@ -46,26 +46,69 @@ class VoiceCommandController {
 
   Future<void> execute(VoiceCommand command) async {
     lastCommand.value = command;
+    debugPrint('[VoiceCommandController] Executing: ${command.intent} (game: ${command.gameName})');
 
     switch (command.intent) {
       case VoiceIntent.openGame:
         final gameName = command.gameName;
         if (gameName != null) {
-          _gameRoutes[_normalizeGameName(gameName)]?.call();
+          final normalized = _normalizeGameName(gameName);
+          final handler = _gameRoutes[normalized];
+          if (handler != null) {
+            handler();
+          } else if (normalized.contains('blink')) {
+            final route = _routeHandlers[VoiceIntent.openBlinkingGame];
+            if (route != null) {
+              route();
+            } else {
+              _gameRoutes['blinking game']?.call();
+            }
+          } else if (normalized.contains('memory') ||
+              normalized.contains('pattern')) {
+            final route = _routeHandlers[VoiceIntent.openMemoryGame];
+            if (route != null) {
+              route();
+            } else {
+              _gameRoutes['pattern memory game']?.call();
+            }
+          } else if (normalized.contains('shanaba') ||
+              normalized.contains('shanba') ||
+              normalized.contains('kang') ||
+              RegExp(r'\bking\b').hasMatch(normalized) ||
+              normalized.contains('slide') ||
+              normalized.contains('tactile')) {
+            final route = _routeHandlers[VoiceIntent.openKingShanabaGame];
+            if (route != null) {
+              route();
+            } else {
+              _gameRoutes['king shanaba']?.call();
+            }
+          }
         }
         break;
       case VoiceIntent.openBlinkingGame:
       case VoiceIntent.openMemoryGame:
+      case VoiceIntent.openKingShanabaGame:
       case VoiceIntent.goHome:
       case VoiceIntent.exitGame:
         if (command.intent == VoiceIntent.exitGame) {
           _routeHandlers[VoiceIntent.exitGame]?.call();
         } else {
-          _routeHandlers[command.intent]?.call();
+          final handler = _routeHandlers[command.intent];
+          if (handler != null) {
+            handler();
+          } else if (command.intent == VoiceIntent.openKingShanabaGame) {
+            _gameRoutes['king shanaba']?.call();
+          } else if (command.intent == VoiceIntent.openBlinkingGame) {
+            _gameRoutes['blinking game']?.call();
+          } else if (command.intent == VoiceIntent.openMemoryGame) {
+            _gameRoutes['pattern memory game']?.call();
+          }
         }
         break;
       case VoiceIntent.pauseGame:
       case VoiceIntent.resumeGame:
+      case VoiceIntent.slideDisc:
       case VoiceIntent.tapNumber:
         if (command.intent == VoiceIntent.tapNumber &&
             command.parameter == null) {

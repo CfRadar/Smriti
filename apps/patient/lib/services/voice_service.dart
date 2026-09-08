@@ -170,8 +170,11 @@ class VoiceService {
         confidence: result.confidence >= 0 ? result.confidence : 0.0,
       );
 
+      debugPrint('[VoiceService] Heard: "$recognizedText" -> ${command.intent} (game: ${command.gameName})');
       await _logCommand(command);
       await VoiceCommandController.instance.execute(command);
+    } catch (e) {
+      debugPrint('[VoiceService] Error handling voice result: $e');
     } finally {
       _processing = false;
       if (!_disposed) {
