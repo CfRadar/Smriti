@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
+import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
 import 'models/voice_command.dart';
 import 'services/voice_service.dart';
@@ -54,17 +55,74 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       VoiceIntent.openMemoryGame,
       () => _openRoute(const PatternMemoryGameScreen()),
     );
-    VoiceCommandController.instance.registerGameRoute(
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.openKingShanabaGame,
+      () => _openRoute(const KingShanabaGameScreen()),
+    );
+    for (final alias in [
       'blinking game',
-      () => _openRoute(const BlinkGameScreen()),
-    );
-    VoiceCommandController.instance.registerGameRoute(
+      'blink game',
+      'blinking',
+      'blink',
+      'blink memory',
+    ]) {
+      VoiceCommandController.instance.registerGameRoute(
+        alias,
+        () => _openRoute(const BlinkGameScreen()),
+      );
+    }
+    for (final alias in [
       'pattern memory game',
-      () => _openRoute(const PatternMemoryGameScreen()),
-    );
+      'pattern memory',
+      'memory game',
+      'memory',
+    ]) {
+      VoiceCommandController.instance.registerGameRoute(
+        alias,
+        () => _openRoute(const PatternMemoryGameScreen()),
+      );
+    }
+    for (final alias in [
+      'king shanaba',
+      'king shanba',
+      'king shan ba',
+      'kang shanaba',
+      'kang shanba',
+      'kang shan ba',
+      'king shanaba game',
+      'king shanba game',
+      'king shan ba game',
+      'kang shanaba game',
+      'kang shanba game',
+      'king',
+      'open king',
+      'kang',
+      'open kang',
+      'shanaba',
+      'shanba',
+      'shan ba',
+      'sliding game',
+      'slide game',
+      'sliding',
+      'tactile game',
+      'manipuri game',
+      'third game',
+      'game 3',
+      'game three',
+    ]) {
+      VoiceCommandController.instance.registerGameRoute(
+        alias,
+        () => _openRoute(const KingShanabaGameScreen()),
+      );
+    }
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.exitGame,
       () {
+        final nav = _navigatorKey.currentState;
+        if (nav != null) {
+          nav.pushNamedAndRemoveUntil('/home', (route) => false);
+          return;
+        }
         final context = _navigatorKey.currentContext;
         if (context == null || !context.mounted) return;
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -73,6 +131,11 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.goHome,
       () {
+        final nav = _navigatorKey.currentState;
+        if (nav != null) {
+          nav.pushNamedAndRemoveUntil('/home', (route) => false);
+          return;
+        }
         final context = _navigatorKey.currentContext;
         if (context == null || !context.mounted) return;
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -81,10 +144,19 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
   }
 
   void _openRoute(Widget page) {
+    final nav = _navigatorKey.currentState;
+    if (nav != null) {
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => page),
+        (route) => route.isFirst,
+      );
+      return;
+    }
     final context = _navigatorKey.currentContext;
     if (context == null || !context.mounted) return;
-    Navigator.of(context).push(
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => page),
+      (route) => route.isFirst,
     );
   }
 
@@ -246,6 +318,12 @@ class GameHubPage extends StatelessWidget {
     );
   }
 
+  void _openKingShanabaGame(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const KingShanabaGameScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -353,8 +431,10 @@ class GameHubPage extends StatelessWidget {
                 ),
                 _gameCard(
                   context,
-                  icon: Icons.record_voice_over_rounded,
-                  title: 'Game 3',
+                  icon: Icons.sports_esports_rounded,
+                  title: 'King Shanaba',
+                  isAvailable: true,
+                  onTap: () => _openKingShanabaGame(context),
                 ),
                 _gameCard(
                   context,
@@ -465,7 +545,7 @@ class LandingPage extends StatelessWidget {
 
   void _openGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BlinkGameScreen()),
+      MaterialPageRoute(builder: (_) => const GameHubPage()),
     );
   }
 

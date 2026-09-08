@@ -32,6 +32,80 @@ class VoiceCommandParser {
       'memory game chalao',
       'pattern memory kholo',
     ],
+    'king shanaba': [
+      'king shanaba',
+      'king shanba',
+      'king shan ba',
+      'king shan aba',
+      'kang shanaba',
+      'kang shanba',
+      'kang shan ba',
+      'king shamba',
+      'king sharma',
+      'king sanba',
+      'king shana',
+      'king',
+      'kang',
+      'king shanaba game',
+      'king shanba game',
+      'king shan ba game',
+      'kang shanaba game',
+      'kang shanba game',
+      'open king',
+      'play king',
+      'start king',
+      'open king shanaba',
+      'open king shanba',
+      'open king shan ba',
+      'open kang shanaba',
+      'open kang shanba',
+      'open kang shan ba',
+      'play king shanaba',
+      'play king shanba',
+      'play king shan ba',
+      'start king shanaba',
+      'start king shanba',
+      'start king shan ba',
+      'shanaba',
+      'shanba',
+      'shan ba',
+      'shan aba',
+      'shanaba game',
+      'shanba game',
+      'kang game',
+      'king game',
+      'sliding game',
+      'slide game',
+      'sliding',
+      'tactile game',
+      'tactile sliding',
+      'manipuri game',
+      'traditional game',
+      'kangshang',
+      'chekphei',
+      'third game',
+      'game 3',
+      'game three',
+      'king shanaba kholo',
+      'king shanba kholo',
+      'king kholo',
+      'kang kholo',
+      'shanaba kholo',
+      'shanba kholo',
+      'king shanaba chalao',
+      'king shanba chalao',
+      'king chalao',
+      'किंग शनबा',
+      'कांग शनबा',
+      'किंग शानबा',
+      'कांग शानबा',
+      'कंग शानबा',
+      'किंग',
+      'कांग',
+      'स्लाइडिंग गेम',
+      'কং শানাবা',
+      'কিং শানাবা',
+    ],
   };
 
   static final Map<String, int> _numberWords = {
@@ -338,6 +412,63 @@ class VoiceCommandParser {
   }
 
   static String? _extractGameName(String normalized) {
+    if (normalized.contains('blink')) {
+      return 'blinking game';
+    }
+    if (normalized.contains('pattern memory') ||
+        (normalized.contains('memory') &&
+            !normalized.contains('shan') &&
+            !normalized.contains('king') &&
+            !normalized.contains('kang'))) {
+      return 'pattern memory game';
+    }
+
+    final compact = normalized.replaceAll(' ', '');
+
+    // Fast-path phonetic and multi-word detection for King Shanaba / Kang Shanba
+    if (compact.contains('shanba') ||
+        compact.contains('shanaba') ||
+        compact.contains('shamba') ||
+        compact.contains('shahnaba') ||
+        compact.contains('sanaba') ||
+        compact.contains('sanba') ||
+        compact.contains('sharma') ||
+        compact.contains('shanna') ||
+        compact.contains('chana') ||
+        compact.contains('kingshan') ||
+        compact.contains('kangshan') ||
+        compact.contains('kingsham') ||
+        compact.contains('kangsham') ||
+        compact.contains('kingsan') ||
+        compact.contains('kangsan') ||
+        compact.contains('sliding') ||
+        compact.contains('manipuri') ||
+        compact.contains('tactile') ||
+        compact.contains('kangshang') ||
+        compact.contains('chekphei') ||
+        compact.contains('शनबा') ||
+        compact.contains('शानबा') ||
+        compact.contains('शानाबा') ||
+        compact.contains('শানা') ||
+        compact.contains('শানবা') ||
+        compact.contains('কংশানাবা') ||
+        compact.contains('কিংশানাবা') ||
+        normalized.contains('shan ba') ||
+        normalized.contains('shan aba') ||
+        normalized.contains('shana ba') ||
+        normalized.contains('shaan ba') ||
+        normalized.contains('sham ba') ||
+        normalized.contains('shan bah') ||
+        normalized.contains('third game') ||
+        normalized.contains('game three') ||
+        normalized.contains('game 3') ||
+        normalized.contains('3rd game') ||
+        normalized.contains('teesra game') ||
+        RegExp(r'\bking\b').hasMatch(normalized) ||
+        RegExp(r'\bkang\b').hasMatch(normalized)) {
+      return 'king shanaba';
+    }
+
     const openWords = [
       'open',
       'start',
@@ -346,6 +477,8 @@ class VoiceCommandParser {
       'i want to play',
       'take me to',
       'go to',
+      'launch',
+      'run',
       'खोलो',
       'शुरू करो',
       'चलाओ',
@@ -360,7 +493,9 @@ class VoiceCommandParser {
     ];
     for (final entry in _gameAliases.entries) {
       for (final alias in entry.value) {
-        final hasGame = normalized == alias || normalized.contains(alias);
+        final hasGame = normalized == alias ||
+            normalized.contains(alias) ||
+            compact.contains(alias.replaceAll(' ', ''));
         if (!hasGame) continue;
         final hasOpenWord = openWords.any((word) => normalized.contains(word));
         if (hasOpenWord || normalized == alias) return entry.key;
@@ -371,9 +506,10 @@ class VoiceCommandParser {
 
   static VoiceIntent? _legacyGameIntent(String normalized, String gameName) {
     if (!RegExp(r'^[a-z0-9\s]+$').hasMatch(normalized)) return null;
-    return gameName == 'blinking game'
-        ? VoiceIntent.openBlinkingGame
-        : VoiceIntent.openMemoryGame;
+    if (gameName == 'blinking game') return VoiceIntent.openBlinkingGame;
+    if (gameName == 'pattern memory game') return VoiceIntent.openMemoryGame;
+    if (gameName == 'king shanaba') return VoiceIntent.openKingShanabaGame;
+    return null;
   }
 
   static bool _matchesNavigation(
