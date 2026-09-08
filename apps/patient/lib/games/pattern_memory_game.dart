@@ -570,7 +570,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     }
   }
 
-  /// Handle trial outcome & silent adaptive difficulty adjustment (no comment banners)
+  /// Handle trial outcome & silent adaptive difficulty adjustment
   void _handleTrialCompletion({required bool isSuccess}) {
     _gameTimer?.cancel();
     final now = DateTime.now();
@@ -636,7 +636,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
     _telemetryService.sendTelemetry(telemetry);
 
-    // Smooth, quiet transition to next trial
+    // Smooth transition to next trial
     final delayMs = isSuccess ? 800 : 1300;
     _gameTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted) return;
@@ -667,7 +667,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     _startCountdown();
   }
 
-  /// Minimal, clean completion dialog without walls of text or complex cards
+  /// Minimal completion dialog
   void _showCompletionDialog() {
     showDialog(
       context: context,
@@ -929,7 +929,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Top status header with trial counter, completed count, and interactive Level Chip
+  /// Top status header
   Widget _buildTopStatusHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -948,7 +948,6 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Trial number and completed count
           Row(
             children: [
               const Icon(Icons.psychology_rounded,
@@ -973,8 +972,6 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
               ),
             ],
           ),
-
-          // Level badge with streak dots
           InkWell(
             onTap: _openDifficultySheet,
             borderRadius: BorderRadius.circular(20),
@@ -1002,7 +999,6 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                     ),
                   ),
                   const SizedBox(width: 5),
-                  // Progress toward level up (needs 2 streak)
                   Row(
                     children: [
                       Icon(
@@ -1031,7 +1027,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Fixed-height visual indicator bar that never causes layout shifts
+  /// Visual indicator bar
   Widget _buildPhaseBar() {
     return SizedBox(
       height: 6,
@@ -1064,7 +1060,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Countdown overlay centered directly above the grid
+  /// Countdown overlay
   Widget _buildCountdownOverlay() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -1114,7 +1110,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Adaptive Matrix Grid (orientation and position stay constant in every phase)
+  /// Adaptive Matrix Grid
   Widget _buildGridArea() {
     final config = _currentConfig;
     final gridSize = config.gridSize;
@@ -1134,7 +1130,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Individual Tile Widget: Solid color fill with NO white dot during memorize phase
+  /// Individual Tile Widget with 3D Card Flip Animation on Recall Tap
   Widget _buildTile(int index, int gridSize) {
     final isTarget = _targetTileIndices.contains(index);
     final isMemorizing = _currentPhase == PatternGamePhase.memorize;
@@ -1142,19 +1138,83 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     final isFeedback = _currentPhase == PatternGamePhase.feedback;
     final isSelected = _selectedTileIndices.contains(index);
     final isWrongTap = _lastWrongTileIndex == index;
+    final double borderRadius = gridSize == 5 ? 10.0 : 14.0;
 
-    // Determine visual state
+    // Target rotation angle (in radians)
+    // Front face (0.0 rad) shows green target / checkmark
+    // Back face (pi rad) shows neutral blank state during recall
+    double targetAngle = 0.0;
+    if (isTarget) {
+      if (isRecall && !isSelected) {
+        targetAngle = pi; // Flipped to back face waiting for user tap
+      } else {
+        targetAngle = 0.0; // Flipped to front face during memorize, feedback, or when correctly tapped
+      }
+    }
+
+    return Semantics(
+      button: isRecall,
+      enabled: isRecall,
+      label: 'Tile ${index + 1}',
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: targetAngle, end: targetAngle),
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOutCubic,
+        builder: (context, angle, child) {
+          final isFrontFacing = angle.abs() % (2 * pi) < (pi / 2) ||
+              angle.abs() % (2 * pi) > (3 * pi / 2);
+
+          return Transform(
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001) // 3D Perspective perspective
+              ..rotateY(angle),
+            alignment: Alignment.center,
+            child: isFrontFacing
+                ? _buildFrontFace(
+                    index: index,
+                    borderRadius: borderRadius,
+                    isMemorizing: isMemorizing,
+                    isTarget: isTarget,
+                    isSelected: isSelected,
+                    isWrongTap: isWrongTap,
+                    isFeedback: isFeedback,
+                    isRecall: isRecall,
+                  )
+                : Transform(
+                    transform: Matrix4.identity()..rotateY(pi), // Mirror correction for back face
+                    alignment: Alignment.center,
+                    child: _buildBackFace(
+                      index: index,
+                      borderRadius: borderRadius,
+                      isRecall: isRecall,
+                    ),
+                  ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Front Face (Target pattern / Success / Error state)
+  Widget _buildFrontFace({
+    required int index,
+    required double borderRadius,
+    required bool isMemorizing,
+    required bool isTarget,
+    required bool isSelected,
+    required bool isWrongTap,
+    required bool isFeedback,
+    required bool isRecall,
+  }) {
     Color tileColor = cardWhite;
     Border border = Border.all(color: borderGrey, width: 2.0);
     Widget? icon;
 
     if (isMemorizing && isTarget) {
-      // Solid filled box with accent border - NO white dot
       tileColor = darkGreen;
       border = Border.all(color: primarySage, width: 3.0);
       icon = null;
     } else if (isSelected && isTarget) {
-      // Correctly selected tile in recall/feedback
       tileColor = successGreen;
       border = Border.all(color: darkGreen, width: 3.0);
       icon = const Icon(
@@ -1163,7 +1223,6 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
         size: 26,
       );
     } else if (isWrongTap) {
-      // Wrong tile tapped
       tileColor = alertSoftRed;
       border = Border.all(color: Colors.red.shade900, width: 3.0);
       icon = const Icon(
@@ -1172,7 +1231,6 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
         size: 26,
       );
     } else if (isFeedback && isTarget && !isSelected) {
-      // Missed pattern tile revealed gently in feedback
       tileColor = cream;
       border = Border.all(color: amberAccent, width: 2.5);
       icon = const Icon(
@@ -1182,53 +1240,70 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       );
     }
 
-    final double borderRadius = gridSize == 5 ? 10.0 : 14.0;
-
-    return Semantics(
-      button: isRecall,
-      enabled: isRecall,
-      label: 'Tile ${index + 1}',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isRecall ? () => _onTileTap(index) : null,
-          borderRadius: BorderRadius.circular(borderRadius),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeInOut,
-            decoration: BoxDecoration(
-              color: tileColor,
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: border,
-              boxShadow: (isMemorizing && isTarget)
-                  ? [
-                      BoxShadow(
-                        color: darkGreen.withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-            ),
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 150),
-                child: icon ?? const SizedBox.shrink(),
-              ),
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isRecall ? () => _onTileTap(index) : null,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Container(
+          decoration: BoxDecoration(
+            color: tileColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: border,
+            boxShadow: (isMemorizing && isTarget)
+                ? [
+                    BoxShadow(
+                      color: darkGreen.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: icon ?? const SizedBox.shrink(),
           ),
         ),
       ),
     );
   }
 
-  /// Footer instruction: clean, functional, without cheering comments
+  /// Back Face (Neutral blank state during recall waiting for tap)
+  Widget _buildBackFace({
+    required int index,
+    required double borderRadius,
+    required bool isRecall,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isRecall ? () => _onTileTap(index) : null,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Container(
+          decoration: BoxDecoration(
+            color: cardWhite,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: borderGrey, width: 2.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Footer instruction
   Widget _buildFooterInstruction() {
     String message;
     IconData iconData;
