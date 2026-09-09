@@ -15,34 +15,40 @@ class VoiceStatusIndicator extends StatelessWidget {
         final data = _statusData(status);
 
         if (compact) {
-          return Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+          return Tooltip(
+            message: '${data.label} (tap to speak)',
+            child: GestureDetector(
+              onTap: () => VoiceService.instance.startListening(),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: data.color,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: data.color.withValues(alpha: 0.38),
-                    blurRadius: 8,
-                    spreadRadius: 2,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: data.color,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: data.color.withValues(alpha: 0.38),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

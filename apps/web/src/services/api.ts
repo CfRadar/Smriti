@@ -21,8 +21,20 @@ async function request(
     });
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || `Request failed: ${response.status}`);
+        let errorMessage = `Request failed: ${response.status}`;
+        try {
+            const errJson = await response.json();
+            errorMessage = errJson.message || errJson.error || errorMessage;
+        } catch {
+            const errText = await response.text().catch(() => "");
+            if (errText) errorMessage = errText;
+        }
+        if (response.status === 401) {
+            // Unauthorized - token might be expired
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+        }
+        throw new Error(errorMessage);
     }
 
     if (response.status === 204) {
@@ -42,6 +54,12 @@ export const api = {
     post: (path: string, data: unknown) =>
         request(path, {
             method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    put: (path: string, data: unknown) =>
+        request(path, {
+            method: "PUT",
             body: JSON.stringify(data),
         }),
 

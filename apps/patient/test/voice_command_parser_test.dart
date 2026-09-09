@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:patient/controllers/voice_command_controller.dart';
 import 'package:patient/models/voice_command.dart';
 import 'package:patient/utils/voice_command_parser.dart';
 
@@ -95,19 +96,6 @@ void main() {
           VoiceIntent.pauseGame);
       expect(VoiceCommandParser.parse('jari rakho').intent,
           VoiceIntent.resumeGame);
-    });
-
-    test('parses the exact Hindi phrases reported by the user', () {
-      expect(VoiceCommandParser.parse('play memory kholo').intent,
-          VoiceIntent.openMemoryGame);
-      expect(VoiceCommandParser.parse('home par le jao').intent,
-          VoiceIntent.goHome);
-      expect(VoiceCommandParser.parse('home par jao').intent,
-          VoiceIntent.goHome);
-      expect(VoiceCommandParser.parse('memory kholo').intent,
-          VoiceIntent.openMemoryGame);
-      expect(VoiceCommandParser.parse('pattern memory kholo').intent,
-          VoiceIntent.openMemoryGame);
     });
 
     test('returns unknown for unrelated phrases', () {

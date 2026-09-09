@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.get('/patient/:patientId', progressController.getPatientProgress);
+router.get(['/patient/:patientId', '/:patientId'], progressController.getPatientProgress);
 router.post('/', progressController.recordProgress);
 
 export default router;

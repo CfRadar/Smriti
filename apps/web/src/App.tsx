@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/auth/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 import CaregiverLayout from "./layouts/caregiverLayout";
 import DashboardOverview from "./pages/caregiver/DashboardOverview";
 import RemindersPage from "./pages/caregiver/RemindersPage";
@@ -10,15 +12,18 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing Page */}
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
-        {/* Caregiver Portal */}
-        <Route path="/caregiver" element={<CaregiverLayout />}>
-          <Route index element={<DashboardOverview />} />
-          <Route path="reminders" element={<RemindersPage />} />
-          <Route path="memories" element={<MemoriesPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
+        {/* Protected Caregiver Portal */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/caregiver" element={<CaregiverLayout />}>
+            <Route index element={<DashboardOverview />} />
+            <Route path="reminders" element={<RemindersPage />} />
+            <Route path="memories" element={<MemoriesPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+          </Route>
         </Route>
 
         {/* Fallback */}
