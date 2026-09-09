@@ -337,6 +337,8 @@ class GameHubPage extends StatefulWidget {
   const GameHubPage({super.key});
 
   static const Color ivory = Color(0xFFF8F5EC);
+  static const Color screenBg = Color(0xFFF0F4F8); // Harmonious cool sky-mist tint matching nav bar
+  static const Color softPeach = Color(0xFFFDF0E7);
   static const Color darkGreen = Color(0xFF214E3B);
   static const Color green = Color(0xFF5F866D);
   static const Color lightGreen = Color(0xFFDCE8DA);
@@ -350,6 +352,7 @@ class GameHubPage extends StatefulWidget {
 class _GameHubPageState extends State<GameHubPage> {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
+  final bool _showRoutineSection = false;
 
   @override
   void initState() {
@@ -487,14 +490,15 @@ class _GameHubPageState extends State<GameHubPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GameHubPage.ivory,
+      backgroundColor: GameHubPage.screenBg,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHeader()),
-            SliverToBoxAdapter(child: _buildRemindersSection()),
+            if (_showRoutineSection)
+              SliverToBoxAdapter(child: _buildRemindersSection()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 28, 22, 40),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
               sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
             ),
           ],
@@ -913,66 +917,123 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
+  void _showComingSoon(BuildContext context, String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title is coming soon!'),
+        backgroundColor: GameHubPage.darkGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Widget _buildGamesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Choose an activity',
-          style: TextStyle(
-            color: GameHubPage.darkGreen,
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Choose an activity',
+              style: TextStyle(
+                color: Color(0xFF1E3A5F),
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2EAF2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
+                  SizedBox(width: 4),
+                  Text(
+                    '6 Games',
+                    style: TextStyle(
+                      color: Color(0xFF1E3A5F),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 7),
-        const Text(
-          'Small exercises for memory and attention.',
-          style: TextStyle(color: GameHubPage.textGrey, fontSize: 15),
-        ),
-        const SizedBox(height: 20),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 650 ? 3 : 2;
-            return GridView.count(
-              crossAxisCount: columns,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: columns == 2 ? .84 : 1.05,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _gameCard(
-                  context,
-                  icon: Icons.grid_3x3_rounded,
-                  title: 'Blink Memory',
-                  isAvailable: true,
-                  onTap: () => _openBlinkGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.grid_view_rounded,
-                  title: 'Pattern Memory',
-                  isAvailable: true,
-                  onTap: () => _openPatternGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.sports_esports_rounded,
-                  title: 'King Shanaba',
-                  isAvailable: true,
-                  onTap: () => _openKingShanabaGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.park_rounded,
-                  title: 'Bamboo Dance',
-                  isAvailable: true,
-                  onTap: () => _openBambooDanceGame(context),
-                ),
-              ],
-            );
-          },
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 11,
+          mainAxisSpacing: 11,
+          childAspectRatio: 1.05,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _gameCard(
+              context,
+              icon: Icons.visibility_rounded,
+              title: 'Blink Memory',
+              gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
+              iconColor: const Color(0xFFE65100),
+              isAvailable: true,
+              onTap: () => _openBlinkGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.grid_view_rounded,
+              title: 'Pattern Memory',
+              gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
+              iconColor: const Color(0xFF4A148C),
+              isAvailable: true,
+              onTap: () => _openPatternGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.sports_esports_rounded,
+              title: 'King Shanaba',
+              gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
+              iconColor: const Color(0xFF1B5E20),
+              isAvailable: true,
+              onTap: () => _openKingShanabaGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.music_note_rounded,
+              title: 'Bamboo Dance',
+              gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
+              iconColor: const Color(0xFFB71C1C),
+              isAvailable: true,
+              onTap: () => _openBambooDanceGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.auto_stories_rounded,
+              title: 'Story Recall',
+              gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
+              iconColor: const Color(0xFF0D47A1),
+              isAvailable: false,
+              onTap: () => _showComingSoon(context, 'Story Recall'),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.spa_rounded,
+              title: 'Mindful Breath',
+              gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
+              iconColor: const Color(0xFF880E4F),
+              isAvailable: false,
+              onTap: () => _showComingSoon(context, 'Mindful Breath'),
+            ),
+          ],
         ),
       ],
     );
@@ -982,54 +1043,145 @@ class _GameHubPageState extends State<GameHubPage> {
     BuildContext context, {
     required IconData icon,
     required String title,
+    required List<Color> gradientColors,
+    required Color iconColor,
     bool isAvailable = false,
     VoidCallback? onTap,
   }) {
     return Semantics(
-      button: isAvailable,
-      enabled: isAvailable,
-      label: isAvailable ? '$title. Start game.' : '$title. Coming soon.',
+      button: true,
+      enabled: true,
+      label: isAvailable ? '$title. Play game.' : '$title. Coming soon.',
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Container(
           decoration: BoxDecoration(
-            color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE5E1D7),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE3DED1),
-              width: 1.5,
+              color: const Color(0xFF8298AB), // Soft medium slate-blue grey
+              width: 4.0, // Substantial wide border
             ),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Icon(
-                  icon,
-                  color: isAvailable
-                      ? GameHubPage.darkGreen.withValues(alpha: .24)
-                      : GameHubPage.textGrey.withValues(alpha: .22),
-                  size: 92,
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF64748B).withValues(alpha: 0.14),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  color: Colors.white.withValues(alpha: .78),
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isAvailable ? GameHubPage.darkGreen : GameHubPage.textGrey,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(19.2),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Playful Gradient Background
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: gradientColors,
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                // Playful Center Icon in white circular glass badge
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        icon,
+                        color: iconColor,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Soon Tag for upcoming games
+                if (!isAvailable)
+                  Positioned(
+                    top: 7,
+                    right: 7,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.40),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.schedule_rounded, color: Colors.white, size: 9),
+                          SizedBox(width: 3),
+                          Text(
+                            'Soon',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Translucent black overlay at bottom with large white curved font
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6.5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.54),
+                    ),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
+                        fontFamilyFallback: [
+                          'sans-serif-rounded',
+                          'Comfortaa',
+                          'Sniglet',
+                          'Comic Sans MS',
+                          'Chalkboard SE',
+                          'Fredoka One',
+                          'cursive',
+                        ],
+                        shadows: [
+                          Shadow(
+                            color: Colors.black87,
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
