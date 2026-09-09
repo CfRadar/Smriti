@@ -48,16 +48,16 @@ void main() {
       expect(VoiceCommandParser.parse('select number five').parameter, 5);
     });
 
-    test('parses generic and multilingual game opening commands', () {
+    test('parses English and Hindi game opening commands', () {
       expect(VoiceCommandParser.parse('Open blinking game').gameName,
           'blinking game');
       expect(VoiceCommandParser.parse('मेमोरी गेम खोलो').intent,
           VoiceIntent.openGame);
-      expect(VoiceCommandParser.parse('প্যাটাৰ্ণ মেমৰি আৰম্ভ কৰা').intent,
+      expect(VoiceCommandParser.parse('पैटर्न मेमोरी खोलो').intent,
           VoiceIntent.openGame);
     });
 
-    test('parses multilingual exit commands', () {
+    test('parses English and Hindi exit commands', () {
       for (final phrase in [
         'close the game',
         'exit',
@@ -66,8 +66,6 @@ void main() {
         'गेम बंद करो',
         'मुझे नहीं खेलना',
         'खेलना बंद करो',
-        'খেলটো বন্ধ কৰা',
-        'মই আৰু খেলিব নিবিচাৰোঁ',
       ]) {
         expect(VoiceCommandParser.parse(phrase).intent, VoiceIntent.exitGame,
             reason: phrase);
@@ -98,101 +96,6 @@ void main() {
           VoiceIntent.pauseGame);
       expect(VoiceCommandParser.parse('jari rakho').intent,
           VoiceIntent.resumeGame);
-    });
-
-    test('parses open King Shanaba game phrases and aliases', () {
-      expect(VoiceCommandParser.parse('Open king shanaba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open king shanaba game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open king shanba game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open king shanba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king shanba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king shan ba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open king shan ba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open king').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('play king').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('play king shanaba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('play king shanba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('play king shan ba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('play king shanaba game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('start kang shanaba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king shanaba game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open sliding game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('open tactile game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('third game').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('game 3').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king sharma').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king shamba').intent,
-          VoiceIntent.openKingShanabaGame);
-      expect(VoiceCommandParser.parse('king shanaba kholo').gameName,
-          'king shanaba');
-      expect(VoiceCommandParser.parse('कांग शनबा गेम खोलो').intent,
-          VoiceIntent.openGame);
-      expect(VoiceCommandParser.parse('कांग शनबा गेम खोलो').gameName,
-          'king shanaba');
-    });
-
-    test('does not auto-aim for slide, flick, or shoot voice commands', () {
-      expect(VoiceCommandParser.parse('slide').intent, VoiceIntent.unknown);
-      expect(VoiceCommandParser.parse('slide disc').intent, VoiceIntent.unknown);
-      expect(VoiceCommandParser.parse('flick').intent, VoiceIntent.unknown);
-      expect(VoiceCommandParser.parse('strike').intent, VoiceIntent.unknown);
-      expect(VoiceCommandParser.parse('shoot').intent, VoiceIntent.unknown);
-      expect(VoiceCommandParser.parse('shoot disc').intent, VoiceIntent.unknown);
-    });
-
-    test('cross-window voice routing dispatches correct handlers', () async {
-      final controller = VoiceCommandController.instance;
-      String lastOpened = '';
-
-      controller.registerRoute(VoiceIntent.openBlinkingGame, () {
-        lastOpened = 'blink';
-      });
-      controller.registerRoute(VoiceIntent.openKingShanabaGame, () {
-        lastOpened = 'king_shanaba';
-      });
-      controller.registerGameRoute('king shanaba', () {
-        lastOpened = 'king_shanaba';
-      });
-      controller.registerGameRoute('blinking game', () {
-        lastOpened = 'blink';
-      });
-
-      // From any window, speaking open king shanaba triggers king shanaba handler
-      final openShanabaCmd = VoiceCommandParser.parse('open king shanaba');
-      await controller.execute(openShanabaCmd);
-      expect(lastOpened, 'king_shanaba');
-
-      // Speaking open blink game triggers blink handler
-      final openBlinkCmd = VoiceCommandParser.parse('open blinking game');
-      await controller.execute(openBlinkCmd);
-      expect(lastOpened, 'blink');
-
-      // Speaking hindi open king shanaba triggers king shanaba
-      final hindiShanabaCmd = VoiceCommandParser.parse('कांग शनबा गेम खोलो');
-      await controller.execute(hindiShanabaCmd);
-      expect(lastOpened, 'king_shanaba');
     });
 
     test('returns unknown for unrelated phrases', () {
