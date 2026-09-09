@@ -9,7 +9,7 @@ import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
 import 'services/reminder_service.dart';
 import 'services/voice_service.dart';
-import 'widgets/voice_status_indicator.dart';
+import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -503,48 +503,207 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Row(
-        children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: GameHubPage.darkGreen,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.psychology_alt_rounded,
-                color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'SMRITI',
-              style: TextStyle(
-                color: GameHubPage.darkGreen,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
+  void _openAccessibilitySettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const VoiceStatusIndicator(compact: true),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Accessibility settings',
-            onPressed: () {},
-            style: IconButton.styleFrom(
-              backgroundColor: GameHubPage.lightGreen,
-              fixedSize: const Size(44, 44),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F1F5),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Settings / পছন্দসমূহ',
+                      style: TextStyle(
+                        color: GameHubPage.darkGreen,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Accessibility & Voice preferences',
+                      style: TextStyle(color: GameHubPage.textGrey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            icon: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 23),
+            const SizedBox(height: 20),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
+              title: const Text('Voice Assistant (কণ্ঠ সহায়ক)'),
+              subtitle: const Text('Tap the wave button on top-right to speak commands.'),
+              trailing: ValueListenableBuilder<VoiceStatus>(
+                valueListenable: VoiceService.instance.statusNotifier,
+                builder: (context, status, _) {
+                  final active = status == VoiceStatus.listening || status == VoiceStatus.processing;
+                  return Chip(
+                    label: Text(
+                      active ? 'Active' : 'Idle',
+                      style: TextStyle(
+                        color: active ? Colors.green.shade800 : Colors.grey.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                    backgroundColor: active ? Colors.green.shade50 : Colors.grey.shade100,
+                  );
+                },
+              ),
+            ),
+            const Divider(),
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.volume_up_rounded, color: GameHubPage.green),
+              title: Text('Routine Reminders (ৰুটিন সোঁৱৰণী)'),
+              subtitle: Text('Spoken in Assamese and English.'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2F8), // Very light blue shade
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Settings option on left
+          _buildSettingsButton(),
+
+          // Smiti / Smriti written in between with Peach and pink color underline separated from between
+          _buildTitleWithUnderline(),
+
+          // Voice option on right with continuous listening animation waves / greyscaled when not
+          const VoiceWaveButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton() {
+    return Semantics(
+      button: true,
+      label: 'Accessibility and settings',
+      child: Tooltip(
+        message: 'Settings',
+        child: InkWell(
+          onTap: () => _openAccessibilitySettings(context),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFCFE0ED),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.tune_rounded,
+              color: GameHubPage.darkGreen,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleWithUnderline() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Smriti',
+          style: TextStyle(
+            color: GameHubPage.darkGreen,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Peach underline segment
+            Container(
+              width: 22,
+              height: 3.5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFAB91), // Peach
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 6), // Separated from between
+            // Pink underline segment
+            Container(
+              width: 22,
+              height: 3.5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF48FB1), // Pink
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -814,31 +973,6 @@ class _GameHubPageState extends State<GameHubPage> {
               ],
             );
           },
-        ),
-        const SizedBox(height: 25),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: GameHubPage.cream,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.favorite_rounded, color: GameHubPage.green, size: 25),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'There is no rush. Go at your own pace.',
-                  style: TextStyle(
-                    color: GameHubPage.darkGreen,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );
