@@ -1,7 +1,7 @@
 // apps/patient/lib/games/bamboo_dance_game.dart
 //
 // Smriti Dementia-Care Platform - Cognitive & Motor Stimulation Module
-// Traditional Assam Bamboo Dance: "Bamboo Dance" (Cheraw / বাঁহ নৃত্য)
+// Traditional Assam Bamboo Dance: "Bamboo Dance"
 //
 // Features:
 // 1. Top-down 2D bamboo court with 3 horizontal and 3 vertical poles intersecting
@@ -197,7 +197,7 @@ class BambooDanceTelemetryService {
 class BambooStageConfig {
   final int stageNumber;
   final String name;
-  final String assameseName;
+  final String subtitle;
   final int bpm;
   final int timingWindowMs;
   final List<DanceDirection> availableDirections;
@@ -207,7 +207,7 @@ class BambooStageConfig {
   const BambooStageConfig({
     required this.stageNumber,
     required this.name,
-    required this.assameseName,
+    required this.subtitle,
     required this.bpm,
     required this.timingWindowMs,
     required this.availableDirections,
@@ -220,7 +220,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 1,
       name: 'Familiarisation',
-      assameseName: 'সহজ আৰম্ভণি',
+      subtitle: 'Gentle Start',
       bpm: 38,
       timingWindowMs: 3400,
       availableDirections: [DanceDirection.up],
@@ -230,7 +230,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 2,
       name: 'Gentle Alternation',
-      assameseName: 'বাওঁ-সোঁ সালসলনি',
+      subtitle: 'Left-Right Shifts',
       bpm: 40,
       timingWindowMs: 3000,
       availableDirections: [DanceDirection.left, DanceDirection.right],
@@ -240,7 +240,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 3,
       name: 'Four Directions',
-      assameseName: 'চাৰি দিশৰ নৃত্য',
+      subtitle: 'All Directions',
       bpm: 42,
       timingWindowMs: 2700,
       availableDirections: [
@@ -255,7 +255,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 4,
       name: 'Rhythm Pattern',
-      assameseName: 'ছন্দোময় গতি',
+      subtitle: 'Rhythmic Tempo',
       bpm: 44,
       timingWindowMs: 2500,
       availableDirections: [
@@ -270,7 +270,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 5,
       name: 'Pattern Memory',
-      assameseName: 'স্মৃতি আৰু ছন্দ',
+      subtitle: 'Memory & Rhythm',
       bpm: 44,
       timingWindowMs: 2600,
       availableDirections: [
@@ -286,7 +286,7 @@ class BambooStageConfig {
     BambooStageConfig(
       stageNumber: 6,
       name: 'Cheraw Harmony',
-      assameseName: 'আনন্দময় বাঁহ নৃত্য',
+      subtitle: 'Harmonious Flow',
       bpm: 46,
       timingWindowMs: 2400,
       availableDirections: [
@@ -1111,7 +1111,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Bamboo Dance (বাঁহ নৃত্য)',
+                  'Bamboo Dance',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -1121,7 +1121,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   ),
                 ),
                 Text(
-                  '${stageConfig.name} • ${stageConfig.assameseName}',
+                  '${stageConfig.name} • ${stageConfig.subtitle}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -1259,8 +1259,8 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                     Flexible(
                       child: Text(
                         _engine.isAlternateNotes
-                            ? 'সহজ ছন্দ • Relaxed'
-                            : 'নিৰন্তৰ নৃত্য • Flow',
+                            ? 'Relaxed'
+                            : 'Flow',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1364,7 +1364,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Text(
-                  '🌸 অভিনন্দন • CONGRATULATIONS 🌸',
+                  '🌸 CONGRATULATIONS 🌸',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -1375,7 +1375,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                '${widget.totalTargetTrials} টা খোজ সম্পন্ন হ\'ল!',
+                '${widget.totalTargetTrials} Dance Steps Completed!',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: darkGreen,
@@ -1383,21 +1383,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${widget.totalTargetTrials} Dance Steps Completed!',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: green,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
               const SizedBox(height: 10),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
-                  'আপুনি বৰ সুন্দৰকৈ নাচিলে। আপোনাৰ মন আৰু স্বাস্থ্যৰ বাবে বৰ উপকাৰী।\n(You danced beautifully! Great for rhythm & memory.)',
+                  'You danced beautifully! Great for rhythm & memory.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: textGrey,
@@ -1490,12 +1480,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                       ),
                       icon: const Icon(Icons.replay_rounded, size: 20),
                       label: const Text(
-                        'পুনৰ খেলক\nPlay Again',
+                        'Play Again',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          height: 1.1,
                         ),
                       ),
                       onPressed: _restartGameSession,
@@ -1514,12 +1503,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                       ),
                       icon: const Icon(Icons.home_rounded, size: 20),
                       label: const Text(
-                        'ঘৰলৈ যাওক\nHome',
+                        'Home',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          height: 1.1,
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),

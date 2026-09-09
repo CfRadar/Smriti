@@ -397,7 +397,7 @@ class _GameHubPageState extends State<GameHubPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('বঢ়িয়া! (Well done!) ${reminder.title} marked completed.'),
+          content: Text('Well done! ${reminder.title} marked completed.'),
           backgroundColor: GameHubPage.darkGreen,
           duration: const Duration(seconds: 2),
         ),
@@ -407,7 +407,7 @@ class _GameHubPageState extends State<GameHubPage> {
 
   void _speakReminder(PatientReminder reminder) {
     final promptText = reminder.voicePromptText ??
-        'দেউতা, এয়া আপোনাৰ ${reminder.title} সময় হ\'ল। (Time for your ${reminder.title})';
+        'Time for your ${reminder.title}.';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -447,7 +447,7 @@ class _GameHubPageState extends State<GameHubPage> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text(
-              'Close / বন্ধ কৰক',
+              'Close',
               style: TextStyle(
                 color: GameHubPage.green,
                 fontSize: 16,
@@ -543,7 +543,7 @@ class _GameHubPageState extends State<GameHubPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Settings / পছন্দসমূহ',
+                      'Settings',
                       style: TextStyle(
                         color: GameHubPage.darkGreen,
                         fontSize: 20,
@@ -562,7 +562,7 @@ class _GameHubPageState extends State<GameHubPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
-              title: const Text('Voice Assistant (কণ্ঠ সহায়ক)'),
+              title: const Text('Voice Assistant'),
               subtitle: const Text('Tap the wave button on top-right to speak commands.'),
               trailing: ValueListenableBuilder<VoiceStatus>(
                 valueListenable: VoiceService.instance.statusNotifier,
@@ -586,8 +586,8 @@ class _GameHubPageState extends State<GameHubPage> {
             const ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.volume_up_rounded, color: GameHubPage.green),
-              title: Text('Routine Reminders (ৰুটিন সোঁৱৰণী)'),
-              subtitle: Text('Spoken in Assamese and English.'),
+              title: Text('Routine Reminders'),
+              subtitle: Text('Spoken audio reminders.'),
             ),
           ],
         ),
@@ -720,7 +720,7 @@ class _GameHubPageState extends State<GameHubPage> {
             children: [
               const Expanded(
                 child: Text(
-                  'Today\'s Routine (দৈনিক দিনচৰ্যা)',
+                  'Today\'s Routine',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -760,7 +760,7 @@ class _GameHubPageState extends State<GameHubPage> {
                   SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'No routine tasks right now. Relax and enjoy your day! (কোনো বাকী কাম নাই)',
+                      'No routine tasks right now. Relax and enjoy your day!',
                       style: TextStyle(
                         color: GameHubPage.darkGreen,
                         fontSize: 15,
@@ -898,7 +898,7 @@ class _GameHubPageState extends State<GameHubPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isCompleted ? 'Done' : 'Done / কৰা হ\'ল',
+                  isCompleted ? 'Done' : 'Done',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
