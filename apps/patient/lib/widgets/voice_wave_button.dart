@@ -54,8 +54,12 @@ class _VoiceWaveButtonState extends State<VoiceWaveButton>
   }
 
   Future<void> _handleTap(bool isListening) async {
+    if (!VoiceService.instance.isEnabled) {
+      await VoiceService.instance.setEnabled(true);
+      return;
+    }
     if (isListening) {
-      await VoiceService.instance.stopListening();
+      await VoiceService.instance.setEnabled(false);
     } else {
       await VoiceService.instance.startListening();
     }
@@ -68,16 +72,22 @@ class _VoiceWaveButtonState extends State<VoiceWaveButton>
       builder: (context, status, _) {
         final isListening =
             status == VoiceStatus.listening || status == VoiceStatus.processing;
+        final isDisabled =
+            !VoiceService.instance.isEnabled || status == VoiceStatus.disabled;
 
         return Semantics(
           button: true,
-          label: isListening
-              ? 'Voice listening active. Tap to pause.'
-              : 'Voice idle. Tap to start listening.',
+          label: isDisabled
+              ? 'Voice Assistant deactivated. Tap to activate.'
+              : (isListening
+                  ? 'Voice listening active. Tap to deactivate.'
+                  : 'Voice idle. Tap to speak.'),
           child: Tooltip(
-            message: isListening
-                ? 'Listening... (Tap to pause)'
-                : 'Voice idle (Tap to speak)',
+            message: isDisabled
+                ? 'Voice deactivated (Tap to activate)'
+                : (isListening
+                    ? 'Listening... (Tap to deactivate)'
+                    : 'Voice idle (Tap to speak)'),
             child: InkWell(
               onTap: () => _handleTap(isListening),
               borderRadius: BorderRadius.circular(14),
@@ -88,12 +98,16 @@ class _VoiceWaveButtonState extends State<VoiceWaveButton>
                 decoration: BoxDecoration(
                   color: isListening
                       ? const Color(0xFFE0F2FE)
-                      : const Color(0xFFE2E8F0),
+                      : (isDisabled
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFFE2E8F0)),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isListening
                         ? const Color(0xFF38BDF8)
-                        : const Color(0xFFCBD5E1),
+                        : (isDisabled
+                            ? const Color(0xFFE2E8F0)
+                            : const Color(0xFFCBD5E1)),
                     width: 1.5,
                   ),
                   boxShadow: isListening
@@ -132,10 +146,12 @@ class _VoiceWaveButtonState extends State<VoiceWaveButton>
                           },
                         ),
                       Icon(
-                        isListening ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        isListening
+                            ? Icons.mic_rounded
+                            : (isDisabled ? Icons.mic_off_rounded : Icons.mic_none_rounded),
                         color: isListening
                             ? Colors.white
-                            : const Color(0xFF94A3B8),
+                            : (isDisabled ? const Color(0xFFCBD5E1) : const Color(0xFF94A3B8)),
                         size: 22,
                         shadows: isListening
                             ? const [
