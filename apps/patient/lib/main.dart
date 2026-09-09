@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
+import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
 import 'models/reminder_model.dart';
@@ -116,6 +117,39 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       VoiceCommandController.instance.registerGameRoute(
         alias,
         () => _openRoute(const KingShanabaGameScreen()),
+      );
+    }
+    VoiceCommandController.instance.registerRoute(
+      VoiceIntent.openBambooDanceGame,
+      () => _openRoute(const BambooDanceGameScreen()),
+    );
+    for (final alias in [
+      'bamboo dance',
+      'bamboo dance game',
+      'bamboo game',
+      'bamboo',
+      'dance game',
+      'dance',
+      'cheraw',
+      'cheraw dance',
+      'assam dance',
+      'assamese dance',
+      'বাঁহ নৃত্য',
+      'বাঁহনৃত্য',
+      'বাঁহ খেল',
+      'বাঁহৰ নৃত্য',
+      'बांस नृत्य',
+      'बैम्बू डांस',
+      'बैंबू डांस',
+      'डांस गेम',
+      'चौथा गेम',
+      'fourth game',
+      'game 4',
+      'game four',
+    ]) {
+      VoiceCommandController.instance.registerGameRoute(
+        alias,
+        () => _openRoute(const BambooDanceGameScreen()),
       );
     }
     VoiceCommandController.instance.registerRoute(
@@ -444,6 +478,12 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
+  void _openBambooDanceGame(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const BambooDanceGameScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -465,42 +505,43 @@ class _GameHubPageState extends State<GameHubPage> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Row(
         children: [
           Container(
-            height: 48,
-            width: 48,
+            height: 44,
+            width: 44,
             decoration: BoxDecoration(
               color: GameHubPage.darkGreen,
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(Icons.psychology_alt_rounded,
-                color: Colors.white, size: 27),
+                color: Colors.white, size: 26),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            'SMRITI',
-            style: TextStyle(
-              color: GameHubPage.darkGreen,
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2.5,
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'SMRITI',
+              style: TextStyle(
+                color: GameHubPage.darkGreen,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
             ),
           ),
-          const Spacer(),
           const VoiceStatusIndicator(compact: true),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Accessibility settings',
             onPressed: () {},
             style: IconButton.styleFrom(
               backgroundColor: GameHubPage.lightGreen,
-              fixedSize: const Size(48, 48),
+              fixedSize: const Size(44, 44),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            icon: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 25),
+            icon: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 23),
           ),
         ],
       ),
@@ -518,15 +559,18 @@ class _GameHubPageState extends State<GameHubPage> {
         children: [
           Row(
             children: [
-              const Text(
-                'Today\'s Routine (দৈনিক দিনচৰ্যা)',
-                style: TextStyle(
-                  color: GameHubPage.darkGreen,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+              const Expanded(
+                child: Text(
+                  'Today\'s Routine (দৈনিক দিনচৰ্যা)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: GameHubPage.darkGreen,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded, color: GameHubPage.green),
                 tooltip: 'Refresh routine',
@@ -616,7 +660,7 @@ class _GameHubPageState extends State<GameHubPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isCompleted ? GameHubPage.lightGreen.withOpacity(0.5) : GameHubPage.lightGreen,
+              color: isCompleted ? GameHubPage.lightGreen.withValues(alpha: 0.5) : GameHubPage.lightGreen,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -762,8 +806,10 @@ class _GameHubPageState extends State<GameHubPage> {
                 ),
                 _gameCard(
                   context,
-                  icon: Icons.palette_rounded,
-                  title: 'Game 4',
+                  icon: Icons.park_rounded,
+                  title: 'Bamboo Dance',
+                  isAvailable: true,
+                  onTap: () => _openBambooDanceGame(context),
                 ),
               ],
             );

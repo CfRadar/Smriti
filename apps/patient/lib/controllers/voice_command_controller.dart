@@ -83,12 +83,22 @@ class VoiceCommandController {
             } else {
               _gameRoutes['king shanaba']?.call();
             }
+          } else if (normalized.contains('bamboo') ||
+              normalized.contains('dance') ||
+              normalized.contains('cheraw')) {
+            final route = _routeHandlers[VoiceIntent.openBambooDanceGame];
+            if (route != null) {
+              route();
+            } else {
+              _gameRoutes['bamboo dance']?.call();
+            }
           }
         }
         break;
       case VoiceIntent.openBlinkingGame:
       case VoiceIntent.openMemoryGame:
       case VoiceIntent.openKingShanabaGame:
+      case VoiceIntent.openBambooDanceGame:
       case VoiceIntent.goHome:
       case VoiceIntent.exitGame:
         if (command.intent == VoiceIntent.exitGame) {
@@ -97,6 +107,8 @@ class VoiceCommandController {
           final handler = _routeHandlers[command.intent];
           if (handler != null) {
             handler();
+          } else if (command.intent == VoiceIntent.openBambooDanceGame) {
+            _gameRoutes['bamboo dance']?.call();
           } else if (command.intent == VoiceIntent.openKingShanabaGame) {
             _gameRoutes['king shanaba']?.call();
           } else if (command.intent == VoiceIntent.openBlinkingGame) {
