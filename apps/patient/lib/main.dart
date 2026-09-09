@@ -9,6 +9,8 @@ import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
 import 'services/reminder_service.dart';
 import 'services/voice_service.dart';
+import 'widgets/animated_fragmented_divider.dart';
+import 'widgets/animated_star_badge.dart';
 import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
@@ -353,6 +355,19 @@ class _GameHubPageState extends State<GameHubPage> {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
   final bool _showRoutineSection = false;
+  bool _reminderExpanded = true;
+  int _currentReminderIndex = 0;
+  final GlobalKey _tickKey = GlobalKey();
+
+  static final PatientReminder _dummyReminder = PatientReminder(
+    id: '__dummy_water__',
+    title: 'Drink Water',
+    description: 'Stay hydrated — have a glass of water!',
+    type: 'hydration',
+    scheduledTime: DateTime.now(),
+    isVoicePromptEnabled: false,
+    status: 'pending',
+  );
 
   @override
   void initState() {
@@ -366,13 +381,18 @@ class _GameHubPageState extends State<GameHubPage> {
       final list = await ReminderService.instance.fetchReminders();
       if (mounted) {
         setState(() {
-          _reminders = list;
+          // Prepend the dummy reminder so it always shows
+          final withoutDummy = list.where((r) => r.id != _dummyReminder.id).toList();
+          _reminders = [_dummyReminder, ...withoutDummy];
           _loadingReminders = false;
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _loadingReminders = false);
+        setState(() {
+          _reminders = [_dummyReminder];
+          _loadingReminders = false;
+        });
       }
     }
   }
@@ -489,16 +509,22 @@ class _GameHubPageState extends State<GameHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
     return Scaffold(
       backgroundColor: GameHubPage.screenBg,
+      // Always show bottom sheet – shows 'No reminders' when empty and expanded
+      bottomSheet: _buildReminderBottomSheet(pendingReminders),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHeader()),
+            const SliverToBoxAdapter(
+              child: AnimatedFragmentedDivider(),
+            ),
             if (_showRoutineSection)
               SliverToBoxAdapter(child: _buildRemindersSection()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
               sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
             ),
           ],
@@ -506,6 +532,156 @@ class _GameHubPageState extends State<GameHubPage> {
       ),
     );
   }
+
+  Widget _buildReminderBottomSheet(List<PatientReminder> reminders) {
+    if (_currentReminderIndex >= reminders.length) {
+      _currentReminderIndex = 0;
+    }
+    final isEmpty = reminders.isEmpty;
+    final reminder = isEmpty ? null : reminders[_currentReminderIndex];
+    final timeStr = reminder != null
+        ? DateFormat('h:mm a').format(reminder.scheduledTime)
+        : '';
+    final hasMultiple = reminders.length > 1;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Handle / toggle bar ──────────────────────────────────────
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _reminderExpanded = !_reminderExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isEmpty
+                          ? const Color(0xFFF0F4F8)
+                          : const Color(0xFFFFECE5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      isEmpty
+                          ? Icons.notifications_off_rounded
+                          : Icons.notifications_rounded,
+                      color: isEmpty
+                          ? const Color(0xFF8298AB)
+                          : const Color(0xFFFF7043),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isEmpty
+                          ? 'No reminders'
+                          : (_reminderExpanded ? 'Reminder' : reminder!.title),
+                      style: TextStyle(
+                        color: isEmpty
+                            ? const Color(0xFF8298AB)
+                            : const Color(0xFF1E3A5F),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (!isEmpty && hasMultiple)
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFECE5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentReminderIndex + 1}/${reminders.length}',
+                        style: const TextStyle(
+                          color: Color(0xFFFF7043),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  // Animated arrow – hidden when empty
+                  if (!isEmpty)
+                    AnimatedRotation(
+                      turns: _reminderExpanded ? 0.0 : 0.5,
+                      duration: const Duration(milliseconds: 300),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF8298AB),
+                        size: 24,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Expanded content (hidden when no reminders or collapsed) ──
+          if (!isEmpty)
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 280),
+              crossFadeState: _reminderExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              firstChild: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: _ReminderCard(
+                  reminder: reminder!,
+                  timeStr: timeStr,
+                  hasMultiple: hasMultiple,
+                  currentIndex: _currentReminderIndex,
+                  totalCount: reminders.length,
+                  tickKey: _tickKey,
+                  onPrev: _currentReminderIndex > 0
+                      ? () => setState(() => _currentReminderIndex--)
+                      : null,
+                  onNext: _currentReminderIndex < reminders.length - 1
+                      ? () => setState(() => _currentReminderIndex++)
+                      : null,
+                  onSpeak: reminder.isVoicePromptEnabled
+                      ? () => _speakReminder(reminder)
+                      : null,
+                  onDone: () {
+                    // Get tick button global position before acknowledging
+                    final tickBox = _tickKey.currentContext
+                        ?.findRenderObject() as RenderBox?;
+                    final tickPos = tickBox != null
+                        ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
+                        : Offset.zero;
+                    AnimatedStarBadge.globalKey.currentState
+                        ?.celebrate(tickPos);
+                    _acknowledgeReminder(reminder);
+                  },
+                  getTypeIcon: _getTypeIcon,
+                ),
+              ),
+              secondChild: const SizedBox(height: 4),
+            ),
+        ],
+      ),
+    );
+  }
+
 
   void _openAccessibilitySettings(BuildContext context) {
     showModalBottomSheet(
@@ -604,7 +780,7 @@ class _GameHubPageState extends State<GameHubPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF2F8), // Very light blue shade
+        color: const Color(0xFFEAF2F8),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
         boxShadow: [
           BoxShadow(
@@ -618,14 +794,21 @@ class _GameHubPageState extends State<GameHubPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Settings option on left
+          // Settings on left
           _buildSettingsButton(),
 
-          // Smiti / Smriti written in between with Peach and pink color underline separated from between
+          // Title in centre
           _buildTitleWithUnderline(),
 
-          // Voice option on right with continuous listening animation waves / greyscaled when not
-          const VoiceWaveButton(),
+          // Right side: star badge + voice button
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
+              const SizedBox(width: 6),
+              const VoiceWaveButton(),
+            ],
+          ),
         ],
       ),
     );
@@ -1543,3 +1726,227 @@ class LandingPage extends StatelessWidget {
         ),
       );
 }
+
+// ─── _ReminderCard ─────────────────────────────────────────────────────────────
+
+class _ReminderCard extends StatefulWidget {
+  final PatientReminder reminder;
+  final String timeStr;
+  final bool hasMultiple;
+  final int currentIndex;
+  final int totalCount;
+  final GlobalKey tickKey;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
+  final VoidCallback? onSpeak;
+  final VoidCallback onDone;
+  final IconData Function(String) getTypeIcon;
+
+  const _ReminderCard({
+    required this.reminder,
+    required this.timeStr,
+    required this.hasMultiple,
+    required this.currentIndex,
+    required this.totalCount,
+    required this.tickKey,
+    required this.onPrev,
+    required this.onNext,
+    required this.onSpeak,
+    required this.onDone,
+    required this.getTypeIcon,
+  });
+
+  @override
+  State<_ReminderCard> createState() => _ReminderCardState();
+}
+
+class _ReminderCardState extends State<_ReminderCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _tickCtrl;
+  late final Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _tickCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 1.38)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 35),
+      TweenSequenceItem(
+          tween: Tween(begin: 1.38, end: 0.85)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: 30),
+      TweenSequenceItem(
+          tween: Tween(begin: 0.85, end: 1.0)
+              .chain(CurveTween(curve: Curves.elasticOut)),
+          weight: 35),
+    ]).animate(_tickCtrl);
+  }
+
+  @override
+  void dispose() {
+    _tickCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onTickTap() {
+    _tickCtrl.forward(from: 0).then((_) => widget.onDone());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.reminder;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFFAB91).withValues(alpha: 0.55),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Type icon
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFECE5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.getTypeIcon(r.type),
+              color: const Color(0xFFFF7043),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Text info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.title,
+                  style: const TextStyle(
+                    color: Color(0xFF1E3A5F),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (r.description != null && r.description!.isNotEmpty)
+                  Text(
+                    r.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF8298AB),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded,
+                        size: 12, color: Color(0xFFFF7043)),
+                    const SizedBox(width: 3),
+                    Text(
+                      widget.timeStr,
+                      style: const TextStyle(
+                        color: Color(0xFFFF7043),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (widget.hasMultiple) ...[
+                      const SizedBox(width: 10),
+                      _navChip(
+                        icon: Icons.chevron_left_rounded,
+                        enabled: widget.onPrev != null,
+                        onTap: widget.onPrev,
+                      ),
+                      const SizedBox(width: 4),
+                      _navChip(
+                        icon: Icons.chevron_right_rounded,
+                        enabled: widget.onNext != null,
+                        onTap: widget.onNext,
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // ── Tick button with bounce animation ──
+          GestureDetector(
+            key: widget.tickKey,
+            onTap: _onTickTap,
+            child: AnimatedBuilder(
+              animation: _scaleAnim,
+              builder: (_, child) => Transform.scale(
+                scale: _scaleAnim.value,
+                child: child,
+              ),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1E3A5F), Color(0xFF2D5A8E)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navChip({
+    required IconData icon,
+    required bool enabled,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        opacity: enabled ? 1.0 : 0.3,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF2F8),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: const Color(0xFF1E3A5F)),
+        ),
+      ),
+    );
+  }
+}
+
