@@ -242,25 +242,74 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<double> _scaleAnimation;
+
+  // { slides in from the left  (offset goes from -1.0 → 0.0 of screen width)
+  late final Animation<double> _leftSlide;
+  // } slides in from the right (offset goes from +1.0 → 0.0)
+  late final Animation<double> _rightSlide;
+  // Brackets fade out as they meet
+  late final Animation<double> _bracketFade;
+  // "S" + "mriti" fades / scales in
+  late final Animation<double> _logoFade;
+  late final Animation<double> _logoScale;
+  // Underline pops in
+  late final Animation<double> _underlineFade;
+  // Subtitle fades last
+  late final Animation<double> _subtitleFade;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 1900),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
+
+    _leftSlide = Tween<double>(begin: -1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.52, curve: Curves.easeOutCubic),
+      ),
     );
-    _scaleAnimation = Tween<double>(begin: .9, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    _rightSlide = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.52, curve: Curves.easeOutCubic),
+      ),
     );
+    _bracketFade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.45, 0.68, curve: Curves.easeIn),
+      ),
+    );
+    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.55, 0.82, curve: Curves.easeOut),
+      ),
+    );
+    _logoScale = Tween<double>(begin: 0.78, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.55, 0.82, curve: Curves.easeOutBack),
+      ),
+    );
+    _underlineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.75, 0.92, curve: Curves.easeOut),
+      ),
+    );
+    _subtitleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.84, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
     _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2200), _openGameHub);
+    Future.delayed(const Duration(milliseconds: 2800), _openGameHub);
   }
 
   void _openGameHub() {
@@ -268,7 +317,7 @@ class _SplashPageState extends State<SplashPage>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const GameHubPage(),
-        transitionDuration: const Duration(milliseconds: 550),
+        transitionDuration: const Duration(milliseconds: 500),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
           child: child,
@@ -285,55 +334,150 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5EC),
+      backgroundColor: const Color(0xFFF0F4F8), // matches main UI screenBg
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  height: 76,
-                  width: 76,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF214E3B),
-                    borderRadius: BorderRadius.circular(24),
+                // ── Logo area ──────────────────────────────────────────
+                SizedBox(
+                  width: 160,
+                  height: 110,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // { bracket from the left
+                      Opacity(
+                        opacity: _bracketFade.value.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(_leftSlide.value * sw * 0.55, 0),
+                          child: const Text(
+                            '{',
+                            style: TextStyle(
+                              fontSize: 96,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w200,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // } bracket from the right
+                      Opacity(
+                        opacity: _bracketFade.value.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(_rightSlide.value * sw * 0.55, 0),
+                          child: const Text(
+                            '}',
+                            style: TextStyle(
+                              fontSize: 96,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w200,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // "S" emerges from the collision
+                      Opacity(
+                        opacity: _logoFade.value,
+                        child: Transform.scale(
+                          scale: _logoScale.value,
+                          child: const Text(
+                            'S',
+                            style: TextStyle(
+                              fontSize: 92,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.psychology_alt_rounded,
-                      color: Colors.white, size: 42),
                 ),
+
+                // ── "mriti" text ──────────────────────────────────────
+                Opacity(
+                  opacity: _logoFade.value,
+                  child: Transform.scale(
+                    scale: _logoScale.value,
+                    child: const Text(
+                      'mriti',
+                      style: TextStyle(
+                        color: Color(0xFF1E3A5F),
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 5,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── Peach / pink underline (matches nav bar) ──────────
+                Opacity(
+                  opacity: _underlineFade.value,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFAB91),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 28,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF48FB1),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 22),
-                const Text(
-                  'SMRITI',
-                  style: TextStyle(
-                    color: Color(0xFF214E3B),
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Care that feels like home.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF66736C),
-                    fontSize: 17,
-                    height: 1.4,
-                    fontStyle: FontStyle.italic,
+
+                // ── Subtitle ──────────────────────────────────────────
+                Opacity(
+                  opacity: _subtitleFade.value,
+                  child: const Text(
+                    'Care that feels like home.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF8298AB),
+                      fontSize: 16,
+                      height: 1.4,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
+
 
 class GameHubPage extends StatefulWidget {
   const GameHubPage({super.key});
