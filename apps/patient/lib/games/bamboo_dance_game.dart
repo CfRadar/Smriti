@@ -1011,11 +1011,10 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   children: [
                     _buildTopBar(),
                     const AnimatedFragmentedDivider(),
-                    _buildStepCadenceRibbon(),
                     // Expanded court maximizing screen real estate
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: LayoutBuilder(
                           builder: (context, courtConstraints) {
                             final courtSize = min(
@@ -1111,8 +1110,6 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                         ),
                       ),
                     ),
-                    // 3. Aesthetic bottom footer card to fill screen space elegantly
-                    _buildAestheticFooter(),
                   ],
                 ),
                 if (_isEndingOverlayVisible)
@@ -1200,11 +1197,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Top Nav Bar with centered curved title, peach/pink underline, and animated controls
+  /// Top Nav Bar with centered curved title, peach/pink underline, and compact non-overlapping controls
   Widget _buildTopBar() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         color: navBarBg,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
@@ -1216,23 +1213,22 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
           ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
         children: [
-          // 1. Center Game Title with curved font and peach/pink fragmented underline
-          _buildNavTitleWithUnderline(),
+          // 1. Back button on the left
+          _buildNavBackButton(),
+          const SizedBox(width: 6),
 
-          // 2. Far left: Back button
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _buildNavBackButton(),
+          // 2. Centered Game Title with curved font + peach/pink fragmented underline
+          Expanded(
+            child: Center(
+              child: _buildNavTitleWithUnderline(),
+            ),
           ),
+          const SizedBox(width: 6),
 
-          // 3. Far right: Sound, Pause/Play, Score counter
-          Align(
-            alignment: Alignment.centerRight,
-            child: _buildNavRightControls(),
-          ),
+          // 3. Right: Sound, Pause/Play, Score counter (compact, guaranteed no overlap)
+          _buildNavRightControls(),
         ],
       ),
     );
@@ -1240,38 +1236,42 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
 
   /// Centered game title in curved font with peach & pink fragmented line underline below
   Widget _buildNavTitleWithUnderline() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          'Bamboo Dance',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: primaryNavy,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            fontStyle: FontStyle.italic,
-            fontFamily: 'Caveat',
-            letterSpacing: 0.4,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Bamboo Dance',
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: TextStyle(
+              color: primaryNavy,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              fontStyle: FontStyle.italic,
+              fontFamily: 'Caveat',
+              letterSpacing: 0.3,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        // Peach and pink fragmented line underline below it
-        AnimatedBuilder(
-          animation: _underlineController,
-          builder: (context, _) {
-            return SizedBox(
-              width: 84,
-              height: 4,
-              child: CustomPaint(
-                painter: _UnderlineFragmentPainter(
-                  progress: _underlineController.value,
+          const SizedBox(height: 3),
+          // Peach and pink fragmented line underline below it
+          AnimatedBuilder(
+            animation: _underlineController,
+            builder: (context, _) {
+              return SizedBox(
+                width: 74,
+                height: 3.5,
+                child: CustomPaint(
+                  painter: _UnderlineFragmentPainter(
+                    progress: _underlineController.value,
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -1284,13 +1284,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
         message: 'Exit to Home',
         child: InkWell(
           onTap: () => Navigator.of(context).pop(),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            width: 38,
-            height: 38,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: slateBorder,
                 width: 1.2,
@@ -1306,7 +1306,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
             child: const Icon(
               Icons.arrow_back_rounded,
               color: primaryNavy,
-              size: 20,
+              size: 19,
             ),
           ),
         ),
@@ -1321,10 +1321,10 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
       children: [
         // Sound toggle with idle breath + active animation
         _buildNavSoundButton(),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         // Pause / Play toggle with idle pulse & pause state indicator
         _buildNavPausePlayButton(),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         // Score counter on the nav right with idle float & pop on score
         _buildNavScoreBadge(),
       ],
@@ -1361,13 +1361,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 }
               });
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 35,
-              height: 35,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: _isSoundEnabled ? const Color(0xFFE8F4FD) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: _isSoundEnabled
                       ? const Color(0xFFB3D7F5)
@@ -1378,7 +1378,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   if (_isSoundEnabled)
                     BoxShadow(
                       color: const Color(0xFF90CAF9).withValues(alpha: 0.25),
-                      blurRadius: 5,
+                      blurRadius: 4,
                       offset: const Offset(0, 1.5),
                     ),
                 ],
@@ -1388,7 +1388,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                     ? Icons.volume_up_rounded
                     : Icons.volume_off_rounded,
                 color: _isSoundEnabled ? primaryNavy : textMuted,
-                size: 19,
+                size: 17,
               ),
             ),
           ),
@@ -1405,12 +1405,12 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
         final glow = _isPaused ? (0.3 + 0.5 * _navIdleController.value) : 0.0;
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               if (_isPaused)
                 BoxShadow(
                   color: orangeAccent.withValues(alpha: glow),
-                  blurRadius: 8,
+                  blurRadius: 6,
                   spreadRadius: 1,
                 ),
             ],
@@ -1431,13 +1431,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 _pauseGame();
               }
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 35,
-              height: 35,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: _isPaused ? const Color(0xFFFFF3E0) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: _isPaused ? orangeAccent : slateBorder,
                   width: 1.2,
@@ -1445,15 +1445,15 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1.5),
                   ),
                 ],
               ),
               child: Icon(
                 _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 color: _isPaused ? orangeAccent : primaryNavy,
-                size: 20,
+                size: 18,
               ),
             ),
           ),
@@ -1475,26 +1475,26 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
         return Transform.scale(
           scale: scale,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFFFF6EE), Color(0xFFFDEEF2)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _scorePopController.value > 0.05
                     ? orangeAccent
                     : peachAccent,
-                width: 1.3,
+                width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
                   color: peachAccent.withValues(
                     alpha: 0.20 + (_scorePopController.value * 0.30),
                   ),
-                  blurRadius: 5 + (_scorePopController.value * 5),
+                  blurRadius: 4 + (_scorePopController.value * 4),
                   offset: const Offset(0, 1.5),
                 ),
               ],
@@ -1505,16 +1505,16 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 const Icon(
                   Icons.stars_rounded,
                   color: Color(0xFFFF9800),
-                  size: 15,
+                  size: 14,
                 ),
                 const SizedBox(width: 3),
                 Text(
                   '$score',
                   style: const TextStyle(
                     color: primaryNavy,
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
@@ -1522,213 +1522,6 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
           ),
         );
       },
-    );
-  }
-
-  /// Continuous step counter and cadence ribbon styled to main UI
-  Widget _buildStepCadenceRibbon() {
-    final stageConfig = _engine.currentConfig;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: slateBorder,
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: primaryNavy.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Step counter badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-              decoration: BoxDecoration(
-                color: primaryNavy,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryNavy.withValues(alpha: 0.20),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1.5),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.directions_run_rounded,
-                    color: peachAccent,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Step $_totalTrialsRun / ${widget.totalTargetTrials}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Stage and cadence indicator
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: lightBlue,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _rhythmPulseController,
-                      builder: (context, _) {
-                        return Transform.scale(
-                          scale: 0.8 + (_rhythmPulseController.value * 0.4),
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: orangeAccent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        '${stageConfig.name} • ${_engine.adaptiveBpm} BPM',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: primaryNavy,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Aesthetic bottom footer card to fill screen space and enhance experience
-  Widget _buildAestheticFooter() {
-    final accuracyPercent = _totalTrialsRun > 0
-        ? ((_correctStepsCount / _totalTrialsRun) * 100).round()
-        : 100;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: slateBorder,
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: primaryNavy.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFECE5),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: const Icon(
-                Icons.touch_app_rounded,
-                color: orangeAccent,
-                size: 17,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Tap Glowing Circle in Rhythm',
-                    style: TextStyle(
-                      color: primaryNavy,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Step inside open spaces along the beat',
-                    style: TextStyle(
-                      color: textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Harmony accuracy badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: lightBlue,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.favorite_rounded,
-                    color: pinkAccent,
-                    size: 12,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Harmony $accuracyPercent%',
-                    style: const TextStyle(
-                      color: primaryNavy,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
