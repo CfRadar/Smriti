@@ -790,24 +790,29 @@ class _GameHubPageState extends State<GameHubPage> {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Settings on left
-          _buildSettingsButton(),
-
-          // Title in centre
+          // Title always perfectly centered
           _buildTitleWithUnderline(),
 
-          // Right side: star badge + voice button
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
-              const SizedBox(width: 6),
-              const VoiceWaveButton(),
-            ],
+          // Settings on the far left
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildSettingsButton(),
+          ),
+
+          // Star + voice on the far right
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
+                const SizedBox(width: 6),
+                const VoiceWaveButton(),
+              ],
+            ),
           ),
         ],
       ),
