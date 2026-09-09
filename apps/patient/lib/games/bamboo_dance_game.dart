@@ -1197,11 +1197,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Top Nav Bar with true-centered curved title, clean underline, and perfectly aligned controls
+  /// Top Nav Bar with centered curved title, peach/pink underline, and compact non-overlapping controls
   Widget _buildTopBar() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         color: navBarBg,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
@@ -1213,23 +1213,33 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
           ),
         ],
       ),
-      child: NavigationToolbar(
-        leading: _buildNavBackButton(),
-        middle: _buildNavTitleWithUnderline(),
-        trailing: _buildNavRightControls(),
-        centerMiddle: true,
-        middleSpacing: 8.0,
+      child: Row(
+        children: [
+          // 1. Back button on the left
+          _buildNavBackButton(),
+          const SizedBox(width: 6),
+
+          // 2. Centered Game Title with curved font + peach/pink fragmented underline
+          Expanded(
+            child: Center(
+              child: _buildNavTitleWithUnderline(),
+            ),
+          ),
+          const SizedBox(width: 6),
+
+          // 3. Right: Sound, Pause/Play, Score counter (compact, guaranteed no overlap)
+          _buildNavRightControls(),
+        ],
       ),
     );
   }
 
-  /// Perfectly centered game title in curved font with clean peach & pink fragmented line underline below
+  /// Centered game title in curved font with peach & pink fragmented line underline below
   Widget _buildNavTitleWithUnderline() {
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
             'Bamboo Dance',
@@ -1241,53 +1251,31 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
               fontWeight: FontWeight.w800,
               fontStyle: FontStyle.italic,
               fontFamily: 'Caveat',
-              letterSpacing: 0.4,
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: 3),
-          // Crisp, clean peach and pink fragmented line underline
-          _buildFragmentedUnderline(),
+          // Peach and pink fragmented line underline below it
+          AnimatedBuilder(
+            animation: _underlineController,
+            builder: (context, _) {
+              return SizedBox(
+                width: 74,
+                height: 3.5,
+                child: CustomPaint(
+                  painter: _UnderlineFragmentPainter(
+                    progress: _underlineController.value,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  /// Clean, centered peach and pink fragmented underline with gentle rhythmic flow
-  Widget _buildFragmentedUnderline() {
-    return AnimatedBuilder(
-      animation: _underlineController,
-      builder: (context, _) {
-        final t = _underlineController.value;
-        final peachW = 20.0 + (sin(t * 2 * pi) * 2.0);
-        final pinkW = 20.0 - (sin(t * 2 * pi) * 2.0);
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: peachW,
-              height: 3.5,
-              decoration: BoxDecoration(
-                color: peachAccent,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(width: 5),
-            Container(
-              width: pinkW,
-              height: 3.5,
-              decoration: BoxDecoration(
-                color: pinkAccent,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Main UI style back button with uniform 36x36 geometry
+  /// Main UI style back button
   Widget _buildNavBackButton() {
     return Semantics(
       button: true,
@@ -1298,9 +1286,8 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
           onTap: () => Navigator.of(context).pop(),
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -1310,7 +1297,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: primaryNavy.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -1319,7 +1306,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
             child: const Icon(
               Icons.arrow_back_rounded,
               color: primaryNavy,
-              size: 20,
+              size: 19,
             ),
           ),
         ),
@@ -1327,31 +1314,30 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Right side controls grid: Sound toggle, Pause/Play toggle, and Score counter with uniform 36px height
+  /// Right side controls: Sound toggle, Pause/Play toggle, and Score counter with animations
   Widget _buildNavRightControls() {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Sound toggle
+        // Sound toggle with idle breath + active animation
         _buildNavSoundButton(),
-        const SizedBox(width: 5),
-        // Pause / Play toggle
+        const SizedBox(width: 4),
+        // Pause / Play toggle with idle pulse & pause state indicator
         _buildNavPausePlayButton(),
-        const SizedBox(width: 5),
-        // Score counter badge
+        const SizedBox(width: 4),
+        // Score counter on the nav right with idle float & pop on score
         _buildNavScoreBadge(),
       ],
     );
   }
 
-  /// Sound toggle button with uniform 36x36 geometry and breath animation
+  /// Sound toggle button with idle breath animation
   Widget _buildNavSoundButton() {
     return AnimatedBuilder(
       animation: _navIdleController,
       builder: (context, child) {
         final scale = _isSoundEnabled
-            ? 1.0 + (_navIdleController.value * 0.04)
+            ? 1.0 + (_navIdleController.value * 0.05)
             : 1.0;
         return Transform.scale(
           scale: scale,
@@ -1375,24 +1361,26 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 }
               });
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: _isSoundEnabled ? const Color(0xFFEAF2F8) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: _isSoundEnabled ? const Color(0xFFE8F4FD) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: _isSoundEnabled ? const Color(0xFFB3D7F5) : slateBorder,
+                  color: _isSoundEnabled
+                      ? const Color(0xFFB3D7F5)
+                      : slateBorder,
                   width: 1.2,
                 ),
                 boxShadow: [
-                  BoxShadow(
-                    color: primaryNavy.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
+                  if (_isSoundEnabled)
+                    BoxShadow(
+                      color: const Color(0xFF90CAF9).withValues(alpha: 0.25),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1.5),
+                    ),
                 ],
               ),
               child: Icon(
@@ -1400,6 +1388,71 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                     ? Icons.volume_up_rounded
                     : Icons.volume_off_rounded,
                 color: _isSoundEnabled ? primaryNavy : textMuted,
+                size: 17,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Pause/Play button with idle pulse and paused aura indicator
+  Widget _buildNavPausePlayButton() {
+    return AnimatedBuilder(
+      animation: _navIdleController,
+      builder: (context, child) {
+        final glow = _isPaused ? (0.3 + 0.5 * _navIdleController.value) : 0.0;
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              if (_isPaused)
+                BoxShadow(
+                  color: orangeAccent.withValues(alpha: glow),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Semantics(
+        button: true,
+        label: _isPaused ? 'Resume Game' : 'Pause Game',
+        child: Tooltip(
+          message: _isPaused ? 'Resume' : 'Pause',
+          child: InkWell(
+            onTap: () {
+              if (_isPaused) {
+                _resumeGame();
+              } else {
+                _pauseGame();
+              }
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: _isPaused ? const Color(0xFFFFF3E0) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _isPaused ? orangeAccent : slateBorder,
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1.5),
+                  ),
+                ],
+              ),
+              child: Icon(
+                _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                color: _isPaused ? orangeAccent : primaryNavy,
                 size: 18,
               ),
             ),
@@ -1409,83 +1462,40 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Pause/Play button with uniform 36x36 geometry and clean state indicator
-  Widget _buildNavPausePlayButton() {
-    return Semantics(
-      button: true,
-      label: _isPaused ? 'Resume Game' : 'Pause Game',
-      child: Tooltip(
-        message: _isPaused ? 'Resume' : 'Pause',
-        child: InkWell(
-          onTap: () {
-            if (_isPaused) {
-              _resumeGame();
-            } else {
-              _pauseGame();
-            }
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _isPaused ? const Color(0xFFFFF3E0) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isPaused ? orangeAccent : slateBorder,
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (_isPaused ? orangeAccent : primaryNavy).withValues(alpha: 0.06),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-              color: _isPaused ? orangeAccent : primaryNavy,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Score counter badge with matching 36px height, star icon, and score pop bounce
+  /// Score counter on the nav right with idle floating & pop bounce on score
   Widget _buildNavScoreBadge() {
     final score = _correctStepsCount * 10;
     return AnimatedBuilder(
       animation: Listenable.merge([_navIdleController, _scorePopController]),
       builder: (context, child) {
         final popScale = Curves.elasticOut.transform(_scorePopController.value);
-        final idleScale = 1.0 + (_navIdleController.value * 0.02);
-        final scale = idleScale + (popScale * 0.16);
+        final idleScale = 1.0 + (_navIdleController.value * 0.03);
+        final scale = idleScale + (popScale * 0.20);
 
         return Transform.scale(
           scale: scale,
           child: Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 9),
-            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFF6EE), Color(0xFFFDEEF2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _scorePopController.value > 0.05
                     ? orangeAccent
-                    : slateBorder,
+                    : peachAccent,
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (_scorePopController.value > 0.05 ? orangeAccent : primaryNavy)
-                      .withValues(alpha: 0.06),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  color: peachAccent.withValues(
+                    alpha: 0.20 + (_scorePopController.value * 0.30),
+                  ),
+                  blurRadius: 4 + (_scorePopController.value * 4),
+                  offset: const Offset(0, 1.5),
                 ),
               ],
             ),
@@ -1495,14 +1505,14 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                 const Icon(
                   Icons.stars_rounded,
                   color: Color(0xFFFF9800),
-                  size: 16,
+                  size: 14,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Text(
                   '$score',
                   style: const TextStyle(
                     color: primaryNavy,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.2,
                   ),
@@ -1755,6 +1765,68 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
         ),
       ),
     );
+  }
+}
+
+/// Custom painter for the animated peach & pink fragmented underline below title
+class _UnderlineFragmentPainter extends CustomPainter {
+  final double progress;
+
+  _UnderlineFragmentPainter({required this.progress});
+
+  static const Color peachColor = Color(0xFFFFAB91);
+  static const Color pinkColor = Color(0xFFF48FB1);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double width = size.width;
+    final double height = size.height;
+    final double lineThickness = height.clamp(3.0, 4.0);
+
+    const double dashWidth = 34.0;
+    const double dashGap = 8.0;
+    const double period = dashWidth + dashGap;
+
+    final Paint peachPaint = Paint()
+      ..color = peachColor
+      ..style = PaintingStyle.fill;
+
+    final Paint pinkPaint = Paint()
+      ..color = pinkColor
+      ..style = PaintingStyle.fill;
+
+    final double shift = progress * period;
+    double x = -period + shift;
+
+    int index = 0;
+    canvas.save();
+    canvas.clipRRect(
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(2.0)),
+    );
+    while (x < width + period) {
+      final bool isPeach = (index % 2 == 0);
+      final Paint paint = isPeach ? peachPaint : pinkPaint;
+
+      final RRect rrect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          x,
+          (height - lineThickness) / 2,
+          dashWidth,
+          lineThickness,
+        ),
+        const Radius.circular(2.0),
+      );
+      canvas.drawRRect(rrect, paint);
+
+      x += dashWidth + dashGap;
+      index++;
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _UnderlineFragmentPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 
