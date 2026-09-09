@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -35,11 +36,52 @@ class VoiceService {
   bool _processing = false;
   bool _restartScheduled = false;
   bool _starting = false;
+  bool _permissionGranted = false;
+  bool _speechAvailable = false;
   Timer? _restartTimer;
+
+  static bool isPermissionDeniedError(String? errorMessage) {
+    final normalized = (errorMessage ?? '').toLowerCase();
+    return normalized.contains('permission') ||
+        normalized.contains('not-allowed') ||
+        normalized.contains('not allowed') ||
+        normalized.contains('denied') ||
+        normalized.contains('microphone');
+  }
+
+  static VoiceStatus resolveSpeechStatus({
+    required String speechStatus,
+    required bool isProcessing,
+    required bool isPermissionGranted,
+    required bool isSpeechAvailable,
+  }) {
+    if (isProcessing) {
+      return VoiceStatus.processing;
+    }
+
+    if (!isSpeechAvailable) {
+      return VoiceStatus.disabled;
+    }
+
+    if (!isPermissionGranted) {
+      return VoiceStatus.error;
+    }
+
+    switch (speechStatus) {
+      case 'listening':
+        return VoiceStatus.listening;
+      case 'done':
+      case 'stopped':
+      case 'notListening':
+        return VoiceStatus.listening;
+      default:
+        return VoiceStatus.initializing;
+    }
+  }
 
   Future<bool> initialize() async {
     if (_disposed || _initialized) {
-      return _speechToText.isAvailable;
+      return _speechToText.isAvailable && _permissionGranted;
     }
 
     _initialized = true;
@@ -48,40 +90,70 @@ class VoiceService {
     try {
       final available = await _speechToText.initialize(
         onStatus: (status) {
+          if (!_processing && !_permissionGranted) {
+            statusNotifier.value = VoiceStatus.error;
+            return;
+          }
+
+          final nextStatus = resolveSpeechStatus(
+            speechStatus: status,
+            isProcessing: _processing,
+            isPermissionGranted: _permissionGranted,
+            isSpeechAvailable: _speechAvailable,
+          );
+
+          if (nextStatus == VoiceStatus.listening &&
+              (status == 'done' || status == 'stopped' || status == 'notListening')) {
+            if (!_processing) {
+              _scheduleListeningRestart();
+            }
+          }
+
           if (status == 'listening') {
             statusNotifier.value = VoiceStatus.listening;
             return;
           }
 
           if (status == 'done' || status == 'stopped' || status == 'notListening') {
-            if (!_processing) {
+            if (!_processing && _permissionGranted) {
               statusNotifier.value = VoiceStatus.listening;
-              _scheduleListeningRestart();
             }
           }
         },
         onError: (error) {
           debugPrint('Voice recognition error: ${error.errorMsg}');
+          if (isPermissionDeniedError(error.errorMsg)) {
+            _permissionGranted = false;
+          }
           statusNotifier.value = VoiceStatus.error;
         },
         debugLogging: false,
       );
 
+      _speechAvailable = available;
       if (!available) {
+        _permissionGranted = false;
         statusNotifier.value = VoiceStatus.disabled;
         return false;
       }
 
-      final permissionGranted = await _speechToText.hasPermission;
-      if (!permissionGranted) {
-        statusNotifier.value = VoiceStatus.error;
-        return false;
+      final hasPermission = await _speechToText.hasPermission;
+      if (!hasPermission) {
+        final microphonePermission = await Permission.microphone.request();
+        _permissionGranted = microphonePermission.isGranted;
+        if (!_permissionGranted) {
+          statusNotifier.value = VoiceStatus.error;
+          return false;
+        }
+      } else {
+        _permissionGranted = true;
       }
 
       await startListening();
       return true;
     } catch (e) {
       debugPrint('Voice service initialization error: $e');
+      _permissionGranted = false;
       statusNotifier.value = VoiceStatus.error;
       return false;
     }
@@ -91,6 +163,11 @@ class VoiceService {
     _restartTimer?.cancel();
     _restartTimer = null;
     _restartScheduled = false;
+
+    if (!_permissionGranted) {
+      statusNotifier.value = VoiceStatus.error;
+      return;
+    }
 
     if (_disposed ||
         !_initialized ||

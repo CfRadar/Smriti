@@ -47,16 +47,16 @@ void main() {
       expect(VoiceCommandParser.parse('select number five').parameter, 5);
     });
 
-    test('parses generic and multilingual game opening commands', () {
+    test('parses English and Hindi game opening commands', () {
       expect(VoiceCommandParser.parse('Open blinking game').gameName,
           'blinking game');
       expect(VoiceCommandParser.parse('मेमोरी गेम खोलो').intent,
           VoiceIntent.openGame);
-      expect(VoiceCommandParser.parse('প্যাটাৰ্ণ মেমৰি আৰম্ভ কৰা').intent,
+      expect(VoiceCommandParser.parse('पैटर्न मेमोरी खोलो').intent,
           VoiceIntent.openGame);
     });
 
-    test('parses multilingual exit commands', () {
+    test('parses English and Hindi exit commands', () {
       for (final phrase in [
         'close the game',
         'exit',
@@ -65,8 +65,6 @@ void main() {
         'गेम बंद करो',
         'मुझे नहीं खेलना',
         'खेलना बंद करो',
-        'খেলটো বন্ধ কৰা',
-        'মই আৰু খেলিব নিবিচাৰোঁ',
       ]) {
         expect(VoiceCommandParser.parse(phrase).intent, VoiceIntent.exitGame,
             reason: phrase);
@@ -97,6 +95,19 @@ void main() {
           VoiceIntent.pauseGame);
       expect(VoiceCommandParser.parse('jari rakho').intent,
           VoiceIntent.resumeGame);
+    });
+
+    test('parses the exact Hindi phrases reported by the user', () {
+      expect(VoiceCommandParser.parse('play memory kholo').intent,
+          VoiceIntent.openMemoryGame);
+      expect(VoiceCommandParser.parse('home par le jao').intent,
+          VoiceIntent.goHome);
+      expect(VoiceCommandParser.parse('home par jao').intent,
+          VoiceIntent.goHome);
+      expect(VoiceCommandParser.parse('memory kholo').intent,
+          VoiceIntent.openMemoryGame);
+      expect(VoiceCommandParser.parse('pattern memory kholo').intent,
+          VoiceIntent.openMemoryGame);
     });
 
     test('returns unknown for unrelated phrases', () {

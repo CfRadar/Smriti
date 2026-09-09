@@ -9,28 +9,31 @@ class VoiceCommandParser {
       'blink',
       'ब्लिंकिंग गेम',
       'ब्लिंक गेम',
-      'ब्लिंकिंग',
-      'ब्लिंक',
       'blink game kholo',
       'blinking game kholo',
       'blink game shuru karo',
       'blinking game chalao',
-      'ব্লিংকিং গেম',
-      'ব্লিংক গেম',
     ],
     'pattern memory game': [
       'pattern memory game',
       'pattern memory',
       'memory game',
       'memory',
-      'প্যাটাৰ্ণ মেমৰি',
-      'মেমৰি গেম',
+      'memeory',
+      'memeory game',
       'मेमोरी गेम',
       'पैटर्न मेमोरी',
       'memory game kholo',
       'memory game shuru karo',
       'memory game chalao',
       'pattern memory kholo',
+      'memeory kholo',
+      'play memory kholo',
+      'play memeory kholo',
+      'memory kholo',
+      'pattern memory chalao',
+      'play memory',
+      'play memeory',
     ],
   };
 
@@ -178,31 +181,6 @@ class VoiceCommandParser {
       'mujhe game se bahar nikalo',
       'mujhe ghar jana hai',
       'mujhe wapas jana hai',
-      'খেলটো বন্ধ কৰা',
-      'খেলটো বন্ধ কৰি দিয়া',
-      'এই খেলটো বন্ধ কৰা',
-      'খেলৰ পৰা ওলাই যোৱা',
-      'ওলাই যোৱা',
-      'খেলটো এৰি দিয়া',
-      'খেলটো নেখেলা',
-      'খেল বন্ধ কৰা',
-      'খেলা বন্ধ কৰা',
-      'বন্ধ কৰা',
-      'বাতিল কৰা',
-      'পিছলৈ যোৱা',
-      'ঘৰলৈ উভতি যোৱা',
-      'হোমলৈ যোৱা',
-      'মই আৰু খেলিব নিবিচাৰোঁ',
-      'মই এই খেলটো খেলিব নিবিচাৰোঁ',
-      'এতিয়া আৰু খেলিব নালাগে',
-      'মই খেলাটো বন্ধ কৰিব বিচাৰোঁ',
-      'মই খেলিব নোখোজোঁ',
-      'মোক খেলৰ পৰা উলিয়াই দিয়া',
-      'মোক বাহিৰলৈ লৈ যোৱা',
-      'মই উভতি যাব বিচাৰোঁ',
-      'মোক ঘৰলৈ লৈ যোৱা',
-      'এতিয়া বচ',
-      'আৰু নালাগে',
     ])) {
       return _command(VoiceIntent.exitGame, rawText, confidence);
     }
@@ -221,18 +199,19 @@ class VoiceCommandParser {
           'return to home',
           'main screen',
           'home screen',
-          'घर वापस जाओ',
-          'होम पर जाओ',
-          'वापस जाओ',
-          'ghar wapas jao',
           'home par jao',
-          'wapas jao',
-          'पिछলৈ যোৱা',
-          'ঘৰলৈ উভতি যোৱা',
-          'হোমলৈ যাও',
-          'হোমলৈ যোৱা',
+          'home par le jao',
+          'home par chalo',
+          'home le jao',
+          'home jao',
+          'ghar wapas jao',
+          'home me le jao',
           'main menu par jao',
           'home menu par jao',
+          'घर वापस जाओ',
+          'होम पर जाओ',
+          'होम पर ले जाओ',
+          'वापस जाओ',
         ])) {
       return VoiceCommand(
         intent: VoiceIntent.goHome,
@@ -352,11 +331,6 @@ class VoiceCommandParser {
       'खेलना है',
       'पर चलो',
       'खेलने चलो',
-      'শুরু কৰা',
-      'খেলা',
-      'খেলিব বিচাৰোঁ',
-      'আৰম্ভ কৰা',
-      'লৈ যোৱা',
     ];
     for (final entry in _gameAliases.entries) {
       for (final alias in entry.value) {
@@ -395,7 +369,15 @@ class VoiceCommandParser {
           normalized.startsWith('return to $target') ||
           normalized.startsWith('return to the $target') ||
           normalized.startsWith('back to $target') ||
-          normalized.startsWith('back to the $target');
+          normalized.startsWith('back to the $target') ||
+          normalized.startsWith('home par') ||
+          normalized.startsWith('home le') ||
+          normalized.startsWith('home jao') ||
+          normalized.startsWith('ghar par') ||
+          normalized.startsWith('ghar wapas') ||
+          normalized.contains('home par') ||
+          normalized.contains('home le') ||
+          normalized.contains('ghar wapas');
     });
   }
 
