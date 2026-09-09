@@ -109,6 +109,33 @@ class VoiceCommandParser {
       'কং শানাবা',
       'কিং শানাবা',
     ],
+    'bamboo dance': [
+      'bamboo dance',
+      'bamboo dance game',
+      'bamboo game',
+      'bamboo',
+      'dance game',
+      'dance',
+      'cheraw',
+      'cheraw dance',
+      'assam dance',
+      'assamese dance',
+      'bamboo dance kholo',
+      'dance game kholo',
+      'bamboo dance chalao',
+      'বাঁহ নৃত্য',
+      'বাঁহনৃত্য',
+      'বাঁহ খেল',
+      'বাঁহৰ নৃত্য',
+      'बांस नृत्य',
+      'बैम्बू डांस',
+      'बैंबू डांस',
+      'डांस गेम',
+      'चौथा गेम',
+      'fourth game',
+      'game 4',
+      'game four',
+    ],
   };
 
   static final Map<String, int> _numberWords = {
@@ -391,6 +418,19 @@ class VoiceCommandParser {
   }
 
   static String? _extractGameName(String normalized) {
+    if (normalized.contains('bamboo') ||
+        normalized.contains('cheraw') ||
+        normalized.contains('বাঁহ') ||
+        normalized.contains('बांस') ||
+        normalized.contains('बैम्बू') ||
+        normalized.contains('बैंबू') ||
+        normalized.contains('fourth game') ||
+        normalized.contains('game 4') ||
+        normalized.contains('game four') ||
+        normalized.contains('चौथा गेम') ||
+        (normalized.contains('dance') && !normalized.contains('king'))) {
+      return 'bamboo dance';
+    }
     if (normalized.contains('blink')) {
       return 'blinking game';
     }
@@ -483,6 +523,7 @@ class VoiceCommandParser {
     if (gameName == 'blinking game') return VoiceIntent.openBlinkingGame;
     if (gameName == 'pattern memory game') return VoiceIntent.openMemoryGame;
     if (gameName == 'king shanaba') return VoiceIntent.openKingShanabaGame;
+    if (gameName == 'bamboo dance') return VoiceIntent.openBambooDanceGame;
     return null;
   }
 

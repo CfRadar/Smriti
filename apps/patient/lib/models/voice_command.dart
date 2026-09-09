@@ -3,6 +3,7 @@ enum VoiceIntent {
   openBlinkingGame,
   openMemoryGame,
   openKingShanabaGame,
+  openBambooDanceGame,
   slideDisc,
   goHome,
   exitGame,
