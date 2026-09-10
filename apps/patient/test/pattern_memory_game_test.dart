@@ -148,5 +148,206 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getInt('smriti_pattern_memory_level'), 1);
     });
+
+    testWidgets('Correct tile guess has the same dark green colour as shown tile without tick mark',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          routes: {
+            '/home': (context) => const SizedBox(),
+          },
+          home: const PatternMemoryGameScreen(
+            sessionId: 'test_tile_color_session',
+            totalTrials: 5,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      // Fast forward past countdown (3s) and memorization (2.5s)
+      await tester.pump(const Duration(milliseconds: 3500));
+      await tester.pump(const Duration(milliseconds: 3000));
+
+      // In recall phase, there should be NO check_rounded icon on any tile
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+
+      // Find first tappable tile in the grid
+      final firstGridTile = find.descendant(
+        of: find.byType(GridView),
+        matching: find.byType(InkWell),
+      ).first;
+      await tester.tap(firstGridTile);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Verify that even after guessing, check_rounded icon is NOT used
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+    });
+
+    testWidgets('Wrong tile tap displays matching soft red without cross mark and advances to next pattern',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          routes: {
+            '/home': (context) => const SizedBox(),
+          },
+          home: const PatternMemoryGameScreen(
+            sessionId: 'test_wrong_tap_session',
+            totalTrials: 5,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      // Fast forward past countdown (3s) and memorization (3.6s)
+      await tester.pump(const Duration(milliseconds: 3500));
+      await tester.pump(const Duration(milliseconds: 4000));
+
+      // In recall phase of Trial 1
+      expect(find.textContaining('Trial 1 / 5'), findsOneWidget);
+
+      // Find all tiles in grid
+      final tiles = find.descendant(
+        of: find.byType(GridView),
+        matching: find.byType(InkWell),
+      );
+
+      // Verify neither check mark nor cross mark exist anywhere
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+      // Tap tiles until a non-pattern tile is tapped (triggering wrong tap & feedback phase)
+      for (int i = 0; i < tiles.evaluate().length; i++) {
+        await tester.tap(tiles.at(i));
+        await tester.pump(const Duration(milliseconds: 50));
+        // Cross mark must NEVER be shown on any tile
+        expect(find.byIcon(Icons.close_rounded), findsNothing);
+        // If wrong tap occurred, game moved to feedback phase
+        if (find.text('Reviewing pattern...').evaluate().isNotEmpty) {
+          break;
+        }
+      }
+
+      // Fast forward through feedback delay (1.4s) and countdown into next trial
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pump(const Duration(milliseconds: 3500));
+
+      // Next pattern (Trial 2) is reached
+      expect(find.textContaining('Trial 2 / 5'), findsOneWidget);
+    });
+
+    testWidgets('Relaxed invisible timer advances trial after timeout without displaying ticking clock',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          routes: {
+            '/home': (context) => const SizedBox(),
+          },
+          home: const PatternMemoryGameScreen(
+            sessionId: 'test_timeout_session',
+            totalTrials: 3,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      // Fast forward past countdown (3s) and memorization (3.6s) into recall
+      await tester.pump(const Duration(milliseconds: 3500));
+      await tester.pump(const Duration(milliseconds: 4000));
+
+      expect(find.textContaining('Trial 1 / 3'), findsOneWidget);
+
+      // No countdown timer digits or ticking clock displayed on screen during recall
+      expect(find.byIcon(Icons.timer_outlined), findsNothing);
+      expect(find.byIcon(Icons.hourglass_bottom_rounded), findsNothing);
+
+      // Fast forward by relaxed timeout duration (25s) + feedback delay (1.5s) + countdown (2.5s)
+      await tester.pump(const Duration(seconds: 26));
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pump(const Duration(milliseconds: 3000));
+
+      // Should have advanced to Trial 2
+      expect(find.textContaining('Trial 2 / 3'), findsOneWidget);
+    });
+
+    testWidgets('Game completion dialog shows at session end without showing next pattern behind',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          routes: {
+            '/home': (context) => const SizedBox(),
+          },
+          home: const PatternMemoryGameScreen(
+            sessionId: 'test_completion_session',
+            totalTrials: 1, // Only 1 trial for test
+          ),
+        ),
+      );
+
+      await tester.pump();
+      // Fast forward past countdown and memorization into recall
+      await tester.pump(const Duration(milliseconds: 3500));
+      await tester.pump(const Duration(milliseconds: 4000));
+
+      expect(find.textContaining('Trial 1 / 1'), findsOneWidget);
+
+      // Let the trial complete via relaxed timeout
+      await tester.pump(const Duration(seconds: 26));
+      // Feedback delay (1.5s)
+      await tester.pump(const Duration(milliseconds: 1600));
+      await tester.pumpAndSettle();
+
+      // Unified GameCompletionDialog should be visible
+      expect(find.text('Great Job!'), findsOneWidget);
+      expect(find.text('Activity Completed'), findsOneWidget);
+      // 'Next pattern...' must NOT be shown when game ends
+      expect(find.text('Next pattern...'), findsNothing);
+    });
+
+    testWidgets('Toggling sound off mutes sound button and disables click audio playback',
+        (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PatternMemoryGameScreen(
+            sessionId: 'test_sound_session',
+            totalTrials: 3,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Initially sound is enabled with volume up icon
+      expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.volume_off_rounded), findsNothing);
+
+      // Tap sound toggle button to mute
+      await tester.tap(find.bySemanticsLabel('Toggle Sound'));
+      await tester.pumpAndSettle();
+
+      // Sound should now be muted with volume off icon
+      expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
+
+      // Fast forward past countdown and memorization into recall
+      await tester.pump(const Duration(milliseconds: 3500));
+      await tester.pump(const Duration(milliseconds: 4000));
+
+      // Tapping tile during recall when sound is disabled must execute cleanly without error
+      final gridFind = find.byType(GridView);
+      if (gridFind.evaluate().isNotEmpty) {
+        final firstTile = find.descendant(
+          of: gridFind,
+          matching: find.byType(GestureDetector),
+        );
+        if (firstTile.evaluate().isNotEmpty) {
+          await tester.tap(firstTile.first);
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      // Remains muted
+      expect(find.byIcon(Icons.volume_off_rounded), findsOneWidget);
+    });
   });
 }

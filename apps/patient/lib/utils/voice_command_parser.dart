@@ -2,6 +2,20 @@ import '../models/voice_command.dart';
 
 class VoiceCommandParser {
   static const Map<String, List<String>> _gameAliases = {
+    'picture recognition': [
+      'picture recognition',
+      'picture recognition game',
+      'picture game',
+      'pictures game',
+      'recognition game',
+      'find pictures',
+      'ছবি চিনাক্তকৰণ',
+      'ছবি খেল',
+      'ছবি',
+      'चित्र पहचान',
+      'picture game kholo',
+      'picture game shuru karo',
+    ],
     'blinking game': [
       'blinking game',
       'blink game',
@@ -431,6 +445,12 @@ class VoiceCommandParser {
         (normalized.contains('dance') && !normalized.contains('king'))) {
       return 'bamboo dance';
     }
+    if (normalized.contains('picture') ||
+        normalized.contains('recognition') ||
+        normalized.contains('ছবি') ||
+        normalized.contains('चित्र पहचान')) {
+      return 'picture recognition';
+    }
     if (normalized.contains('blink')) {
       return 'blinking game';
     }
@@ -520,7 +540,9 @@ class VoiceCommandParser {
 
   static VoiceIntent? _legacyGameIntent(String normalized, String gameName) {
     if (!RegExp(r'^[a-z0-9\s]+$').hasMatch(normalized)) return null;
-    if (gameName == 'blinking game') return VoiceIntent.openBlinkingGame;
+    if (gameName == 'picture recognition' || gameName == 'blinking game') {
+      return VoiceIntent.openBlinkingGame;
+    }
     if (gameName == 'pattern memory game') return VoiceIntent.openMemoryGame;
     if (gameName == 'king shanaba') return VoiceIntent.openKingShanabaGame;
     if (gameName == 'bamboo dance') return VoiceIntent.openBambooDanceGame;

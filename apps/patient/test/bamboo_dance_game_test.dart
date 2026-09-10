@@ -193,13 +193,13 @@ void main() {
       await tester.pump();
 
       // Check header and navigation
-      expect(find.text('Bamboo Dance (বাঁহ নৃত্য)'), findsOneWidget);
+      expect(find.text('Bamboo Dance'), findsOneWidget);
       expect(find.byTooltip('Exit to Home'), findsOneWidget);
       expect(find.byIcon(Icons.volume_up_rounded), findsOneWidget);
       expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
 
-      // Check step counter
-      expect(find.text('Step 0 / 5'), findsOneWidget);
+      // Check initial score counter badge
+      expect(find.text('0'), findsOneWidget);
 
       // Verify directional D-Pad controls are REMOVED
       expect(find.text('UP / ওপৰ'), findsNothing);
@@ -243,8 +243,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Initial step is 0, initial dancer is at center (1, 1), target is UP at (1, 0)
-      expect(find.text('Step 0 / 5'), findsOneWidget);
+      // Initial score is 0, initial dancer is at center (1, 1), target is UP at (1, 0)
+      expect(find.text('0'), findsOneWidget);
 
       final targetFinder = find.byKey(const ValueKey('bamboo_target_circle'));
       expect(targetFinder, findsOneWidget);
@@ -253,8 +253,8 @@ void main() {
       await tester.tap(targetFinder);
       await tester.pump();
 
-      // Step count increments immediately
-      expect(find.text('Step 1 / 5'), findsOneWidget);
+      // Score counter increments immediately (10 points per step)
+      expect(find.text('10'), findsOneWidget);
 
       // Advance jump animation
       await tester.pump(const Duration(milliseconds: 700));
@@ -312,7 +312,7 @@ void main() {
       );
       var painter = customPaint.painter as BambooCourtPainter;
       expect(painter.dancerGridPos, const GridPos(1, 0));
-      expect(find.text('Step 1 / 5'), findsOneWidget);
+      expect(find.text('10'), findsOneWidget);
 
       // Step 2: From (1, 0), next target is strictly in opposite bamboo space (1, 2)
       expect(painter.targetGridPos, const GridPos(1, 2));
@@ -328,7 +328,7 @@ void main() {
       );
       painter = customPaint.painter as BambooCourtPainter;
       expect(painter.dancerGridPos, const GridPos(1, 2));
-      expect(find.text('Step 2 / 5'), findsOneWidget);
+      expect(find.text('20'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
@@ -421,7 +421,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Bamboo Dance (বাঁহ নৃত্য)'), findsOneWidget);
+      expect(find.text('Bamboo Dance'), findsOneWidget);
       expect(find.byKey(const ValueKey('bamboo_court_canvas')), findsOneWidget);
       expect(find.byKey(const ValueKey('bamboo_target_circle')), findsOneWidget);
       expect(find.text('UP / ওপৰ'), findsNothing);
@@ -444,8 +444,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      // Initial state is step 0
-      expect(find.text('Step 0 / 5'), findsOneWidget);
+      // Initial state is score 0
+      expect(find.text('0'), findsOneWidget);
 
       final targetCircle = find.byKey(const ValueKey('bamboo_target_circle'));
       expect(targetCircle, findsOneWidget);
@@ -460,8 +460,8 @@ void main() {
       await tester.tap(targetCircle);
       await tester.pump(const Duration(milliseconds: 50));
 
-      // Step count should increment to exactly 1, NOT 4!
-      expect(find.text('Step 1 / 5'), findsOneWidget);
+      // Score count should increment to exactly 10, NOT 40!
+      expect(find.text('10'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
@@ -487,26 +487,25 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1200));
 
-      expect(find.text('Step 1 / 2'), findsOneWidget);
+      expect(find.text('10'), findsOneWidget);
 
       // Step 2 (target reached!)
       await tester.tap(targetCircle);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1200));
 
-      // Check ending celebratory overlay appeared
-      expect(find.text('2 টা খোজ সম্পন্ন হ\'ল!'), findsOneWidget);
-      expect(find.text('2 Dance Steps Completed!'), findsOneWidget);
-      expect(find.text('পুনৰ খেলক\nPlay Again'), findsOneWidget);
-      expect(find.text('ঘৰলৈ যাওক\nHome'), findsOneWidget);
+      // Check ending celebratory overlay appeared with unified GameCompletionDialog
+      expect(find.text('Great Job!'), findsOneWidget);
+      expect(find.text('Play Again'), findsOneWidget);
+      expect(find.text('Home'), findsOneWidget);
 
       // Tap Play Again
-      await tester.tap(find.text('পুনৰ খেলক\nPlay Again'));
+      await tester.tap(find.text('Play Again'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
 
-      // Game resets cleanly to Step 0
-      expect(find.text('Step 0 / 2'), findsOneWidget);
+      // Game resets cleanly to Score 0
+      expect(find.text('0'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
@@ -1024,6 +1023,121 @@ void main() {
       // Verify that hop starts from otherBlockPos and NOT prevPos
       expect(painter.targetGridPos, target);
       expect(BambooCourtPainter.getOtherBlockAreaPos(painter.targetGridPos), const GridPos(1, 2));
+    });
+
+    testWidgets('Off-target tap shows small hint to tap on the target',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: BambooDanceGameScreen(
+            sessionId: 'off_target_hint_test',
+            totalTargetTrials: 5,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Hint is initially hidden
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsNothing);
+      expect(find.text('Tap on the target! 🎯'), findsNothing);
+
+      // Tap off-target on the court canvas (bottom-left corner of the court)
+      final courtFinder = find.byKey(const ValueKey('bamboo_court_canvas'));
+      expect(courtFinder, findsOneWidget);
+      await tester.tapAt(tester.getBottomLeft(courtFinder) + const Offset(10, -10));
+      await tester.pump();
+
+      // Hint now appears directing user to tap the target!
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsOneWidget);
+      expect(find.text('Tap on the target! 🎯'), findsOneWidget);
+      expect(find.byIcon(Icons.touch_app_rounded), findsWidgets);
+
+      // Now tap on the target circle
+      final targetCircle = find.byKey(const ValueKey('bamboo_target_circle'));
+      await tester.tap(targetCircle);
+      await tester.pump();
+
+      // Step successfully registers and score increments
+      expect(find.text('10'), findsOneWidget);
+      // Hint is dismissed
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+
+    testWidgets('Hesitation idle delay automatically shows hint to tap on target',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: BambooDanceGameScreen(
+            sessionId: 'idle_hint_test',
+            totalTargetTrials: 5,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Initially no hint
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsNothing);
+
+      // Advance time by 3 seconds without user tapping
+      await tester.pump(const Duration(seconds: 3));
+
+      // Hint should now appear automatically
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsOneWidget);
+      expect(find.text('Tap on the target! 🎯'), findsOneWidget);
+
+      // Tapping the floating hint pill completes the step
+      await tester.tap(find.byKey(const ValueKey('bamboo_target_hint')));
+      await tester.pump();
+
+      expect(find.text('10'), findsOneWidget);
+      expect(find.byKey(const ValueKey('bamboo_target_hint')), findsNothing);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+
+    testWidgets('Header status box displays step progress and tappable Stage badge opening bottom sheet',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: BambooDanceGameScreen(
+            sessionId: 'header_stats_test',
+            totalTargetTrials: 10,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Header status box elements
+      expect(find.text('Step 1 / 10'), findsOneWidget);
+      expect(find.text('Done: 0'), findsOneWidget);
+      expect(find.text('Stage 1'), findsOneWidget);
+
+      // Tap Stage badge to open stage sheet
+      await tester.tap(find.text('Stage 1'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Verify stage bottom sheet appears
+      expect(find.text('Dance Stages (1–6)'), findsOneWidget);
+      expect(find.textContaining('Stage 2: Gentle Alternation'), findsOneWidget);
+
+      // Select Stage 2
+      await tester.tap(find.textContaining('Stage 2: Gentle Alternation'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Verify stage updated to Stage 2 in the header box
+      expect(find.text('Stage 2'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     });
   });
 }

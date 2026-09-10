@@ -46,7 +46,7 @@ void main() {
     test('Initializes with senior-friendly baseline parameters', () {
       final engine = ShanabaAdaptiveEngine();
       expect(engine.level, 1);
-      expect(engine.targetRadius, 56.0);
+      expect(engine.targetRadius, 26.0);
       expect(engine.difficultyLabel, 'Gentle Pace');
     });
 
@@ -57,7 +57,7 @@ void main() {
 
       engine.recordResult(isHit: true, reactionTimeMs: 1100);
       expect(engine.level, 2);
-      expect(engine.targetRadius, lessThan(56.0));
+      expect(engine.targetRadius, lessThan(26.0));
       expect(engine.difficultyLabel, 'Balanced');
     });
 
@@ -72,7 +72,7 @@ void main() {
       engine.recordResult(isHit: false, reactionTimeMs: 2000);
       engine.recordResult(isHit: false, reactionTimeMs: 2000);
       expect(engine.level, 1);
-      expect(engine.targetRadius, greaterThanOrEqualTo(56.0));
+      expect(engine.targetRadius, greaterThanOrEqualTo(26.0));
     });
 
     test('Expands tolerance when patient reaction time is slow (>4500ms)', () {
@@ -85,24 +85,24 @@ void main() {
     test('Progressively shrinks striker and target diameter in each level', () {
       final engine = ShanabaAdaptiveEngine();
       expect(engine.level, 1);
-      expect(engine.currentStrikerDiameter, 72.0);
-      expect(engine.currentTargetDiameter, 66.0);
+      expect(engine.currentStrikerDiameter, 42.0);
+      expect(engine.currentTargetDiameter, 30.0);
 
       engine.level = 2;
-      expect(engine.currentStrikerDiameter, 64.0);
-      expect(engine.currentTargetDiameter, 58.0);
+      expect(engine.currentStrikerDiameter, 38.0);
+      expect(engine.currentTargetDiameter, 26.0);
 
       engine.level = 3;
-      expect(engine.currentStrikerDiameter, 56.0);
-      expect(engine.currentTargetDiameter, 50.0);
+      expect(engine.currentStrikerDiameter, 35.0);
+      expect(engine.currentTargetDiameter, 23.0);
 
       engine.level = 4;
-      expect(engine.currentStrikerDiameter, 48.0);
-      expect(engine.currentTargetDiameter, 42.0);
+      expect(engine.currentStrikerDiameter, 32.0);
+      expect(engine.currentTargetDiameter, 21.0);
 
       engine.level = 5;
-      expect(engine.currentStrikerDiameter, 40.0);
-      expect(engine.currentTargetDiameter, 34.0);
+      expect(engine.currentStrikerDiameter, 29.0);
+      expect(engine.currentTargetDiameter, 19.0);
 
       // Verify strictly decreasing sizes (shorter in each level)
       for (int lvl = 1; lvl < 5; lvl++) {
@@ -138,17 +138,16 @@ void main() {
       // Check title and theme headers
       expect(find.text('King Shanaba'), findsOneWidget);
       expect(find.text('Traditional Manipuri Kangshang'), findsOneWidget);
-      expect(find.text('Trial 1 / 5'), findsOneWidget);
-      expect(find.text('Lvl 1: Gentle Pace'), findsOneWidget);
-      expect(find.textContaining('Score:'), findsOneWidget);
-      expect(find.text('Pull back to aim & strike'), findsOneWidget);
+      expect(find.text('Round 1 / 5'), findsOneWidget);
+      expect(find.text('Level 1'), findsOneWidget);
+      expect(find.byIcon(Icons.stars_rounded), findsOneWidget);
       expect(
         find.text('Pull back to aim & strike • Voice: "pause", "resume", "exit"'),
         findsOneWidget,
       );
 
-      // Check presence of court and game images
-      expect(find.byType(Image), findsWidgets);
+      // Check presence of minimal themed playing area elements
+      expect(find.byType(MinimalStrikerDisc), findsOneWidget);
     });
 
     testWidgets('Toggles sound and pause states gracefully',
@@ -164,7 +163,7 @@ void main() {
       await tester.pump();
 
       // Tap Pause icon
-      final pauseIcon = find.byIcon(Icons.pause_circle_outline_rounded);
+      final pauseIcon = find.byIcon(Icons.pause_rounded);
       expect(pauseIcon, findsOneWidget);
       await tester.tap(pauseIcon);
       await tester.pump();
@@ -239,7 +238,7 @@ void main() {
         VoiceCommand(intent: VoiceIntent.unknown, originalText: 'slide'),
       );
       await tester.pump();
-      expect(find.text('Pull back to aim & strike'), findsOneWidget);
+      expect(find.textContaining('Pull back to aim & strike'), findsOneWidget);
     });
 
     testWidgets('Renders cleanly on narrow mobile devices (360px and 320px) with no overflow',

@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -11,7 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:patient/controllers/voice_command_controller.dart';
 import 'package:patient/models/voice_command.dart';
-import 'package:patient/widgets/voice_status_indicator.dart';
+import 'package:patient/widgets/animated_fragmented_divider.dart';
+import 'package:patient/widgets/game_completion_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Game phases during a trial
@@ -20,6 +22,7 @@ enum PatternGamePhase {
   memorize,
   recall,
   feedback,
+  completed,
 }
 
 /// Difficulty configuration for levels 1 through 10
@@ -242,19 +245,27 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   // Theme Palette Definitions
   static const Color darkGreen = Color(0xFF214E3B);
   static const Color primarySage = Color(0xFF4A7C59);
-  static const Color softBackground = Color(0xFFF8F5EC);
   static const Color cardWhite = Color(0xFFFFFFFF);
   static const Color borderGrey = Color(0xFFE0E8E1);
   static const Color textDark = Color(0xFF2C3E35);
   static const Color textGrey = Color(0xFF66736C);
   static const Color cream = Color(0xFFEDE7D7);
   static const Color successGreen = Color(0xFF2E7D32);
-  static const Color alertSoftRed = Color(0xFFD32F2F);
-  static const Color amberAccent = Color(0xFFE67E22);
+  static const Color darkRed = Color(0xFF6B2D2D); // Deep forest red matching darkGreen
+  static const Color softRedBorder = Color(0xFF9E4D4D); // Soft warm red border matching primarySage
+  static const Color screenBg = Color(0xFFF0F4F8);
+  static const Color navBarBg = Color(0xFFEAF2F8); // Light blue nav surface matching Bamboo Dance
+  static const Color primaryNavy = Color(0xFF1E293B);
+  static const Color slateBorder = Color(0xFFE2E8F0);
+  static const Color peachAccent = Color(0xFFEAA083);
+  static const Color pinkAccent = Color(0xFFE89BA6);
+
+  bool _isSoundEnabled = true;
 
   // Persistence keys
   static const String _prefKeyLevel = 'smriti_pattern_memory_level';
   static const String _prefKeyBestStreak = 'smriti_pattern_memory_best_streak';
+  static const String _prefKeyHighScore = 'smriti_pattern_memory_high_score';
   static const String _prefKeyMLSessions = 'smriti_pattern_ml_training_sessions';
 
   // Services & Audio
@@ -271,9 +282,11 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   int _currentLevel = 1;
   int _correctStreak = 0;
   int _bestStreak = 0;
+  int _highScore = 0;
   int _currentTrial = 1;
   int _completedCount = 0;
   int _correctCount = 0;
+  int get _score => _correctCount * 30 * _currentLevel;
 
   PatternGamePhase _currentPhase = PatternGamePhase.countdown;
   int _countdownNumber = 3;
@@ -281,10 +294,18 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   // Pattern data
   Set<int> _targetTileIndices = {};
   final Set<int> _selectedTileIndices = {};
+  final Set<int> _wrongTileIndices = {};
   int? _lastWrongTileIndex;
 
   Timer? _gameTimer;
+  Timer? _recallTimer;
   DateTime? _recallStartTime;
+
+  /// Relaxed recall duration for senior care (hidden, never displayed to prevent time anxiety)
+  int get _relaxedRecallTimeoutSeconds {
+    if (_currentConfig.gridSize >= 5) return 30;
+    return 25;
+  }
 
   // Detailed trial telemetry collected for ML model training
   final List<Map<String, dynamic>> _sessionTrialLogs = [];
@@ -328,6 +349,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   void dispose() {
     VoiceCommandController.instance.unregisterGame();
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
     _progressController.dispose();
     _audioPlayer.dispose();
     _telemetryService.dispose();
@@ -337,6 +359,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   void pauseGame() {
     if (_isPaused) return;
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
     _progressController.stop();
     setState(() {
       _isPaused = true;
@@ -361,12 +384,14 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       final prefs = await SharedPreferences.getInstance();
       final savedLevel = prefs.getInt(_prefKeyLevel) ?? 1;
       final savedBestStreak = prefs.getInt(_prefKeyBestStreak) ?? 0;
+      final savedHighScore = prefs.getInt(_prefKeyHighScore) ?? 0;
 
       if (mounted) {
         setState(() {
           _currentLevel = savedLevel.clamp(1, 10);
           _initialSessionLevel = _currentLevel;
           _bestStreak = savedBestStreak;
+          _highScore = savedHighScore;
         });
         _startCountdown();
       }
@@ -449,11 +474,22 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   /// Crisp audio & haptic feedback on tile tap
   Future<void> _playTapSound({bool isError = false}) async {
     try {
+      // Haptic feedback provides physical tactile response
       if (isError) {
-        HapticFeedback.mediumImpact();
+        // Distinct vibration for wrong tile tap (firm impact + vibration pulse)
+        HapticFeedback.heavyImpact();
+        HapticFeedback.vibrate();
+      } else {
+        // Gentle subtle tap for correct guess
+        HapticFeedback.lightImpact();
+      }
+
+      // If sound is turned off, strictly avoid any system click or audio asset playback
+      if (!_isSoundEnabled) return;
+
+      if (isError) {
         SystemSound.play(SystemSoundType.alert);
       } else {
-        HapticFeedback.lightImpact();
         SystemSound.play(SystemSoundType.click);
       }
 
@@ -473,6 +509,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   /// Phase 1: 3-2-1 gentle countdown before pattern shows
   void _startCountdown() {
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
     _progressController.stop();
 
     final config = _currentConfig;
@@ -487,6 +524,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     setState(() {
       _targetTileIndices = pattern;
       _selectedTileIndices.clear();
+      _wrongTileIndices.clear();
       _lastWrongTileIndex = null;
       _currentPhase = PatternGamePhase.countdown;
       _countdownNumber = 3;
@@ -511,11 +549,13 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   /// Phase 2: Memorize highlighted pattern tiles
   void _startMemorizePhase() {
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
 
     final config = _currentConfig;
 
     setState(() {
       _selectedTileIndices.clear();
+      _wrongTileIndices.clear();
       _lastWrongTileIndex = null;
       _currentPhase = PatternGamePhase.memorize;
     });
@@ -534,13 +574,21 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   /// Phase 3: Recall - user taps the memorized tiles
   void _startRecallPhase() {
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
     _progressController.stop();
 
     setState(() {
       _currentPhase = PatternGamePhase.recall;
       _recallStartTime = DateTime.now();
       _selectedTileIndices.clear();
+      _wrongTileIndices.clear();
       _lastWrongTileIndex = null;
+    });
+
+    // Hidden, relaxed solving timer for senior care (not displayed to prevent time anxiety)
+    _recallTimer = Timer(Duration(seconds: _relaxedRecallTimeoutSeconds), () {
+      if (!mounted || _currentPhase != PatternGamePhase.recall) return;
+      _handleTrialCompletion(isSuccess: false, timedOut: true);
     });
   }
 
@@ -548,6 +596,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   void _onTileTap(int index) {
     if (_currentPhase != PatternGamePhase.recall) return;
     if (_selectedTileIndices.contains(index)) return;
+    if (_wrongTileIndices.contains(index)) return;
 
     final isCorrect = _targetTileIndices.contains(index);
 
@@ -559,49 +608,59 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
 
       // Check if all pattern tiles have been found
       if (_selectedTileIndices.length == _targetTileIndices.length) {
+        _recallTimer?.cancel();
         _handleTrialCompletion(isSuccess: true);
       }
     } else {
-      // Wrong tile tapped
+      // Wrong tile tapped: provide distinct vibration & sound, highlight wrong tile in matching soft red,
+      // and transition to feedback phase then advance to the next pattern!
       _playTapSound(isError: true);
       setState(() {
+        _wrongTileIndices.add(index);
         _lastWrongTileIndex = index;
       });
+      _recallTimer?.cancel();
       _handleTrialCompletion(isSuccess: false);
     }
   }
 
   /// Handle trial outcome & silent adaptive difficulty adjustment
-  void _handleTrialCompletion({required bool isSuccess}) {
+  void _handleTrialCompletion({required bool isSuccess, bool timedOut = false}) {
     _gameTimer?.cancel();
+    _recallTimer?.cancel();
     final now = DateTime.now();
     final reactionTimeMs = _recallStartTime != null
         ? now.difference(_recallStartTime!).inMilliseconds
         : 0;
 
+    final bool isCleanSuccess = isSuccess && _wrongTileIndices.isEmpty;
+
     setState(() {
       _currentPhase = PatternGamePhase.feedback;
       _completedCount++;
-      if (isSuccess) {
+      if (isCleanSuccess) {
         _correctCount++;
         _correctStreak++;
         if (_correctStreak > _bestStreak) {
           _bestStreak = _correctStreak;
         }
+      } else if (isSuccess) {
+        _correctCount++;
+        _correctStreak = 0;
       } else {
         _correctStreak = 0;
       }
     });
 
-    // Adaptive difficulty logic: promote after 2 correct, demote after error
-    if (isSuccess) {
+    // Adaptive difficulty logic: promote after 2 clean correct, demote after unassisted error
+    if (isCleanSuccess) {
       if (_correctStreak >= 2) {
         if (_currentLevel < 10) {
           _currentLevel++;
           _correctStreak = 0;
         }
       }
-    } else {
+    } else if (!isSuccess) {
       if (_currentLevel > 1) {
         _currentLevel--;
       }
@@ -618,7 +677,10 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       'pattern_count': _currentConfig.patternCount,
       'target_indices': _targetTileIndices.toList(),
       'selected_indices': _selectedTileIndices.toList(),
+      'wrong_indices': _wrongTileIndices.toList(),
       'is_correct': isSuccess,
+      'is_clean_correct': isCleanSuccess,
+      'timed_out': timedOut,
       'reaction_time_ms': reactionTimeMs,
       'timestamp': now.toUtc().toIso8601String(),
     };
@@ -637,17 +699,30 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
     _telemetryService.sendTelemetry(telemetry);
 
-    // Smooth transition to next trial
-    final delayMs = isSuccess ? 800 : 1300;
+    // Smooth transition to next trial or session conclusion
+    final isFinalTrial = _currentTrial >= widget.totalTrials;
+    final delayMs = isSuccess ? 800 : 1500;
     _gameTimer = Timer(Duration(milliseconds: delayMs), () {
       if (!mounted) return;
 
-      if (_currentTrial < widget.totalTrials) {
+      if (!isFinalTrial) {
         setState(() {
           _currentTrial++;
         });
         _startCountdown();
       } else {
+        _gameTimer?.cancel();
+        _recallTimer?.cancel();
+        _progressController.stop();
+
+        setState(() {
+          _currentPhase = PatternGamePhase.completed;
+          _targetTileIndices.clear();
+          _selectedTileIndices.clear();
+          _wrongTileIndices.clear();
+          _lastWrongTileIndex = null;
+        });
+
         _recordMLSessionData();
         _showCompletionDialog();
       }
@@ -656,6 +731,10 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
 
   /// Reset session stats and continue from current difficulty preset
   void _restartSession() {
+    _gameTimer?.cancel();
+    _recallTimer?.cancel();
+    _progressController.stop();
+
     _sessionStartTime = DateTime.now();
     _initialSessionLevel = _currentLevel;
     _sessionTrialLogs.clear();
@@ -664,86 +743,74 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       _completedCount = 0;
       _correctCount = 0;
       _correctStreak = 0;
+      _selectedTileIndices.clear();
+      _wrongTileIndices.clear();
+      _lastWrongTileIndex = null;
     });
     _startCountdown();
   }
 
-  /// Minimal completion dialog
-  void _showCompletionDialog() {
-    showDialog(
+  /// Unified game completion dialog matching the Smriti UI theme
+  void _showCompletionDialog() async {
+    _gameTimer?.cancel();
+    _recallTimer?.cancel();
+    _progressController.stop();
+    final reactionTimes = _sessionTrialLogs
+        .map((t) => t['reaction_time_ms'] as int? ?? 0)
+        .where((rt) => rt > 0)
+        .toList();
+    final avgRt = reactionTimes.isNotEmpty
+        ? (reactionTimes.reduce((a, b) => a + b) / reactionTimes.length).round()
+        : 0;
+
+    final accuracy = widget.totalTrials > 0
+        ? ((_correctCount / widget.totalTrials) * 100).round()
+        : 100;
+
+    final sessionScore = _correctCount * 30 * _currentLevel;
+    if (sessionScore > _highScore) {
+      _highScore = sessionScore;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_prefKeyHighScore, _highScore);
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    showGameCompletionDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: cardWhite,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: primarySage, size: 28),
-            SizedBox(width: 10),
-            Text(
-              'Session Complete',
-              style: TextStyle(
-                color: textDark,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+      finalScore: sessionScore,
+      bestScore: _highScore,
+      metrics: [
+        GameCompletionMetric(
+          icon: Icons.check_circle_outline_rounded,
+          label: 'Accuracy',
+          value: '$accuracy%',
+          iconColor: GameCompletionDialog.darkGreen,
         ),
-        content: Text(
-          'Level $_currentLevel • $_correctCount of ${widget.totalTrials} correct',
-          style: const TextStyle(
-            color: textDark,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+        GameCompletionMetric(
+          icon: Icons.speed_rounded,
+          label: 'Avg Speed',
+          value: '${(avgRt / 1000).toStringAsFixed(1)}s',
+          iconColor: GameCompletionDialog.sageGreen,
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _playTapSound();
-              Navigator.of(context).pop();
-              if (mounted && Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text(
-              'Home',
-              style: TextStyle(
-                color: textGrey,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: darkGreen,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            ),
-            onPressed: () {
-              _playTapSound();
-              Navigator.of(context).pop();
-              _restartSession();
-            },
-            child: const Text(
-              'Play Again',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ],
-      ),
+        GameCompletionMetric(
+          icon: Icons.local_fire_department_rounded,
+          label: 'Best Streak',
+          value: '$_bestStreak',
+          iconColor: GameCompletionDialog.darkGreen,
+        ),
+      ],
+      onHome: () {
+        _playTapSound();
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/home', (route) => false);
+      },
+      onPlayAgain: () {
+        _playTapSound();
+        _restartSession();
+      },
     );
   }
 
@@ -751,109 +818,116 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   void _openDifficultySheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: cardWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Difficulty Preset (1–10)',
-                          style: TextStyle(
-                            color: textDark,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, color: textGrey),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: 10,
-                        itemBuilder: (context, index) {
-                          final lvl = index + 1;
-                          final cfg = PatternDifficultyConfig.getForLevel(lvl);
-                          final isSelected = lvl == _currentLevel;
-
-                          return ListTile(
-                            onTap: () {
-                              setSheetState(() {});
-                              setState(() {
-                                _currentLevel = lvl;
-                                _correctStreak = 0;
-                              });
-                              _savePreferences();
-                              Navigator.of(context).pop();
-                              _startCountdown();
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            tileColor: isSelected
-                                ? primarySage.withValues(alpha: 0.12)
-                                : null,
-                            leading: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: isSelected
-                                  ? primarySage
-                                  : borderGrey.withValues(alpha: 0.6),
-                              child: Text(
-                                '$lvl',
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.90),
+              child: StatefulBuilder(
+                builder: (context, setSheetState) {
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Difficulty Preset (1–10)',
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : textDark,
+                                  color: textDark,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
                                 ),
                               ),
-                            ),
-                            title: Text(
-                              'Level $lvl (${cfg.gridSize}×${cfg.gridSize})',
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
-                                color: textDark,
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: textGrey),
+                                onPressed: () => Navigator.of(context).pop(),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Flexible(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: 10,
+                              itemBuilder: (context, index) {
+                                final lvl = index + 1;
+                                final cfg = PatternDifficultyConfig.getForLevel(lvl);
+                                final isSelected = lvl == _currentLevel;
+
+                                return ListTile(
+                                  onTap: () {
+                                    setSheetState(() {});
+                                    setState(() {
+                                      _currentLevel = lvl;
+                                      _correctStreak = 0;
+                                    });
+                                    _savePreferences();
+                                    Navigator.of(context).pop();
+                                    _startCountdown();
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  tileColor: isSelected
+                                      ? primarySage.withValues(alpha: 0.12)
+                                      : null,
+                                  leading: CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: isSelected
+                                        ? primarySage
+                                        : borderGrey.withValues(alpha: 0.6),
+                                    child: Text(
+                                      '$lvl',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : textDark,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    'Level $lvl (${cfg.gridSize}×${cfg.gridSize})',
+                                    style: TextStyle(
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                      color: textDark,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: textGrey,
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: primarySage,
+                                        )
+                                      : null,
+                                );
+                              },
                             ),
-                            subtitle: Text(
-                              '${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: textGrey,
-                              ),
-                            ),
-                            trailing: isSelected
-                                ? const Icon(
-                                    Icons.check_circle_rounded,
-                                    color: primarySage,
-                                  )
-                                : null,
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );
@@ -862,73 +936,396 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: softBackground,
-      appBar: AppBar(
-        backgroundColor: softBackground,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: textDark),
-          onPressed: () {
-            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+      backgroundColor: screenBg,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              children: [
+                _buildAmbientDecorations(constraints),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTopBar(),
+                    const AnimatedFragmentedDivider(),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildTopStatusHeader(),
+                            const SizedBox(height: 8),
+                            _buildPhaseBar(),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: Center(
+                                child: LayoutBuilder(
+                                  builder: (context, gridConstraints) {
+                                    final available = min(
+                                        gridConstraints.maxWidth, gridConstraints.maxHeight);
+                                    final gridBoxSize =
+                                        (available - 8).clamp(180.0, 360.0);
+
+                                    return SizedBox(
+                                      width: gridBoxSize,
+                                      height: gridBoxSize,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          _buildGridArea(),
+                                          if (_currentPhase == PatternGamePhase.countdown)
+                                            _buildCountdownOverlay(),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildFooterInstruction(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isPaused) _buildPauseOverlay(),
+              ],
+            );
           },
         ),
-        title: const Text(
-          'Pattern Memory',
-          style: TextStyle(
-            color: textDark,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          const VoiceStatusIndicator(compact: true),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Difficulty Settings',
-            icon: const Icon(Icons.tune_rounded, color: darkGreen),
-            onPressed: _openDifficultySheet,
+      ),
+    );
+  }
+
+  /// Top Nav Bar matching Bamboo Dance game reference
+  Widget _buildTopBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: navBarBg,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: primaryNavy.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildTopStatusHeader(),
-              const SizedBox(height: 8),
-              _buildPhaseBar(),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Center(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final available =
-                          min(constraints.maxWidth, constraints.maxHeight);
-                      final gridBoxSize = (available - 8).clamp(180.0, 360.0);
+      child: Row(
+        children: [
+          _buildNavBackButton(),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Center(
+              child: _buildNavTitleWithUnderline(),
+            ),
+          ),
+          const SizedBox(width: 6),
+          _buildNavRightControls(),
+        ],
+      ),
+    );
+  }
 
-                      return SizedBox(
-                        width: gridBoxSize,
-                        height: gridBoxSize,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            _buildGridArea(),
-                            if (_currentPhase == PatternGamePhase.countdown)
-                              _buildCountdownOverlay(),
-                          ],
-                        ),
-                      );
-                    },
+  Widget _buildNavBackButton() {
+    return Semantics(
+      button: true,
+      label: 'Exit to Home',
+      child: Tooltip(
+        message: 'Exit to Home',
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: slateBorder,
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              color: primaryNavy,
+              size: 19,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavTitleWithUnderline() {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Pattern Memory',
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: TextStyle(
+              color: primaryNavy,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              fontStyle: FontStyle.italic,
+              fontFamily: 'Caveat',
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 28,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: peachAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Container(
+                width: 28,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: pinkAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavRightControls() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Sound toggle button with edge lighting effect
+        Semantics(
+          button: true,
+          label: 'Toggle Sound',
+          child: Tooltip(
+            message: _isSoundEnabled ? 'Mute' : 'Unmute',
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _isSoundEnabled = !_isSoundEnabled;
+                });
+                if (!_isSoundEnabled) {
+                  _audioPlayer.stop();
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _isSoundEnabled ? const Color(0xFFE8F4FD) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isSoundEnabled ? const Color(0xFFB3D7F5) : slateBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    if (_isSoundEnabled)
+                      BoxShadow(
+                        color: const Color(0xFF90CAF9).withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                  ],
+                ),
+                child: Icon(
+                  _isSoundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                  color: _isSoundEnabled ? primaryNavy : const Color(0xFF94A3B8),
+                  size: 19,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        // Pause / Resume button replacing setting option
+        Semantics(
+          button: true,
+          label: 'Pause or Resume Game',
+          child: Tooltip(
+            message: _isPaused ? 'Resume' : 'Pause',
+            child: InkWell(
+              onTap: () {
+                if (_isPaused) {
+                  resumeGame();
+                } else {
+                  pauseGame();
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _isPaused ? const Color(0xFFFFF3E0) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isPaused ? const Color(0xFFFFAB91) : slateBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  color: _isPaused ? const Color(0xFFE65100) : primaryNavy,
+                  size: 19,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPauseOverlay() {
+    return Container(
+      color: Colors.black.withValues(alpha: 0.50),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 24.0),
+          decoration: BoxDecoration(
+            color: cardWhite,
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.pause_circle_filled_rounded,
+                  size: 48.0, color: primarySage),
+              const SizedBox(height: 12.0),
+              const Text(
+                'Game Paused',
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w700,
+                  color: textDark,
+                ),
+              ),
+              const SizedBox(height: 6.0),
+              const Text(
+                'Say "Resume" or tap below.',
+                style: TextStyle(fontSize: 14.0, color: textGrey),
+              ),
+              const SizedBox(height: 18.0),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primarySage,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 22.0, vertical: 12.0),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text(
+                  'Resume Session',
+                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                ),
+                onPressed: resumeGame,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmbientDecorations(BoxConstraints constraints) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Stack(
+          children: [
+            Positioned(
+              top: 70,
+              right: -30,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      peachAccent.withValues(alpha: 0.18),
+                      peachAccent.withValues(alpha: 0.0),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              _buildFooterInstruction(),
-            ],
-          ),
+            ),
+            Positioned(
+              bottom: 70,
+              left: -35,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      pinkAccent.withValues(alpha: 0.16),
+                      pinkAccent.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: constraints.maxHeight * 0.40,
+              left: -25,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF90CAF9).withValues(alpha: 0.18),
+                      const Color(0xFF90CAF9).withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -937,94 +1334,147 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   /// Top status header
   Widget _buildTopStatusHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(14.0, 4.0, 14.0, 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: cardWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderGrey, width: 1.5),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: slateBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: primaryNavy.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // 1. Trial progress
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.psychology_rounded,
-                  color: primarySage, size: 22),
-              const SizedBox(width: 8),
+                  color: darkGreen, size: 18),
+              const SizedBox(width: 6),
               Text(
                 'Trial $_currentTrial / ${widget.totalTrials}',
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textDark,
+                  color: primaryNavy,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
-                'Done: $_completedCount',
+                '($_completedCount)',
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
                   color: primarySage,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
+
+          // 2. Tappable Level badge
           InkWell(
             onTap: _openDifficultySheet,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: primarySage.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
+                color: darkGreen.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: primarySage.withValues(alpha: 0.3),
+                  color: darkGreen.withValues(alpha: 0.22),
                   width: 1,
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.bolt_rounded, color: primarySage, size: 16),
+                  const Icon(Icons.bolt_rounded, color: darkGreen, size: 14),
                   const SizedBox(width: 3),
                   Text(
                     'Level $_currentLevel',
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: primarySage,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: darkGreen,
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 4),
                   Row(
                     children: [
                       Icon(
                         _correctStreak >= 1
                             ? Icons.circle
                             : Icons.circle_outlined,
-                        size: 7,
-                        color: primarySage,
+                        size: 6,
+                        color: darkGreen,
                       ),
                       const SizedBox(width: 2),
                       Icon(
                         _correctStreak >= 2
                             ? Icons.circle
                             : Icons.circle_outlined,
-                        size: 7,
-                        color: primarySage,
+                        size: 6,
+                        color: darkGreen,
                       ),
                     ],
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // 3. Unified Points box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8E7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFFD54F).withValues(alpha: 0.65),
+                width: 1.1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFA000).withValues(alpha: 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.stars_rounded,
+                  color: Color(0xFFF57C00),
+                  size: 15,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$_score',
+                  style: const TextStyle(
+                    color: primaryNavy,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Text(
+                  'pts',
+                  style: TextStyle(
+                    color: textGrey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1141,25 +1591,35 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     final isMemorizing = _currentPhase == PatternGamePhase.memorize;
     final isRecall = _currentPhase == PatternGamePhase.recall;
     final isFeedback = _currentPhase == PatternGamePhase.feedback;
+    final isCompleted = _currentPhase == PatternGamePhase.completed;
     final isSelected = _selectedTileIndices.contains(index);
-    final isWrongTap = _lastWrongTileIndex == index;
+    final isWrongTap = _wrongTileIndices.contains(index);
     final double borderRadius = gridSize == 5 ? 10.0 : 14.0;
 
     // Target rotation angle (in radians)
-    // Front face (0.0 rad) shows green target / checkmark
+    // Front face (0.0 rad) shows green target / wrong red / neutral card
     // Back face (pi rad) shows neutral blank state during recall
     double targetAngle = 0.0;
-    if (isTarget) {
+    if (isCompleted) {
+      targetAngle = 0.0;
+    } else if (isTarget) {
       if (isRecall && !isSelected) {
         targetAngle = pi; // Flipped to back face waiting for user tap
       } else {
         targetAngle = 0.0; // Flipped to front face during memorize, feedback, or when correctly tapped
       }
+    } else {
+      // Non-target tile
+      if (isRecall && !isWrongTap) {
+        targetAngle = pi; // Blank neutral state waiting for user tap
+      } else {
+        targetAngle = 0.0; // Front face (neutral white or error state)
+      }
     }
 
     return Semantics(
-      button: isRecall,
-      enabled: isRecall,
+      button: isRecall && !isCompleted,
+      enabled: isRecall && !isCompleted,
       label: 'Tile ${index + 1}',
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: targetAngle, end: targetAngle),
@@ -1184,6 +1644,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                     isWrongTap: isWrongTap,
                     isFeedback: isFeedback,
                     isRecall: isRecall,
+                    isCompleted: isCompleted,
                   )
                 : Transform(
                     transform: Matrix4.identity()..rotateY(pi), // Mirror correction for back face
@@ -1200,7 +1661,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     );
   }
 
-  /// Front Face (Target pattern / Success / Error state)
+  /// Front Face (Target pattern / Success / Error state / Clean completed)
   Widget _buildFrontFace({
     required int index,
     required double borderRadius,
@@ -1210,52 +1671,47 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     required bool isWrongTap,
     required bool isFeedback,
     required bool isRecall,
+    required bool isCompleted,
   }) {
     Color tileColor = cardWhite;
     Border border = Border.all(color: borderGrey, width: 2.0);
     Widget? icon;
 
-    if (isMemorizing && isTarget) {
+    if (isCompleted) {
+      tileColor = cardWhite;
+      border = Border.all(color: borderGrey, width: 2.0);
+      icon = null;
+    } else if (isMemorizing && isTarget) {
       tileColor = darkGreen;
       border = Border.all(color: primarySage, width: 3.0);
       icon = null;
     } else if (isSelected && isTarget) {
-      tileColor = successGreen;
-      border = Border.all(color: darkGreen, width: 3.0);
-      icon = const Icon(
-        Icons.check_rounded,
-        color: Colors.white,
-        size: 26,
-      );
+      tileColor = darkGreen;
+      border = Border.all(color: primarySage, width: 3.0);
+      icon = null;
     } else if (isWrongTap) {
-      tileColor = alertSoftRed;
-      border = Border.all(color: Colors.red.shade900, width: 3.0);
-      icon = const Icon(
-        Icons.close_rounded,
-        color: Colors.white,
-        size: 26,
-      );
+      tileColor = darkRed;
+      border = Border.all(color: softRedBorder, width: 3.0);
+      icon = null; // Clean face with no cross mark
     } else if (isFeedback && isTarget && !isSelected) {
       tileColor = cream;
-      border = Border.all(color: amberAccent, width: 2.5);
-      icon = const Icon(
-        Icons.help_outline_rounded,
-        color: amberAccent,
-        size: 22,
-      );
+      border = Border.all(color: primarySage, width: 2.5);
+      icon = null;
     }
+
+    final bool canTap = isRecall && !isWrongTap && !isSelected && !isCompleted;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: isRecall ? () => _onTileTap(index) : null,
+        onTap: canTap ? () => _onTileTap(index) : null,
         borderRadius: BorderRadius.circular(borderRadius),
         child: Container(
           decoration: BoxDecoration(
             color: tileColor,
             borderRadius: BorderRadius.circular(borderRadius),
             border: border,
-            boxShadow: (isMemorizing && isTarget)
+            boxShadow: (isMemorizing && isTarget) || (isSelected && isTarget)
                 ? [
                     BoxShadow(
                       color: darkGreen.withValues(alpha: 0.35),
@@ -1263,13 +1719,21 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                       spreadRadius: 1,
                     ),
                   ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                : isWrongTap
+                    ? [
+                        BoxShadow(
+                          color: darkRed.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
           ),
           child: Center(
             child: icon ?? const SizedBox.shrink(),
@@ -1322,22 +1786,43 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       case PatternGamePhase.recall:
         final remaining =
             _currentConfig.patternCount - _selectedTileIndices.length;
-        message = 'Tap the pattern tiles ($remaining left)';
+        message = remaining > 0
+            ? 'Tap the pattern tiles ($remaining left)'
+            : 'Pattern completed!';
         iconData = Icons.touch_app_rounded;
         break;
       case PatternGamePhase.feedback:
-        message = _lastWrongTileIndex != null
-            ? 'Reviewing missed pattern...'
-            : 'Next pattern...';
-        iconData = Icons.refresh_rounded;
+        final isFinalTrial = _currentTrial >= widget.totalTrials;
+        if (isFinalTrial) {
+          message = 'Completing session...';
+          iconData = Icons.emoji_events_rounded;
+        } else if (_lastWrongTileIndex != null) {
+          message = 'Reviewing pattern...';
+          iconData = Icons.visibility_rounded;
+        } else {
+          message = 'Next pattern...';
+          iconData = Icons.refresh_rounded;
+        }
+        break;
+      case PatternGamePhase.completed:
+        message = 'Game completed! Well done.';
+        iconData = Icons.emoji_events_rounded;
         break;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
       decoration: BoxDecoration(
-        color: cream.withValues(alpha: 0.6),
+        color: cardWhite,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: slateBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: primaryNavy.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

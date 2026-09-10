@@ -1,21 +1,58 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
+import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
 import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
+import 'screens/folklore_list_screen.dart';
 import 'services/reminder_service.dart';
+import 'services/streak_service.dart';
 import 'services/voice_service.dart';
 import 'widgets/animated_fragmented_divider.dart';
 import 'widgets/animated_star_badge.dart';
+import 'widgets/daily_streak_badge.dart';
+import 'widgets/streak_celebration_overlay.dart';
 import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
 void main() {
   runApp(const SmritiApp());
+}
+
+Route<T> buildSmoothGameRoute<T>(Widget page) {
+  return PageRouteBuilder<T>(
+    transitionDuration: const Duration(milliseconds: 460),
+    reverseTransitionDuration: const Duration(milliseconds: 380),
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
+            child: child,
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class SmritiApp extends StatefulWidget {
@@ -55,7 +92,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
   void _registerVoiceRoutes() {
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.openBlinkingGame,
-      () => _openRoute(const BlinkGameScreen()),
+      () => _openRoute(const PictureRecognitionGameScreen()),
     );
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.openMemoryGame,
@@ -66,6 +103,17 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       () => _openRoute(const KingShanabaGameScreen()),
     );
     for (final alias in [
+      'picture recognition',
+      'picture recognition game',
+      'picture game',
+      'pictures game',
+      'recognition game',
+      'find pictures',
+      'find items',
+      'ছবি চিনাক্তকৰণ',
+      'ছবি খেল',
+      'ছবি',
+      'चित्र पहचान',
       'blinking game',
       'blink game',
       'blinking',
@@ -74,7 +122,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     ]) {
       VoiceCommandController.instance.registerGameRoute(
         alias,
-        () => _openRoute(const BlinkGameScreen()),
+        () => _openRoute(const PictureRecognitionGameScreen()),
       );
     }
     for (final alias in [
@@ -186,7 +234,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     final nav = _navigatorKey.currentState;
     if (nav != null) {
       nav.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => page),
+        buildSmoothGameRoute(page),
         (route) => route.isFirst,
       );
       return;
@@ -194,7 +242,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     final context = _navigatorKey.currentContext;
     if (context == null || !context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => page),
+      buildSmoothGameRoute(page),
       (route) => route.isFirst,
     );
   }
@@ -495,13 +543,29 @@ class GameHubPage extends StatefulWidget {
   State<GameHubPage> createState() => _GameHubPageState();
 }
 
-class _GameHubPageState extends State<GameHubPage> {
+class _GameHubPageState extends State<GameHubPage>
+    with TickerProviderStateMixin {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
   final bool _showRoutineSection = false;
-  bool _reminderExpanded = true;
+  bool _showReminderOverlay = false;
+  bool _hasSeenReminders = false;
+  int _selectedTabIndex = 0;
   int _currentReminderIndex = 0;
   final GlobalKey _tickKey = GlobalKey();
+  final GlobalKey<AnimatedStarBadgeState> _starBadgeKey =
+      GlobalKey<AnimatedStarBadgeState>();
+  final GlobalKey<DailyStreakBadgeState> _streakBadgeKey =
+      GlobalKey<DailyStreakBadgeState>();
+
+  int _streakCount = 1;
+  bool _isIceBreak = false;
+  bool _showingStreakIntro = false;
+  Timer? _streakCelebrationTimer;
+
+  late final AnimationController _reminderPopController;
+  late final Animation<double> _reminderScaleAnim;
+  late final Animation<double> _reminderFadeAnim;
 
   static final PatientReminder _dummyReminder = PatientReminder(
     id: '__dummy_water__',
@@ -516,7 +580,73 @@ class _GameHubPageState extends State<GameHubPage> {
   @override
   void initState() {
     super.initState();
+    _reminderPopController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _reminderScaleAnim = CurvedAnimation(
+      parent: _reminderPopController,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeInBack,
+    );
+    _reminderFadeAnim = CurvedAnimation(
+      parent: _reminderPopController,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+
     _loadReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkStreakCelebration();
+    });
+  }
+
+  @override
+  void dispose() {
+    _streakCelebrationTimer?.cancel();
+    _reminderPopController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkStreakCelebration() async {
+    final s = await StreakService.instance.getStreak();
+    final isIceBreak = await StreakService.instance.shouldShowIceBreakAnimation();
+    final shouldCelebrate = await StreakService.instance.shouldShowCelebration();
+    if (mounted) {
+      setState(() {
+        _streakCount = s;
+        _isIceBreak = isIceBreak;
+      });
+      if (shouldCelebrate) {
+        _streakCelebrationTimer = Timer(const Duration(milliseconds: 550), () {
+          if (mounted) {
+            setState(() => _showingStreakIntro = true);
+          }
+        });
+      }
+    }
+  }
+
+  void _toggleReminderOverlay() {
+    if (_showReminderOverlay) {
+      _closeReminderOverlay();
+    } else {
+      setState(() {
+        _showReminderOverlay = true;
+        _hasSeenReminders = true;
+      });
+      _reminderPopController.forward(from: 0.0);
+    }
+  }
+
+  void _closeReminderOverlay() {
+    if (_showReminderOverlay) {
+      _reminderPopController.reverse().then((_) {
+        if (mounted) {
+          setState(() => _showReminderOverlay = false);
+        }
+      });
+    }
   }
 
   Future<void> _loadReminders() async {
@@ -627,27 +757,27 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
-  void _openBlinkGame(BuildContext context) {
+  void _openPictureRecognitionGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BlinkGameScreen()),
+      buildSmoothGameRoute(const PictureRecognitionGameScreen()),
     );
   }
 
   void _openPatternGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PatternMemoryGameScreen()),
+      buildSmoothGameRoute(const PatternMemoryGameScreen()),
     );
   }
 
   void _openKingShanabaGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const KingShanabaGameScreen()),
+      buildSmoothGameRoute(const KingShanabaGameScreen()),
     );
   }
 
   void _openBambooDanceGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BambooDanceGameScreen()),
+      buildSmoothGameRoute(const BambooDanceGameScreen()),
     );
   }
 
@@ -656,28 +786,288 @@ class _GameHubPageState extends State<GameHubPage> {
     final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
     return Scaffold(
       backgroundColor: GameHubPage.screenBg,
-      // Always show bottom sheet – shows 'No reminders' when empty and expanded
-      bottomSheet: _buildReminderBottomSheet(pendingReminders),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader()),
-            const SliverToBoxAdapter(
-              child: AnimatedFragmentedDivider(),
+      extendBody: true,
+      bottomNavigationBar: _buildBottomNavigationBar(),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(pendingReminders)),
+                const SliverToBoxAdapter(
+                  child: AnimatedFragmentedDivider(),
+                ),
+                if (_showRoutineSection)
+                  SliverToBoxAdapter(child: _buildRemindersSection()),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
+                  sliver: SliverToBoxAdapter(
+                    child: _selectedTabIndex == 0
+                        ? KeyedSubtree(
+                            key: const ValueKey('games_tab'),
+                            child: _buildGamesSection(context),
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey('activities_tab'),
+                            child: _buildActivitiesScreen(),
+                          ),
+                  ),
+                ),
+              ],
             ),
-            if (_showRoutineSection)
-              SliverToBoxAdapter(child: _buildRemindersSection()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
-              sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
+          ),
+          if (_showReminderOverlay) _buildReminderOverlay(pendingReminders),
+          if (_showingStreakIntro)
+            StreakCelebrationOverlay(
+              streakCount: _streakCount,
+              targetKey: _streakBadgeKey,
+              isIceBreak: _isIceBreak,
+              onFinished: () async {
+                await StreakService.instance.markCelebrationShown();
+                if (mounted) {
+                  setState(() => _showingStreakIntro = false);
+                  _streakBadgeKey.currentState?.refreshStreak();
+                }
+              },
             ),
-          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      color: Colors.transparent,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: BottomNavigationBar(
+                  currentIndex: _selectedTabIndex,
+                  onTap: (index) => setState(() => _selectedTabIndex = index),
+              backgroundColor: Colors.transparent,
+              selectedItemColor: GameHubPage.darkGreen,
+              unselectedItemColor: const Color(0xFF7D8BA3),
+              selectedLabelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+              selectedFontSize: 12,
+              unselectedFontSize: 11,
+              type: BottomNavigationBarType.fixed,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              elevation: 0,
+              items: [
+                BottomNavigationBarItem(
+                  icon: _bottomNavIcon(
+                    icon: Icons.videogame_asset_rounded,
+                    selected: _selectedTabIndex == 0,
+                    selectedColor: const Color(0xFFE9F5D6),
+                  ),
+                  activeIcon: _bottomNavIcon(
+                    icon: Icons.videogame_asset_rounded,
+                    selected: true,
+                    selectedColor: const Color(0xFFE9F5D6),
+                  ),
+                  label: 'Games',
+                ),
+                BottomNavigationBarItem(
+                  icon: _bottomNavIcon(
+                    icon: Icons.auto_awesome_rounded,
+                    selected: _selectedTabIndex == 1,
+                    selectedColor: const Color(0xFFEDE4F7),
+                  ),
+                  activeIcon: _bottomNavIcon(
+                    icon: Icons.auto_awesome_rounded,
+                    selected: true,
+                    selectedColor: const Color(0xFFEDE4F7),
+                  ),
+                  label: 'Activities',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  ),
+);
+  }
+
+  Widget _bottomNavIcon({
+    required IconData icon,
+    required bool selected,
+    required Color selectedColor,
+  }) {
+    return AnimatedScale(
+      scale: selected ? 1.08 : 1.0,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutBack,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: selected ? selectedColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: GameHubPage.darkGreen.withValues(alpha: 0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: selected ? 20 : 18,
+          color: selected ? GameHubPage.darkGreen : const Color(0xFF7D8BA3),
         ),
       ),
     );
   }
 
-  Widget _buildReminderBottomSheet(List<PatientReminder> reminders) {
+  Widget _buildActivitiesScreen() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Activities',
+          style: TextStyle(
+            color: Color(0xFF1E3A5F),
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 26),
+        _ActivityCard(
+          delay: 80,
+          icon: Icons.mic_rounded,
+          title: 'Karaoke',
+          subtitle: 'Enjoy a calm music moment.',
+          accentColor: const Color(0xFF86D5E6),
+          glowColor: const Color(0xFF52B5D8),
+          photoTint: const Color(0xFFBFEAF8),
+          photoHighlight: const Color(0xFF8ED7F4),
+          illustration: const _MicrophoneIllustration(),
+          onTap: () {},
+        ),
+        const SizedBox(height: 22),
+        _ActivityCard(
+          delay: 220,
+          icon: Icons.auto_stories_rounded,
+          title: 'Folk Stories',
+          subtitle: 'Enjoy calm music and explore stories.',
+          accentColor: const Color(0xFFEAC4F2),
+          glowColor: const Color(0xFFD795E4),
+          photoTint: const Color(0xFFE9D9F7),
+          photoHighlight: const Color(0xFFD7B4EE),
+          illustration: const _BookIllustration(),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FolkloreListScreen()),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReminderOverlay(List<PatientReminder> reminders) {
+    final visibleReminders = reminders.where((r) => !r.isAcknowledged).toList();
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _reminderFadeAnim,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _reminderFadeAnim.value,
+                child: child,
+              );
+            },
+            child: GestureDetector(
+              onTap: _closeReminderOverlay,
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 72,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: AnimatedBuilder(
+                    animation: _reminderPopController,
+                    builder: (context, child) {
+                      return FadeTransition(
+                        opacity: _reminderFadeAnim,
+                        child: Transform.scale(
+                          alignment: Alignment.topLeft,
+                          scale: _reminderScaleAnim.value,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(-0.20, -0.10),
+                              end: Offset.zero,
+                            ).animate(_reminderScaleAnim),
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                    child: _buildReminderPopup(visibleReminders),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReminderPopup(List<PatientReminder> reminders) {
     if (_currentReminderIndex >= reminders.length) {
       _currentReminderIndex = 0;
     }
@@ -688,159 +1078,148 @@ class _GameHubPageState extends State<GameHubPage> {
         : '';
     final hasMultiple = reminders.length > 1;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.88),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.92),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1E3A5F).withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Handle / toggle bar ──────────────────────────────────────
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => setState(() => _reminderExpanded = !_reminderExpanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isEmpty
-                          ? const Color(0xFFF0F4F8)
-                          : const Color(0xFFFFECE5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      isEmpty
-                          ? Icons.notifications_off_rounded
-                          : Icons.notifications_rounded,
-                      color: isEmpty
-                          ? const Color(0xFF8298AB)
-                          : const Color(0xFFFF7043),
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      isEmpty
-                          ? 'No reminders'
-                          : (_reminderExpanded ? 'Reminder' : reminder!.title),
-                      style: TextStyle(
-                        color: isEmpty
-                            ? const Color(0xFF8298AB)
-                            : const Color(0xFF1E3A5F),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (!isEmpty && hasMultiple)
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
                     Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFECE5),
-                        borderRadius: BorderRadius.circular(20),
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      child: const Icon(
+                        Icons.alarm_on_rounded,
+                        color: GameHubPage.darkGreen,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
                       child: Text(
-                        '${_currentReminderIndex + 1}/${reminders.length}',
-                        style: const TextStyle(
-                          color: Color(0xFFFF7043),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                        'Reminders',
+                        style: TextStyle(
+                          color: GameHubPage.darkGreen,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                  // Animated arrow – hidden when empty
-                  if (!isEmpty)
-                    AnimatedRotation(
-                      turns: _reminderExpanded ? 0.0 : 0.5,
-                      duration: const Duration(milliseconds: 300),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF8298AB),
-                        size: 24,
-                      ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _closeReminderOverlay,
+                      icon: const Icon(Icons.close_rounded, color: GameHubPage.darkGreen),
+                      tooltip: 'Close reminders',
                     ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F7FB).withValues(alpha: 0.80),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded,
+                            color: GameHubPage.green, size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'No reminders right now. Everything looks good.',
+                            style: TextStyle(
+                              color: GameHubPage.darkGreen,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  _ReminderCard(
+                    reminder: reminder!,
+                    timeStr: timeStr,
+                    hasMultiple: hasMultiple,
+                    currentIndex: _currentReminderIndex,
+                    totalCount: reminders.length,
+                    tickKey: _tickKey,
+                    onPrev: _currentReminderIndex > 0
+                        ? () => setState(() => _currentReminderIndex--)
+                        : null,
+                    onNext: _currentReminderIndex < reminders.length - 1
+                        ? () => setState(() => _currentReminderIndex++)
+                        : null,
+                    onSpeak: reminder.isVoicePromptEnabled
+                        ? () => _speakReminder(reminder)
+                        : null,
+                    onDone: () {
+                      final tickBox = _tickKey.currentContext
+                          ?.findRenderObject() as RenderBox?;
+                      final tickPos = tickBox != null
+                          ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
+                          : Offset.zero;
+                      _starBadgeKey.currentState?.celebrate(tickPos);
+                      _acknowledgeReminder(reminder);
+                    },
+                    getTypeIcon: _getTypeIcon,
+                  ),
+              ],
             ),
           ),
-
-          // ── Expanded content (hidden when no reminders or collapsed) ──
-          if (!isEmpty)
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 280),
-              crossFadeState: _reminderExpanded
-                  ? CrossFadeState.showFirst
-                  : CrossFadeState.showSecond,
-              firstChild: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: _ReminderCard(
-                  reminder: reminder!,
-                  timeStr: timeStr,
-                  hasMultiple: hasMultiple,
-                  currentIndex: _currentReminderIndex,
-                  totalCount: reminders.length,
-                  tickKey: _tickKey,
-                  onPrev: _currentReminderIndex > 0
-                      ? () => setState(() => _currentReminderIndex--)
-                      : null,
-                  onNext: _currentReminderIndex < reminders.length - 1
-                      ? () => setState(() => _currentReminderIndex++)
-                      : null,
-                  onSpeak: reminder.isVoicePromptEnabled
-                      ? () => _speakReminder(reminder)
-                      : null,
-                  onDone: () {
-                    // Get tick button global position before acknowledging
-                    final tickBox = _tickKey.currentContext
-                        ?.findRenderObject() as RenderBox?;
-                    final tickPos = tickBox != null
-                        ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
-                        : Offset.zero;
-                    AnimatedStarBadge.globalKey.currentState
-                        ?.celebrate(tickPos);
-                    _acknowledgeReminder(reminder);
-                  },
-                  getTypeIcon: _getTypeIcon,
-                ),
-              ),
-              secondChild: const SizedBox(height: 4),
-            ),
-        ],
+        ),
       ),
     );
   }
 
-
   void _openAccessibilitySettings(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.90),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             Center(
               child: Container(
                 width: 40,
@@ -970,10 +1349,14 @@ class _GameHubPageState extends State<GameHubPage> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+),
+),
+);
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(List<PatientReminder> pendingReminders) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
@@ -991,23 +1374,34 @@ class _GameHubPageState extends State<GameHubPage> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Title always perfectly centered
-          _buildTitleWithUnderline(),
-
-          // Settings on the far left
           Align(
             alignment: Alignment.centerLeft,
-            child: _buildSettingsButton(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildSettingsButton(),
+                const SizedBox(width: 8),
+                AnimatedStarBadge(
+                  key: _starBadgeKey,
+                  hasActiveReminder: pendingReminders.isNotEmpty && !_hasSeenReminders,
+                  onTap: _toggleReminderOverlay,
+                ),
+              ],
+            ),
           ),
-
-          // Star + voice on the far right
+          Align(
+            alignment: Alignment.center,
+            child: _buildTitleWithUnderline(),
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
-                const SizedBox(width: 6),
+                DailyStreakBadge(
+                  key: _streakBadgeKey,
+                ),
+                const SizedBox(width: 8),
                 const VoiceWaveButton(),
               ],
             ),
@@ -1319,42 +1713,49 @@ class _GameHubPageState extends State<GameHubPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Choose an activity',
-              style: TextStyle(
-                color: Color(0xFF1E3A5F),
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2EAF2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
-                  SizedBox(width: 4),
-                  Text(
-                    '6 Games',
-                    style: TextStyle(
-                      color: Color(0xFF1E3A5F),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
+        _AnimatedGameCard(
+          delay: 40,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Choose an activity',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF1E3A5F),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2EAF2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
+                    SizedBox(width: 4),
+                    Text(
+                      '6 Games',
+                      style: TextStyle(
+                        color: Color(0xFF1E3A5F),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         GridView.count(
@@ -1365,59 +1766,77 @@ class _GameHubPageState extends State<GameHubPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            _gameCard(
-              context,
-              icon: Icons.visibility_rounded,
-              title: 'Blink Memory',
-              gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
-              iconColor: const Color(0xFFE65100),
-              isAvailable: true,
-              onTap: () => _openBlinkGame(context),
+            _AnimatedGameCard(
+              delay: 80,
+              child: _gameCard(
+                context,
+                icon: Icons.image_search_rounded,
+                title: 'Picture Recognition',
+                gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
+                iconColor: const Color(0xFFE65100),
+                isAvailable: true,
+                onTap: () => _openPictureRecognitionGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.grid_view_rounded,
-              title: 'Pattern Memory',
-              gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
-              iconColor: const Color(0xFF4A148C),
-              isAvailable: true,
-              onTap: () => _openPatternGame(context),
+            _AnimatedGameCard(
+              delay: 80,
+              child: _gameCard(
+                context,
+                icon: Icons.grid_view_rounded,
+                title: 'Pattern Memory',
+                gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
+                iconColor: const Color(0xFF4A148C),
+                isAvailable: true,
+                onTap: () => _openPatternGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.sports_esports_rounded,
-              title: 'King Shanaba',
-              gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
-              iconColor: const Color(0xFF1B5E20),
-              isAvailable: true,
-              onTap: () => _openKingShanabaGame(context),
+            _AnimatedGameCard(
+              delay: 180,
+              child: _gameCard(
+                context,
+                icon: Icons.sports_esports_rounded,
+                title: 'King Shanaba',
+                gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
+                iconColor: const Color(0xFF1B5E20),
+                isAvailable: true,
+                onTap: () => _openKingShanabaGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.music_note_rounded,
-              title: 'Bamboo Dance',
-              gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
-              iconColor: const Color(0xFFB71C1C),
-              isAvailable: true,
-              onTap: () => _openBambooDanceGame(context),
+            _AnimatedGameCard(
+              delay: 180,
+              child: _gameCard(
+                context,
+                icon: Icons.music_note_rounded,
+                title: 'Bamboo Dance',
+                gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
+                iconColor: const Color(0xFFB71C1C),
+                isAvailable: true,
+                onTap: () => _openBambooDanceGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.auto_stories_rounded,
-              title: 'Story Recall',
-              gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
-              iconColor: const Color(0xFF0D47A1),
-              isAvailable: false,
-              onTap: () => _showComingSoon(context, 'Story Recall'),
+            _AnimatedGameCard(
+              delay: 280,
+              child: _gameCard(
+                context,
+                icon: Icons.auto_stories_rounded,
+                title: 'Story Recall',
+                gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
+                iconColor: const Color(0xFF0D47A1),
+                isAvailable: false,
+                onTap: () => _showComingSoon(context, 'Story Recall'),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.spa_rounded,
-              title: 'Mindful Breath',
-              gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
-              iconColor: const Color(0xFF880E4F),
-              isAvailable: false,
-              onTap: () => _showComingSoon(context, 'Mindful Breath'),
+            _AnimatedGameCard(
+              delay: 280,
+              child: _gameCard(
+                context,
+                icon: Icons.spa_rounded,
+                title: 'Mindful Breath',
+                gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
+                iconColor: const Color(0xFF880E4F),
+                isAvailable: false,
+                onTap: () => _showComingSoon(context, 'Mindful Breath'),
+              ),
             ),
           ],
         ),
@@ -1570,6 +1989,616 @@ class _GameHubPageState extends State<GameHubPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AnimatedGameCard extends StatefulWidget {
+  final int delay;
+  final Widget child;
+
+  const _AnimatedGameCard({
+    required this.delay,
+    required this.child,
+  });
+
+  @override
+  State<_AnimatedGameCard> createState() => _AnimatedGameCardState();
+}
+
+class _AnimatedGameCardState extends State<_AnimatedGameCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _scale;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(-0.16, 0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(_controller);
+    _scale = Tween<double>(begin: 0.96, end: 1.0).chain(
+      CurveTween(curve: Curves.easeOutCubic),
+    ).animate(_controller);
+
+    if (widget.delay == 0) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(Duration(milliseconds: widget.delay), () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(_slide.value.dx * 120, _slide.value.dy * 120),
+            child: Transform.scale(
+              scale: _scale.value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _ActivityCard extends StatefulWidget {
+  final int delay;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final Color glowColor;
+  final Color photoTint;
+  final Color photoHighlight;
+  final Widget illustration;
+  final VoidCallback onTap;
+
+  const _ActivityCard({
+    required this.delay,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accentColor,
+    required this.glowColor,
+    required this.photoTint,
+    required this.photoHighlight,
+    required this.illustration,
+    required this.onTap,
+  });
+
+  @override
+  State<_ActivityCard> createState() => _ActivityCardState();
+}
+
+class _ActivityCardState extends State<_ActivityCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _scale;
+  bool _pressed = false;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0.16, 0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(_controller);
+    _scale = Tween<double>(begin: 0.96, end: 1.0).chain(
+      CurveTween(curve: Curves.easeOutCubic),
+    ).animate(_controller);
+
+    if (widget.delay == 0) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(Duration(milliseconds: widget.delay), () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(_slide.value.dx * 120, _slide.value.dy * 120),
+            child: Transform.scale(
+              scale: _scale.value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Semantics(
+        button: true,
+        label: widget.title,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: widget.onTap,
+          child: AnimatedScale(
+            scale: _pressed ? 0.985 : 1.0,
+            duration: const Duration(milliseconds: 130),
+            curve: Curves.easeOut,
+            child: Container(
+              height: 210,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.alphaBlend(
+                      widget.accentColor.withValues(alpha: 0.45),
+                      Colors.white,
+                    ),
+                    widget.accentColor.withValues(alpha: 0.72),
+                  ],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  width: 1.6,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.glowColor.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 12, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _FloatingIcon(icon: widget.icon, color: widget.glowColor),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 16,
+                                  color: Color(0xFF1E3A5F),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Flexible(
+                            child: Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF1E3A5F),
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Flexible(
+                            child: Text(
+                              widget.subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF536A7B),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.favorite_rounded,
+                                size: 14,
+                                color: Color(0xFF1E3A5F),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  widget.title == 'Karaoke' ? 'Mood boost' : 'Story time',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1E3A5F),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10, right: 12, bottom: 10),
+                      child: SlantedPhotoArea(
+                        color: widget.photoTint,
+                        highlightColor: widget.photoHighlight,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      widget.photoTint,
+                                      widget.photoHighlight,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 18,
+                              right: 18,
+                              child: Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.center,
+                              child: AnimatedBuilder(
+                                animation: _controller,
+                                builder: (context, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, -8 + (1 - _fade.value) * 8),
+                                    child: child,
+                                  );
+                                },
+                                child: widget.illustration,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingIcon extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+
+  const _FloatingIcon({required this.icon, required this.color});
+
+  @override
+  State<_FloatingIcon> createState() => _FloatingIconState();
+}
+
+class _FloatingIconState extends State<_FloatingIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, -4 + 4 * _controller.value),
+          child: child,
+        );
+      },
+      child: Container(
+        width: 58,
+        height: 58,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withValues(alpha: 0.24),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Icon(
+          widget.icon,
+          color: widget.color,
+          size: 30,
+        ),
+      ),
+    );
+  }
+}
+
+class SlantedPhotoArea extends StatelessWidget {
+  final Widget child;
+  final Color color;
+  final Color highlightColor;
+
+  const SlantedPhotoArea({
+    super.key,
+    required this.child,
+    required this.color,
+    required this.highlightColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipPath(
+      clipper: _SlantedPhotoClipper(),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, highlightColor],
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SlantedPhotoClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * 0.18, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width * 0.02, size.height);
+    path.lineTo(0, size.height * 0.12);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _MicrophoneIllustration extends StatelessWidget {
+  const _MicrophoneIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110,
+      height: 110,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
+            ),
+          ),
+          Positioned(
+            bottom: 12,
+            child: Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D47A1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 18,
+            left: 14,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFF4C2),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 18,
+            right: 16,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFE7A3),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookIllustration extends StatelessWidget {
+  const _BookIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110,
+      height: 110,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 16,
+            child: Transform.rotate(
+              angle: -0.32,
+              child: Container(
+                width: 58,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB284CF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            child: Transform.rotate(
+              angle: 0.32,
+              child: Container(
+                width: 58,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD59FE8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+                ),
+                child: const Icon(
+                  Icons.auto_stories_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 18,
+            right: 26,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFF3C3),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            left: 26,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFD9E8),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2089,7 +3118,7 @@ class _ReminderCardState extends State<_ReminderCard>
             ),
           ),
           const SizedBox(width: 10),
-          // ── Tick button with bounce animation ──
+          // ── Green circle check button with bounce animation ──
           GestureDetector(
             key: widget.tickKey,
             onTap: _onTickTap,
@@ -2100,27 +3129,33 @@ class _ReminderCardState extends State<_ReminderCard>
                 child: child,
               ),
               child: Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E3A5F), Color(0xFF2D5A8E)],
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFF81C784).withValues(alpha: 0.85),
+                    width: 2.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.38),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3.5),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 26,
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 27,
+                  ),
                 ),
               ),
             ),

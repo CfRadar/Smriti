@@ -14,6 +14,7 @@ dependencies:
   http: ^1.1.0
   shared_preferences: ^2.2.2
   audioplayers: ^6.0.0
+  flutter_tts: ^4.2.0
   intl: ^0.20.3
   speech_to_text: ^7.0.0
   permission_handler: ^12.0.0
@@ -28,4 +29,9 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/animals/
+    - assets/images/cloth/
+    - assets/images/food/
+    - assets/images/items/
     - assets/audio/
+    - assets/research.txt
