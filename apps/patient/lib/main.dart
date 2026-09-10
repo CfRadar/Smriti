@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
-import 'games/blink_game.dart';
+import 'services/fcm_token_service.dart';
 import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
@@ -72,6 +72,12 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     VoiceCommandController.instance.attachNavigator(_navigatorKey);
     _registerVoiceRoutes();
     VoiceService.instance.initialize();
+    // Register device FCM token with backend (fire-and-forget, non-fatal)
+    // In kiosk/dev mode the backend JWT_SECRET fallback is used.
+    // Replace the token string with a real JWT from login when auth is added.
+    FcmTokenService.instance.registerAfterLogin(
+      'smriti-kiosk-device', // replaced by real JWT in production
+    );
   }
 
   @override
