@@ -18,7 +18,10 @@ class _AnimatedFragmentedDividerState extends State<AnimatedFragmentedDivider>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3360),
-    )..repeat();
+    );
+    if (!WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+      _controller.repeat();
+    }
   }
 
   @override

@@ -28,4 +28,8 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/animals/
+    - assets/images/cloth/
+    - assets/images/food/
+    - assets/images/items/
     - assets/audio/

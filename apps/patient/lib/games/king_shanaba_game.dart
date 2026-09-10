@@ -23,7 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controllers/voice_command_controller.dart';
 import '../models/voice_command.dart';
-import '../widgets/voice_status_indicator.dart';
+import '../widgets/animated_fragmented_divider.dart';
+import '../widgets/game_completion_dialog.dart';
 
 // ============================================================================
 // 1. TELEMETRY & ADAPTIVE DATA MODELS
@@ -149,6 +150,27 @@ class ShanabaTelemetryService {
   }
 }
 
+
+
+/// Traditional Manipuri Kang obstacle piece (Kangkhun / Guard Piece)
+class ShanabaObstacle {
+  Offset position; // Normalized coordinates (0.0 to 1.0)
+  final double radius;
+  final bool isMoving;
+  double velocityX;
+  final double minX;
+  final double maxX;
+
+  ShanabaObstacle({
+    required this.position,
+    this.radius = 13.0,
+    this.isMoving = false,
+    this.velocityX = 0.22,
+    this.minX = 0.16,
+    this.maxX = 0.84,
+  });
+}
+
 /// Minimal Adaptive Difficulty Controller for dementia cognitive-motor therapy.
 class ShanabaAdaptiveEngine {
   int consecutiveHits = 0;
@@ -156,38 +178,38 @@ class ShanabaAdaptiveEngine {
   int level = 1;
 
   // Base parameters
-  double targetRadius = 56.0; // Large, elderly-friendly starting radius
+  double targetRadius = 26.0; // Clean, properly proportioned target hit tolerance
   double friction = 0.080; // Natural wooden court deceleration
 
-  /// Adaptive striker diameter: progressively smaller/shorter per level
+  /// Adaptive striker diameter: sleek authentic dimensions
   double get currentStrikerDiameter {
     switch (level) {
       case 1:
-        return 72.0; // Easiest launch surface
+        return 42.0; // Friendly launch surface
       case 2:
-        return 64.0;
+        return 38.0;
       case 3:
-        return 56.0;
+        return 35.0;
       case 4:
-        return 48.0;
+        return 32.0;
       default:
-        return 40.0; // Master challenge
+        return 29.0; // Master challenge
     }
   }
 
-  /// Adaptive target diameter: progressively smaller/shorter per level
+  /// Adaptive target diameter: sleek authentic Chekphei coin
   double get currentTargetDiameter {
     switch (level) {
       case 1:
-        return 66.0; // High accessibility for seniors
+        return 30.0;
       case 2:
-        return 58.0;
+        return 26.0;
       case 3:
-        return 50.0;
+        return 23.0;
       case 4:
-        return 42.0;
+        return 21.0;
       default:
-        return 34.0; // High precision target
+        return 19.0;
     }
   }
 
@@ -199,8 +221,8 @@ class ShanabaAdaptiveEngine {
       if (consecutiveHits >= 2 && level < 5) {
         level++;
         consecutiveHits = 0;
-        targetRadius = max(34.0, targetRadius - 5.0);
-        friction = (friction + 0.004).clamp(0.06, 0.12);
+        targetRadius = max(18.0, targetRadius - 2.5);
+        friction = (friction + 0.003).clamp(0.06, 0.11);
       }
     } else {
       consecutiveMisses++;
@@ -209,15 +231,15 @@ class ShanabaAdaptiveEngine {
       if (consecutiveMisses >= 2 && level > 1) {
         level--;
         consecutiveMisses = 0;
-        targetRadius = min(74.0, targetRadius + 6.0);
-        friction = (friction - 0.005).clamp(0.06, 0.12);
+        targetRadius = min(32.0, targetRadius + 3.0);
+        friction = (friction - 0.004).clamp(0.06, 0.11);
       }
     }
 
     if (reactionTimeMs > 4500) {
       if (level > 1) level--;
       consecutiveMisses = 0;
-      targetRadius = min(76.0, targetRadius + 4.0);
+      targetRadius = min(34.0, targetRadius + 2.5);
     }
   }
 
@@ -269,28 +291,21 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   // --------------------------------------------------------------------------
   static const Color primarySage = Color(0xFF5F866D);
   static const Color darkGreen = Color(0xFF214E3B);
-  static const Color lightGreen = Color(0xFFDCE8DA);
-  static const Color softBackground = Color(0xFFF8F5EC);
   static const Color cardWhite = Color(0xFFFFFFFF);
-  static const Color borderGrey = Color(0xFFE0E8E1);
   static const Color textDark = Color(0xFF214E3B);
   static const Color textGrey = Color(0xFF66736C);
   static const Color cream = Color(0xFFEDE7D7);
   static const Color successGreen = Color(0xFF2E7D32);
   static const Color goldAccent = Color(0xFFD4A373);
+  static const Color screenBg = Color(0xFFF0F4F8);
+  static const Color navBarBg = Color(0xFFEAF2F8); // Light blue nav surface matching Bamboo Dance
+  static const Color primaryNavy = Color(0xFF1E293B);
+  static const Color slateBorder = Color(0xFFE2E8F0);
+  static const Color peachAccent = Color(0xFFEAA083);
+  static const Color pinkAccent = Color(0xFFE89BA6);
 
-  // Asset paths
-  static const String courtBoardAsset = 'assets/images/kang_court_board.jpg';
-  static const String strikerDiscAsset = 'assets/images/kang_striker_disc.png';
-  static const String targetMarkerAsset = 'assets/images/kang_target_marker.png';
-
-  // Northeast Chime Pool
-  static const List<String> _northeastChimePool = [
-    'audio/northeast_chime_bamboo.wav',
-    'audio/northeast_chime_brass.wav',
-    'audio/northeast_chime_bowl.wav',
-    'audio/northeast_chime_gong.wav',
-  ];
+  // Pleasant Sound Asset (replaces the 4 previous chimes)
+  static const String pleasantSoundAsset = 'audio/pleasant_chime.wav';
 
   // --------------------------------------------------------------------------
   // STATE & SERVICES
@@ -303,11 +318,17 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
   late AnimationController _physicsAnimationController;
   late AnimationController _trialTransitionController;
+  late AnimationController _patrolAnimationController;
 
   // Game Progress
+  static const String _prefKeyHighScore = 'smriti_king_shanaba_high_score';
   int _currentTrial = 1;
   int _score = 0;
   int _hits = 0;
+  int _highScore = 0;
+  int _currentStreak = 0;
+  int _bestStreak = 0;
+  final List<int> _reactionTimes = [];
   bool _isSoundEnabled = true;
   bool _isPaused = false;
   bool _isGameOver = false;
@@ -327,6 +348,9 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   Offset _aimStartOffset = Offset.zero;
   Offset _aimCurrentOffset = Offset.zero;
 
+  // Traditional Obstacle Pieces (Kangkhun Guard Discs)
+  List<ShanabaObstacle> _obstacles = [];
+
   // Dynamic adaptive dimensions: gets progressively shorter/smaller in each level
   double get strikerDiameter => _adaptiveEngine.currentStrikerDiameter;
   double get targetDiameter => _adaptiveEngine.currentTargetDiameter;
@@ -335,16 +359,16 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   static const double strikerMass = 1.30;
   static const double targetMass = 1.00;
 
-  // Playable Inner Court Rail Bounds (keeping pieces safely inside inner court)
-  static const double courtRailLeft = 0.14;
-  static const double courtRailRight = 0.86;
-  static const double courtRailTop = 0.12;
-  static const double courtRailBottom = 0.88;
+  // Playable Inner Court Rail Bounds (maximizing playable court area)
+  static const double courtRailLeft = 0.05;
+  static const double courtRailRight = 0.95;
+  static const double courtRailTop = 0.04;
+  static const double courtRailBottom = 0.95;
 
   // Court Coordinates (Normalized 0.0 to 1.0)
-  static const Offset _defaultStrikerOrigin = Offset(0.50, 0.76);
+  static const Offset _defaultStrikerOrigin = Offset(0.50, 0.88);
   Offset _strikerPos = _defaultStrikerOrigin;
-  Offset _targetPos = const Offset(0.50, 0.22);
+  Offset _targetPos = const Offset(0.50, 0.13);
 
   // Dynamic boundary getters taking disc radii into account
   double get _strikerRadiusNormX => (strikerDiameter / 2) / _courtSize.width;
@@ -399,6 +423,13 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
     _initAudio();
     _setupAnimations();
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _highScore = prefs.getInt(_prefKeyHighScore) ?? 0;
+        });
+      }
+    });
     _resetTrial(immediate: true);
   }
 
@@ -424,11 +455,51 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       duration: const Duration(milliseconds: 700),
     );
     _trialTransitionController.forward(from: 1.0);
+
+    // Continuous 60fps patrol loop: obstacles move smoothly at all times (before, during & after aim)
+    _patrolAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..addListener(_onPatrolTick)..repeat();
+  }
+
+  void _onPatrolTick() {
+    if (!mounted || _isPaused || _isGameOver) return;
+    bool hasMoving = false;
+    for (int i = 0; i < _obstacles.length; i++) {
+      if (_obstacles[i].isMoving) {
+        hasMoving = true;
+        break;
+      }
+    }
+    if (!hasMoving) return;
+
+    const double dt = 0.016;
+    for (int i = 0; i < _obstacles.length; i++) {
+      final obs = _obstacles[i];
+      if (obs.isMoving) {
+        double nx = obs.position.dx + (obs.velocityX * dt);
+        if (nx <= obs.minX) {
+          nx = obs.minX;
+          obs.velocityX = obs.velocityX.abs();
+        } else if (nx >= obs.maxX) {
+          nx = obs.maxX;
+          obs.velocityX = -obs.velocityX.abs();
+        }
+        obs.position = Offset(nx, obs.position.dy);
+      }
+    }
+
+    // While not sliding, trigger frame render so moving obstacle glides smoothly in real-time
+    if (!_isSliding) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
     VoiceCommandController.instance.unregisterGame();
+    _patrolAnimationController.dispose();
     _physicsAnimationController.dispose();
     _trialTransitionController.dispose();
     _sfxAudioPlayer.dispose();
@@ -458,17 +529,15 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     }
   }
 
-  /// Plays a random melodious chime from the Northeast India musical chime pool
-  Future<void> _playRandomNortheastChime() async {
+  /// Plays a soothing, pleasant sound when target is struck
+  Future<void> _playPleasantSound() async {
     if (!_isSoundEnabled) return;
     try {
       HapticFeedback.mediumImpact();
-      final chime = _northeastChimePool[_random.nextInt(_northeastChimePool.length)];
-      // Dedicated chime audio player continues uninterrupted for its full duration
       await _chimeAudioPlayer.stop();
       await _chimeAudioPlayer.play(
-        AssetSource(chime),
-        volume: 1.0,
+        AssetSource(pleasantSoundAsset),
+        volume: 0.85,
       );
     } catch (_) {
       try {
@@ -486,10 +555,98 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   }
 
   // --------------------------------------------------------------------------
-  // GAMEPLAY ENGINE & TRIAL LIFECYCLE
+  // GAMEPLAY ENGINE & SESSION LIFECYCLE
   // --------------------------------------------------------------------------
+  /// Generates randomized, strategically positioned Kangkhun guard obstacles.
+  /// Guaranteed mathematically doable: always leaves an open, intuitive corridor
+  /// or clear bankable ricochet path to the target piece.
+  List<ShanabaObstacle> _generateDoableObstacles(
+    int level, {
+    required Offset targetPos,
+    required Offset strikerPos,
+  }) {
+    final List<ShanabaObstacle> list = [];
+
+    // Calculate where the straight aim ray from striker to target passes mid-court (y ~ 0.48)
+    const double midY = 0.48;
+    final double spanY = targetPos.dy - strikerPos.dy;
+    final double t = spanY.abs() > 0.001 ? (midY - strikerPos.dy) / spanY : 0.5;
+    final double centerLineX = (strikerPos.dx + t * (targetPos.dx - strikerPos.dx)).clamp(0.20, 0.80);
+
+    if (level <= 1) {
+      // Level 1: 1 Gentle Flank Guard.
+      // Placed far out on the opposite flank from the target line, leaving the central direct lane completely open (>100px)
+      final bool placeOnLeft = centerLineX > 0.50;
+      final double flankX = placeOnLeft
+          ? 0.18 + (_random.nextDouble() * 0.10) // 0.18 .. 0.28
+          : 0.72 + (_random.nextDouble() * 0.10); // 0.72 .. 0.82
+      final double obsY = 0.42 + (_random.nextDouble() * 0.12);
+      list.add(ShanabaObstacle(
+        position: Offset(flankX, obsY),
+        radius: 12.0,
+      ));
+    } else if (level == 2) {
+      // Level 2: 1 Guard piece off-center with guaranteed clear direct lane (>80px clearance)
+      final bool placeOnLeft = _random.nextBool();
+      double obsX = placeOnLeft
+          ? centerLineX - (0.22 + _random.nextDouble() * 0.08)
+          : centerLineX + (0.22 + _random.nextDouble() * 0.08);
+      obsX = obsX.clamp(0.18, 0.82);
+      final double obsY = 0.40 + (_random.nextDouble() * 0.14);
+      list.add(ShanabaObstacle(
+        position: Offset(obsX, obsY),
+        radius: 12.5,
+      ));
+    } else if (level == 3) {
+      // Level 3: "The Gateway" - 2 Guards creating a visible opening aligned with the target
+      // Left and right guards positioned with a guaranteed 85px-105px clearance corridor
+      const double corridorHalfWidth = 0.14; // ~28% of court width
+      final double leftX = (centerLineX - corridorHalfWidth - (_random.nextDouble() * 0.08)).clamp(0.16, 0.36);
+      final double rightX = (centerLineX + corridorHalfWidth + (_random.nextDouble() * 0.08)).clamp(0.64, 0.84);
+      final double leftY = 0.38 + (_random.nextDouble() * 0.12);
+      final double rightY = 0.42 + (_random.nextDouble() * 0.12);
+      list.add(ShanabaObstacle(position: Offset(leftX, leftY), radius: 13.0));
+      list.add(ShanabaObstacle(position: Offset(rightX, rightY), radius: 13.0));
+    } else if (level == 4) {
+      // Level 4: Staggered Challenge with dual routes (Direct corridor + Ricochet rail)
+      final double x1 = (centerLineX - 0.13).clamp(0.22, 0.42);
+      final double y1 = 0.36 + (_random.nextDouble() * 0.08);
+      final double x2 = (centerLineX + 0.17).clamp(0.58, 0.78);
+      final double y2 = 0.52 + (_random.nextDouble() * 0.08);
+      list.add(ShanabaObstacle(position: Offset(x1, y1), radius: 13.5));
+      list.add(ShanabaObstacle(position: Offset(x2, y2), radius: 13.5));
+    } else {
+      // Level 5 (Master Court): 1 Stationary Flank Guard + 1 Smooth Patrol Guard
+      // The patrol guard moves continuously across mid-court (y ~ 0.52), challenging timing & rhythm
+      final bool staticOnLeft = centerLineX > 0.50;
+      final double staticX = staticOnLeft
+          ? 0.22 + (_random.nextDouble() * 0.08)
+          : 0.70 + (_random.nextDouble() * 0.08);
+      list.add(ShanabaObstacle(
+        position: Offset(staticX, 0.36),
+        radius: 13.0,
+      ));
+
+      list.add(ShanabaObstacle(
+        position: const Offset(0.50, 0.52),
+        radius: 13.0,
+        isMoving: true,
+        minX: 0.26,
+        maxX: 0.74,
+        velocityX: 0.22,
+      ));
+    }
+    return list;
+  }
+
   void _resetTrial({bool immediate = false}) {
     if (_currentTrial > widget.totalTrials) {
+      if (_score > _highScore) {
+        _highScore = _score;
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setInt(_prefKeyHighScore, _highScore);
+        });
+      }
       setState(() {
         _isGameOver = true;
       });
@@ -497,13 +654,22 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       return;
     }
 
-    // Dynamic placement of target: safely inside inner court rails
-    final double targetX = 0.38 + (_random.nextDouble() * 0.24);
-    final double targetY = 0.20 + (_random.nextDouble() * 0.08);
+    // Dynamic placement of target: safely along the top Chei target line
+    final double targetX = 0.28 + (_random.nextDouble() * 0.44);
+    final double targetY = 0.11 + (_random.nextDouble() * 0.05);
+    final Offset newTargetPos = Offset(targetX, targetY);
+
+    // Generate randomized, mathematically doable obstacles tailored to this round's target position
+    final List<ShanabaObstacle> newObstacles = _generateDoableObstacles(
+      _adaptiveEngine.level,
+      targetPos: newTargetPos,
+      strikerPos: _defaultStrikerOrigin,
+    );
 
     setState(() {
       _strikerPos = _defaultStrikerOrigin;
-      _targetPos = Offset(targetX, targetY);
+      _targetPos = newTargetPos;
+      _obstacles = newObstacles;
       _strikerVelocity = Offset.zero;
       _targetVelocity = Offset.zero;
       _accumulatedDistance = 0.0;
@@ -539,10 +705,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     });
   }
 
-
-
   // --------------------------------------------------------------------------
-  // TACTILE DRAG & GESTURE SYSTEM (Free Movement across Court)
+  // TACTILE DRAG & GESTURE SYSTEM (Pure Manual Aiming - No Auto Aim)
   // --------------------------------------------------------------------------
   void _onCourtPanDown(DragDownDetails details) {
     if (_isSliding || _isEvaluatingResult || _isPaused || _isGameOver) return;
@@ -559,21 +723,16 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
         (details.localPosition.dy / _courtSize.height).clamp(0.0, 1.0);
     final Offset touchNorm = Offset(touchNormX, touchNormY);
 
-    final double distToStriker = sqrt(
-      pow((touchNorm.dx - _strikerPos.dx) * _courtSize.width, 2) +
-          pow((touchNorm.dy - _strikerPos.dy) * _courtSize.height, 2),
-    );
-
     setState(() {
       _isAiming = true;
       _aimStartOffset = touchNorm;
       _aimCurrentOffset = touchNorm;
 
-      // If user tapped directly elsewhere in the lower half of the court, move striker there
-      if (distToStriker > 48.0 && touchNormY > 0.45) {
+      // Allow choosing launch station along the baseline if tapped near the bottom
+      if (touchNormY > 0.74) {
         _strikerPos = Offset(
           touchNormX.clamp(_strikerMinX, _strikerMaxX),
-          touchNormY.clamp(0.45, _strikerMaxY),
+          _defaultStrikerOrigin.dy,
         );
       }
     });
@@ -589,52 +748,62 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
     setState(() {
       _aimCurrentOffset = Offset(normX, normY);
-
-      final double pullY = _aimCurrentOffset.dy - _aimStartOffset.dy;
-
-      // Allow dragging striker freely within inner court rails
-      if (pullY < -0.05 && pullY > -0.45 && _strikerPos.dy > 0.35) {
-        _strikerPos = Offset(
-          (_strikerPos.dx + (details.delta.dx / _courtSize.width))
-              .clamp(_strikerMinX, _strikerMaxX),
-          (_strikerPos.dy + (details.delta.dy / _courtSize.height))
-              .clamp(_strikerMinY, _strikerMaxY),
-        );
-      }
     });
   }
 
   void _onCourtPanEnd(DragEndDetails details) {
     if (_isSliding || _isEvaluatingResult || _isPaused || _isGameOver) return;
 
-    final double pullDx = _aimCurrentOffset.dx - _aimStartOffset.dx;
-    final double pullDy = _aimCurrentOffset.dy - _aimStartOffset.dy;
+    final double courtW = _courtSize.width;
+    final double courtH = _courtSize.height;
 
-    final Offset velocityPx = details.velocity.pixelsPerSecond;
-    double vx = velocityPx.dx / _courtSize.width;
-    double vy = velocityPx.dy / _courtSize.height;
+    // 1. Calculate drag displacement directly in screen pixels
+    final double dragPxX = (_aimCurrentOffset.dx - _aimStartOffset.dx) * courtW;
+    final double dragPxY = (_aimCurrentOffset.dy - _aimStartOffset.dy) * courtH;
+    final double dragDistPx = sqrt(dragPxX * dragPxX + dragPxY * dragPxY);
 
-    // Pull-back slingshot mode
-    if (pullDy > 0.04) {
-      vx = -pullDx * 6.5;
-      vy = -pullDy * 7.5;
-    } else if (vy.abs() < 0.25 && pullDy < -0.04) {
-      // Forward swipe
-      vx = pullDx * 6.0;
-      vy = pullDy * 7.0;
+    // Cancel if tap had insufficient drag motion (NO AUTO-AIM)
+    if (dragDistPx < 8.0) {
+      setState(() {
+        _isAiming = false;
+      });
+      return;
     }
 
-    // Default gentle forward glide if soft release
-    if (vy > -0.25) {
-      final double dxToTarget = _targetPos.dx - _strikerPos.dx;
-      final double dyToTarget = _targetPos.dy - _strikerPos.dy;
-      final double dist = max(0.1, sqrt(dxToTarget * dxToTarget + dyToTarget * dyToTarget));
-      vx = (dxToTarget / dist) * 0.75;
-      vy = -1.15 - (_random.nextDouble() * 0.35);
+    // 2. Slingshot launch direction in screen pixels
+    double launchDirPxX;
+    double launchDirPxY;
+
+    if (dragPxY > 0.0) {
+      // Slingshot pull-back: pulling downward launches upward into the court
+      launchDirPxX = -dragPxX;
+      launchDirPxY = -dragPxY;
+    } else {
+      // Forward flick / push
+      launchDirPxX = dragPxX;
+      launchDirPxY = dragPxY;
     }
 
-    vx = vx.clamp(-1.8, 1.8);
-    vy = vy.clamp(-2.4, -0.4);
+    final double launchDist = sqrt(launchDirPxX * launchDirPxX + launchDirPxY * launchDirPxY);
+    if (launchDist > 0.001) {
+      launchDirPxX /= launchDist;
+      launchDirPxY /= launchDist;
+    }
+
+    // Ensure the shot always launches upward into the court (negative Y in screen pixels)
+    if (launchDirPxY >= -0.15) {
+      launchDirPxY = -0.15;
+      final double reNorm = sqrt(launchDirPxX * launchDirPxX + launchDirPxY * launchDirPxY);
+      launchDirPxX /= reNorm;
+      launchDirPxY /= reNorm;
+    }
+
+    // 3. Generous physical launch speed in screen pixels per second
+    final double speedPxPerSec = (dragDistPx * 18.0).clamp(courtH * 1.8, courtH * 4.6);
+
+    // 4. Set striker velocity in normalized coordinates for exact dt integration
+    final double vx = (launchDirPxX * speedPxPerSec) / courtW;
+    final double vy = (launchDirPxY * speedPxPerSec) / courtH;
 
     _initialReleaseSpeed = sqrt((vx * vx) + (vy * vy));
     _strikerVelocity = Offset(vx, vy);
@@ -733,11 +902,72 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
         // Physical rotation impulse on hit
         _targetRotation += 0.85;
 
-        // Trigger hit effect and Northeast Chime
+        // Trigger hit effect and pleasant sound
         if (!_hasHitTargetThisTrial) {
           _hasHitTargetThisTrial = true;
           _impactRippleCenter = Offset(nextT2x, nextT2y);
-          _playRandomNortheastChime();
+          _playPleasantSound();
+        }
+      }
+    }
+
+    // 3.5. Obstacle (Kangkhun) Rigid Collision (Striker & Target)
+    for (final obs in _obstacles) {
+      final double obsPxX = obs.position.dx * courtW;
+      final double obsPxY = obs.position.dy * courtH;
+
+      // 3.5.1 Striker vs Obstacle
+      final double odx = sPxX - obsPxX;
+      final double ody = sPxY - obsPxY;
+      final double odist = sqrt((odx * odx) + (ody * ody));
+      final double minObsDist = strikerRadiusPx + obs.radius;
+
+      if (odist < minObsDist && odist > 0.001) {
+        final double onx = odx / odist;
+        final double ony = ody / odist;
+        final double vDotN = (svX * courtW) * onx + (svY * courtH) * ony;
+
+        if (vDotN < 0) {
+          const double restitution = 0.85;
+          final double newVn = -vDotN * restitution;
+          final double deltaVn = newVn - vDotN;
+
+          svX += (deltaVn * onx) / courtW;
+          svY += (deltaVn * ony) / courtH;
+
+          final double overlap = minObsDist - odist;
+          nextS1x += (onx * overlap) / courtW;
+          nextS1y += (ony * overlap) / courtH;
+
+          _playSlideSound();
+        }
+      }
+
+      // 3.5.2 Target vs Obstacle (prevents struck target from passing through or overlapping obstacles)
+      final double todx = tPxX - obsPxX;
+      final double tody = tPxY - obsPxY;
+      final double todist = sqrt((todx * todx) + (tody * tody));
+      final double minTargetObsDist = targetRadiusPx + obs.radius;
+
+      if (todist < minTargetObsDist && todist > 0.001) {
+        final double tonx = todx / todist;
+        final double tony = tody / todist;
+        final double tvDotN = (tvX * courtW) * tonx + (tvY * courtH) * tony;
+
+        if (tvDotN < 0) {
+          const double restitution = 0.80;
+          final double newTvN = -tvDotN * restitution;
+          final double deltaTvN = newTvN - tvDotN;
+
+          tvX += (deltaTvN * tonx) / courtW;
+          tvY += (deltaTvN * tony) / courtH;
+
+          final double toverlap = minTargetObsDist - todist;
+          nextT2x += (tonx * toverlap) / courtW;
+          nextT2y += (tony * toverlap) / courtH;
+
+          _targetRotation += 0.45;
+          _playSlideSound();
         }
       }
     }
@@ -746,20 +976,20 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     // Striker boundaries (stays safely inside the inner court)
     if (nextS1x <= _strikerMinX) {
       nextS1x = _strikerMinX;
-      svX = svX.abs() * 0.65;
+      svX = svX.abs(); // Pure specular bounce matching trajectory guide!
       _playSlideSound();
     } else if (nextS1x >= _strikerMaxX) {
       nextS1x = _strikerMaxX;
-      svX = -svX.abs() * 0.65;
+      svX = -svX.abs(); // Pure specular bounce matching trajectory guide!
       _playSlideSound();
     }
     if (nextS1y <= _strikerMinY) {
       nextS1y = _strikerMinY;
-      svY = svY.abs() * 0.55;
+      svY = svY.abs() * 0.70;
       _playSlideSound();
     } else if (nextS1y >= _strikerMaxY) {
       nextS1y = _strikerMaxY;
-      svY = -svY.abs() * 0.55;
+      svY = -svY.abs() * 0.70;
       _playSlideSound();
     }
 
@@ -779,8 +1009,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       tvY = -tvY.abs() * 0.55;
     }
 
-    // 5. Friction Deceleration
-    final double speedDecay = max(0.0, 1.0 - (friction * 28.0 * dt));
+    // 5. Friction Deceleration: natural polished court glide
+    final double speedDecay = max(0.0, 1.0 - (friction * 13.0 * dt));
     svX *= speedDecay;
     svY *= speedDecay;
     tvX *= speedDecay;
@@ -812,7 +1042,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     });
 
     // 6. Stop check when both pieces settle
-    if (currentStrikerSpeed < 0.024 && currentTargetSpeed < 0.024) {
+    if (currentStrikerSpeed < 0.032 && currentTargetSpeed < 0.032) {
       _physicsAnimationController.stop();
       _isSliding = false;
       _evaluateTrialResult();
@@ -840,11 +1070,16 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
     if (isHit) {
       _hits++;
+      _currentStreak++;
+      if (_currentStreak > _bestStreak) {
+        _bestStreak = _currentStreak;
+      }
       final int pointsGained = max(60, 120 - (distanceToTarget * 0.70).round());
       _score += pointsGained;
-      _feedbackMessage = 'Chekphei Struck! Northeast Chime +$pointsGained';
+      _feedbackMessage = 'Target Struck! +$pointsGained';
       _lastTrialSuccess = true;
     } else {
+      _currentStreak = 0;
       _lastTrialSuccess = false;
       if (discPxY > targetPxY + tolerance) {
         _feedbackMessage = 'A gentle push! Slide a little further';
@@ -858,6 +1093,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
     final int safeReactionTime =
         _lastReactionTimeMs > 0 ? _lastReactionTimeMs : 1200;
+    _reactionTimes.add(safeReactionTime);
 
     _adaptiveEngine.recordResult(
       isHit: isHit,
@@ -895,6 +1131,9 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       _currentTrial = 1;
       _score = 0;
       _hits = 0;
+      _currentStreak = 0;
+      _bestStreak = 0;
+      _reactionTimes.clear();
       _isGameOver = false;
       _isPaused = false;
     });
@@ -907,297 +1146,453 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: softBackground,
-      appBar: _buildAppBar(),
+      backgroundColor: screenBg,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildStatsHeader(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 0.65, // Standard mobile phone portrait format (~9:14)
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        _courtSize = Size(constraints.maxWidth, constraints.maxHeight);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Stack(
+              children: [
+                _buildAmbientDecorations(constraints),
+                Column(
+                  children: [
+                    _buildTopBar(),
+                    const AnimatedFragmentedDivider(),
+                    _buildStatsHeader(),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
+                        child: Center(
+                          child: LayoutBuilder(
+                            builder: (context, courtBox) {
+                              final double courtHeight = courtBox.maxHeight;
+                              final double maxCourtWidth = min(courtBox.maxWidth, courtHeight * 0.62);
 
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onPanDown: _onCourtPanDown,
-                          onPanUpdate: _onCourtPanUpdate,
-                          onPanEnd: _onCourtPanEnd,
-                          onPanCancel: _onCourtPanCancel,
-                          child: Container(
-                            width: double.infinity,
-                            height: double.infinity,
-                            decoration: BoxDecoration(
-                              color: cream,
-                              borderRadius: BorderRadius.circular(26.0),
-                              border: Border.all(
-                                color: primarySage.withValues(alpha: 0.22),
-                                width: 2.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: darkGreen.withValues(alpha: 0.10),
-                                  blurRadius: 16.0,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24.0),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                clipBehavior: Clip.none,
-                                children: [
-                                  // 1. Court Background (blended into platform theme)
-                                  _buildBlendedCourt(),
+                              return SizedBox(
+                                width: maxCourtWidth,
+                                height: courtHeight,
+                                child: LayoutBuilder(
+                                  builder: (context, courtConstraints) {
+                                    _courtSize = Size(courtConstraints.maxWidth, courtConstraints.maxHeight);
 
-                                  // 2. Trajectory Aim Guide
-                                  if (_isAiming && !_isSliding)
-                                    CustomPaint(
-                                      size: _courtSize,
-                                      painter: _TrajectoryGuidePainter(
-                                        discOrigin: _strikerPos,
-                                        targetCenter: _targetPos,
-                                        aimStart: _aimStartOffset,
-                                        aimCurrent: _aimCurrentOffset,
-                                      ),
-                                    ),
-
-                                  // 3. Dynamic Impact Wave Ripple
-                                  if (_impactRippleCenter != null)
-                                    Positioned(
-                                      left: (_impactRippleCenter!.dx * _courtSize.width) - _impactRippleRadius,
-                                      top: (_impactRippleCenter!.dy * _courtSize.height) - _impactRippleRadius,
-                                      width: _impactRippleRadius * 2,
-                                      height: _impactRippleRadius * 2,
-                                      child: IgnorePointer(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: goldAccent.withValues(alpha: 0.8),
-                                              width: 2.5,
+                                    return GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onPanDown: _onCourtPanDown,
+                                      onPanUpdate: _onCourtPanUpdate,
+                                      onPanEnd: _onCourtPanEnd,
+                                      onPanCancel: _onCourtPanCancel,
+                                      child: Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: cardWhite,
+                                          borderRadius: BorderRadius.circular(24.0),
+                                          border: Border.all(
+                                            color: slateBorder,
+                                            width: 1.5,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primaryNavy.withValues(alpha: 0.06),
+                                              blurRadius: 14.0,
+                                              offset: const Offset(0, 4),
                                             ),
+                                          ],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(22.0),
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              // 1. Minimal Themed Court Playing Area
+                                              _buildMinimalThemedCourt(),
+
+                                              // 2. Trajectory Aim Guide
+                                              if (_isAiming && !_isSliding)
+                                                CustomPaint(
+                                                  size: _courtSize,
+                                                  painter: _TrajectoryGuidePainter(
+                                                    discOrigin: _strikerPos,
+                                                    targetCenter: _targetPos,
+                                                    aimStart: _aimStartOffset,
+                                                    aimCurrent: _aimCurrentOffset,
+                                                    strikerDiameter: strikerDiameter,
+                                                    obstacles: _obstacles,
+                                                  ),
+                                                ),
+
+                                              // 3. Dynamic Impact Wave Ripple
+                                              if (_impactRippleCenter != null)
+                                                Positioned(
+                                                  left: (_impactRippleCenter!.dx * _courtSize.width) - _impactRippleRadius,
+                                                  top: (_impactRippleCenter!.dy * _courtSize.height) - _impactRippleRadius,
+                                                  width: _impactRippleRadius * 2,
+                                                  height: _impactRippleRadius * 2,
+                                                  child: IgnorePointer(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                          color: goldAccent.withValues(alpha: 0.8),
+                                                          width: 2.5,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              // 4. Traditional Obstacle Pieces (Kangkhun Guards)
+                                              for (final obs in _obstacles) _buildObstacle(obs),
+
+                                              // 5. Physical Hittable Chekphei Target Piece
+                                              _buildHittableTarget(),
+
+                                              // 6. Authentic Kang Striker Disc
+                                              _buildStrikerDisc(),
+
+                                              // 7. Subsession Intro Transition Banner
+                                              if (!_isSliding && _feedbackMessage == null)
+                                                _buildSubsessionTransitionBanner(),
+
+                                              // 9. Trial Feedback Banner
+                                              if (_feedbackMessage != null) _buildFeedbackBanner(),
+
+                                              // 10. Pause Overlay
+                                              if (_isPaused) _buildPauseOverlay(),
+
+                                              // 11. Game Over Dialog
+                                              if (_isGameOver) _buildGameOverDialog(),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                    ),
-
-                                  // 4. Physical Hittable Chekphei Target Piece
-                                  _buildHittableTarget(),
-
-                                  // 5. Authentic Kang Striker Disc
-                                  _buildStrikerDisc(),
-
-                                  // 6. Launch & Aim Cue
-                                  if (!_isSliding && !_isEvaluatingResult && !_isAiming)
-                                    _buildLaunchCue(),
-
-                                  // 7. Subsession Intro Transition Banner
-                                  if (!_isSliding && _feedbackMessage == null)
-                                    _buildSubsessionTransitionBanner(),
-
-                                  // 8. Trial Feedback Banner
-                                  if (_feedbackMessage != null) _buildFeedbackBanner(),
-
-                                  // 9. Pause Overlay
-                                  if (_isPaused) _buildPauseOverlay(),
-
-                                  // 10. Game Over Dialog
-                                  if (_isGameOver) _buildGameOverDialog(),
-                                ],
-                              ),
-                            ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
+                    _buildInstructionFooter(),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Top Nav Bar matching Bamboo Dance game reference
+  Widget _buildTopBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: navBarBg,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: primaryNavy.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildNavBackButton(),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Center(
+              child: _buildNavTitleWithUnderline(),
+            ),
+          ),
+          const SizedBox(width: 6),
+          _buildNavRightControls(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavBackButton() {
+    return Semantics(
+      button: true,
+      label: 'Exit to Home',
+      child: Tooltip(
+        message: 'Exit to Home',
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: slateBorder,
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              color: primaryNavy,
+              size: 19,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavTitleWithUnderline() {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'King Shanaba',
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            style: TextStyle(
+              color: primaryNavy,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              fontStyle: FontStyle.italic,
+              fontFamily: 'Caveat',
+              letterSpacing: 0.3,
+            ),
+          ),
+          const Text(
+            'Traditional Manipuri Kangshang',
+            style: TextStyle(
+              fontSize: 10.0,
+              fontWeight: FontWeight.w600,
+              color: textGrey,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 28,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: peachAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Container(
+                width: 28,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: pinkAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavRightControls() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Sound toggle button with edge lighting effect
+        Semantics(
+          button: true,
+          label: 'Toggle Sound',
+          child: Tooltip(
+            message: _isSoundEnabled ? 'Mute' : 'Unmute',
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _isSoundEnabled = !_isSoundEnabled;
+                });
+                if (!_isSoundEnabled) {
+                  _sfxAudioPlayer.stop();
+                  _chimeAudioPlayer.stop();
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _isSoundEnabled ? const Color(0xFFE8F4FD) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isSoundEnabled ? const Color(0xFFB3D7F5) : slateBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    if (_isSoundEnabled)
+                      BoxShadow(
+                        color: const Color(0xFF90CAF9).withValues(alpha: 0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1.5),
+                      ),
+                  ],
+                ),
+                child: Icon(
+                  _isSoundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                  color: _isSoundEnabled ? primaryNavy : const Color(0xFF94A3B8),
+                  size: 19,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        // Pause / Play toggle
+        Semantics(
+          button: true,
+          label: 'Pause or Resume Game',
+          child: Tooltip(
+            message: _isPaused ? 'Resume' : 'Pause',
+            child: InkWell(
+              onTap: () {
+                if (_isPaused) {
+                  resumeGame();
+                } else {
+                  pauseGame();
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _isPaused ? const Color(0xFFFFF3E0) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isPaused ? const Color(0xFFFFAB91) : slateBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  color: _isPaused ? const Color(0xFFE65100) : primaryNavy,
+                  size: 19,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAmbientDecorations(BoxConstraints constraints) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Stack(
+          children: [
+            Positioned(
+              top: 70,
+              right: -30,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      peachAccent.withValues(alpha: 0.18),
+                      peachAccent.withValues(alpha: 0.0),
+                    ],
                   ),
                 ),
               ),
             ),
-            _buildInstructionFooter(),
+            Positioned(
+              bottom: 70,
+              left: -35,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      pinkAccent.withValues(alpha: 0.16),
+                      pinkAccent.withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: constraints.maxHeight * 0.40,
+              left: -25,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF90CAF9).withValues(alpha: 0.18),
+                      const Color(0xFF90CAF9).withValues(alpha: 0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: softBackground,
-      elevation: 0,
-      centerTitle: false,
-      titleSpacing: 6.0,
-      leadingWidth: 50.0,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 10.0),
-        child: Center(
-          child: IconButton(
-            tooltip: 'Back to activities',
-            style: IconButton.styleFrom(
-              backgroundColor: lightGreen,
-              fixedSize: const Size(38, 38),
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.arrow_back_rounded, color: darkGreen, size: 20),
-            onPressed: () {
-              Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-            },
-          ),
-        ),
-      ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            height: 32,
-            width: 32,
-            decoration: BoxDecoration(
-              color: darkGreen,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: const Icon(Icons.psychology_alt_rounded,
-                color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 8),
-          const Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'King Shanaba',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
-                      color: darkGreen,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Traditional Manipuri Kangshang',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: textGrey,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        const Center(
-          child: Padding(
-            padding: EdgeInsets.only(right: 4.0),
-            child: VoiceStatusIndicator(compact: true),
-          ),
-        ),
-        IconButton(
-          tooltip: _isSoundEnabled ? 'Mute Sound' : 'Enable Sound',
-          style: IconButton.styleFrom(
-            backgroundColor: lightGreen,
-            fixedSize: const Size(38, 38),
-            padding: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          icon: Icon(
-            _isSoundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-            color: darkGreen,
-            size: 20.0,
-          ),
-          onPressed: () {
-            setState(() {
-              _isSoundEnabled = !_isSoundEnabled;
-            });
-          },
-        ),
-        const SizedBox(width: 4.0),
-        IconButton(
-          tooltip: _isPaused ? 'Resume' : 'Pause',
-          style: IconButton.styleFrom(
-            backgroundColor: lightGreen,
-            fixedSize: const Size(38, 38),
-            padding: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          icon: Icon(
-            _isPaused ? Icons.play_arrow_rounded : Icons.pause_circle_outline_rounded,
-            color: darkGreen,
-            size: 20.0,
-          ),
-          onPressed: () {
-            if (_isPaused) {
-              resumeGame();
-            } else {
-              pauseGame();
-            }
-          },
-        ),
-        const SizedBox(width: 10.0),
-      ],
-    );
-  }
-
-  /// Blends the authentic traditional court image with softened contrast for the board
-  Widget _buildBlendedCourt() {
+  /// Minimal themed court playing area
+  Widget _buildMinimalThemedCourt() {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Authentic wooden board
-        Image.asset(
-          courtBoardAsset,
-          fit: BoxFit.fill,
-          errorBuilder: (context, error, stackTrace) {
-            return CustomPaint(
-              size: _courtSize,
-              painter: _ManipuriCourtFallbackPainter(
-                targetCenter: _targetPos,
-                courtSize: _courtSize,
-              ),
-            );
-          },
-        ),
-        // 2. Subtle warm glaze over the board to soften harsh dark shadows without cloudiness
+        // 1. Sleek minimal gradient playing surface
         Container(
-          color: cream.withValues(alpha: 0.16),
-        ),
-        // 3. Soft border line defining court perimeter
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: primarySage.withValues(alpha: 0.20),
-              width: 1.5,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFFFBFDFB),
+                Color(0xFFF1F6F2),
+              ],
             ),
-            borderRadius: BorderRadius.circular(24.0),
           ),
         ),
-        // 4. Traditional inner court rail boundary markings
+        // 2. Minimalist inner boundary rails and subtle alignment markings
         CustomPaint(
           size: _courtSize,
-          painter: _CourtInnerRailPainter(),
+          painter: _MinimalThemedCourtPainter(targetCenter: _targetPos),
         ),
       ],
     );
@@ -1205,75 +1600,114 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
   Widget _buildStatsHeader() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(14.0, 6.0, 14.0, 4.0),
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.0),
+      margin: const EdgeInsets.fromLTRB(14.0, 4.0, 14.0, 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: cream,
-        borderRadius: BorderRadius.circular(18.0),
-        border: Border.all(color: primarySage.withValues(alpha: 0.22), width: 1.2),
+        color: cardWhite,
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: slateBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: primaryNavy.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(
-            child: _buildPill(
-              icon: Icons.flag_rounded,
-              label: 'Trial ${_currentTrial.clamp(1, widget.totalTrials)} / ${widget.totalTrials}',
-              bgColor: lightGreen,
-              textColor: darkGreen,
-            ),
-          ),
-          const SizedBox(width: 6.0),
-          Flexible(
-            child: _buildPill(
-              icon: Icons.speed_rounded,
-              label: 'Lvl ${_adaptiveEngine.level}: ${_adaptiveEngine.difficultyLabel}',
-              bgColor: Colors.white,
-              textColor: darkGreen,
-            ),
-          ),
-          const SizedBox(width: 6.0),
-          Flexible(
-            child: _buildPill(
-              icon: Icons.stars_rounded,
-              label: 'Score: $_score',
-              bgColor: lightGreen,
-              textColor: darkGreen,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPill({
-    required IconData icon,
-    required String label,
-    required Color bgColor,
-    required Color textColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 5.0),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14.0, color: textColor),
-          const SizedBox(width: 4.0),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.0,
+          // 1. Round tracker
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sports_esports_rounded,
+                  size: 18, color: darkGreen),
+              const SizedBox(width: 6),
+              Text(
+                'Round ${_currentTrial.clamp(1, widget.totalTrials)} / ${widget.totalTrials}',
+                style: const TextStyle(
+                  color: primaryNavy,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: textColor,
                 ),
               ),
+            ],
+          ),
+
+          // 2. Level badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: darkGreen.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: darkGreen.withValues(alpha: 0.22),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.bolt_rounded, size: 14, color: darkGreen),
+                const SizedBox(width: 3),
+                Text(
+                  'Level ${_adaptiveEngine.level}',
+                  style: const TextStyle(
+                    color: darkGreen,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Unified Points box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8E7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFFD54F).withValues(alpha: 0.65),
+                width: 1.1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFA000).withValues(alpha: 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.stars_rounded,
+                  color: Color(0xFFF57C00),
+                  size: 15,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '$_score',
+                  style: const TextStyle(
+                    color: primaryNavy,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Text(
+                  'pts',
+                  style: TextStyle(
+                    color: textGrey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1281,7 +1715,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     );
   }
 
-  /// Tangible, physical hittable Chekphei target piece with smooth subsession spring entrance
+  /// Minimal, elegant Manipuri Chekphei target disc (no cartoon icons)
   Widget _buildHittableTarget() {
     final double pxX = (_targetPos.dx * _courtSize.width) - (targetDiameter / 2);
     final double pxY = (_targetPos.dy * _courtSize.height) - (targetDiameter / 2);
@@ -1296,7 +1730,6 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
           animation: _trialTransitionController,
           builder: (context, child) {
             final double animVal = _trialTransitionController.value;
-            // Smooth elastic/spring entrance curve when a new subsession begins
             final double scale = (Curves.easeOutBack.transform(animVal)).clamp(0.0, 1.15);
             return Transform.scale(
               scale: scale,
@@ -1311,51 +1744,53 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  center: Alignment(-0.25, -0.30),
+                  radius: 0.85,
+                  colors: [
+                    Color(0xFFFF8A65),
+                    Color(0xFFE64A19),
+                    Color(0xFFBF360C),
+                  ],
+                  stops: [0.0, 0.65, 1.0],
+                ),
+                border: Border.all(color: Colors.white, width: 1.8),
                 boxShadow: [
                   BoxShadow(
-                    color: darkGreen.withValues(alpha: 0.30),
+                    color: const Color(0xFFE64A19).withValues(alpha: 0.35),
                     blurRadius: 7.0,
-                    offset: const Offset(0, 3.0),
+                    offset: const Offset(0, 2.5),
                   ),
                   if (_hasHitTargetThisTrial)
                     BoxShadow(
-                      color: successGreen.withValues(alpha: 0.65),
-                      blurRadius: 18.0,
-                      spreadRadius: 3.0,
+                      color: successGreen.withValues(alpha: 0.80),
+                      blurRadius: 16.0,
+                      spreadRadius: 2.5,
                     ),
                 ],
               ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    targetMarkerAsset,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [Color(0xFFA5D6A7), primarySage, Color(0xFF2E7D32)],
-                          ),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.circle, color: goldAccent, size: 20),
-                        ),
-                      );
-                    },
+              child: Center(
+                child: Container(
+                  width: targetDiameter * 0.50,
+                  height: targetDiameter * 0.50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      width: 1.2,
+                    ),
                   ),
-                  // Subtle traditional enamelled brass bezel
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: primarySage.withValues(alpha: 0.55),
-                        width: 1.5,
+                  child: Center(
+                    child: Container(
+                      width: targetDiameter * 0.22,
+                      height: targetDiameter * 0.22,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1382,47 +1817,87 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: darkGreen.withValues(alpha: 0.35),
+                  color: darkGreen.withValues(alpha: 0.30),
                   blurRadius: _isSliding ? 10.0 : 6.0,
                   offset: Offset(0, _isSliding ? 4.0 : 2.0),
                 ),
                 if (_isAiming)
                   BoxShadow(
-                    color: goldAccent.withValues(alpha: 0.70),
+                    color: primarySage.withValues(alpha: 0.55),
                     blurRadius: 14.0,
-                    spreadRadius: 2.0,
+                    spreadRadius: 2.5,
                   ),
               ],
             ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  strikerDiscAsset,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const RadialGradient(
-                          colors: [Color(0xFFFFFFFF), Color(0xFFE6D7C3), Color(0xFF6D4C41)],
-                        ),
-                        border: Border.all(color: goldAccent, width: 2.0),
-                      ),
-                    );
-                  },
+            child: MinimalStrikerDisc(diameter: strikerDiameter),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Traditional Manipuri Kangkhun guard obstacle piece with authentic craftsmanship
+  Widget _buildObstacle(ShanabaObstacle obstacle) {
+    final double pxX = (obstacle.position.dx * _courtSize.width) - obstacle.radius;
+    final double pxY = (obstacle.position.dy * _courtSize.height) - obstacle.radius;
+    final double diameter = obstacle.radius * 2;
+
+    return Positioned(
+      left: pxX,
+      top: pxY,
+      width: diameter,
+      height: diameter,
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const RadialGradient(
+              center: Alignment(-0.25, -0.30),
+              radius: 0.85,
+              colors: [
+                Color(0xFF8D6E63), // Rich teak tone
+                Color(0xFF4E342E), // Deep dark wood
+                Color(0xFF2E1C14), // Polished Kang wood grain
+              ],
+              stops: [0.0, 0.65, 1.0],
+            ),
+            border: Border.all(
+              color: const Color(0xFFD4A373), // Authentic turned brass inlay rim
+              width: 1.6,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.28),
+                blurRadius: 6.0,
+                offset: const Offset(0, 3.0),
+              ),
+              BoxShadow(
+                color: const Color(0xFFD4A373).withValues(alpha: 0.20),
+                blurRadius: 3.0,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Container(
+              width: diameter * 0.48,
+              height: diameter * 0.48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFD4A373).withValues(alpha: 0.85),
+                  width: 1.1,
                 ),
-                // Subtle tactile lacquer rim ring
-                DecoratedBox(
-                  decoration: BoxDecoration(
+              ),
+              child: Center(
+                child: Container(
+                  width: diameter * 0.20,
+                  height: diameter * 0.20,
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: goldAccent.withValues(alpha: 0.55),
-                      width: 1.5,
-                    ),
+                    color: Color(0xFFD4A373), // Brass center pin
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1433,14 +1908,13 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   /// Smooth floating transition indicator when a new subsession begins
   Widget _buildSubsessionTransitionBanner() {
     return Positioned(
-      top: 18.0,
-      left: 20.0,
-      right: 20.0,
+      top: 14.0,
+      left: 10.0,
+      right: 10.0,
       child: AnimatedBuilder(
         animation: _trialTransitionController,
         builder: (context, child) {
           final double t = _trialTransitionController.value;
-          // Smoothly slide in and fade in during first 35%, stay visible, fade out gracefully
           final double opacity = (t < 0.35 ? t / 0.35 : (t > 0.72 ? (1.0 - t) / 0.28 : 1.0)).clamp(0.0, 1.0);
           final double translateY = (1.0 - (t.clamp(0.0, 0.35) / 0.35)) * -14.0;
 
@@ -1452,7 +1926,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               opacity: opacity,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 7.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
                   decoration: BoxDecoration(
                     color: darkGreen,
                     borderRadius: BorderRadius.circular(20.0),
@@ -1464,73 +1938,30 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.play_circle_filled_rounded, size: 16.0, color: goldAccent),
-                      const SizedBox(width: 6.0),
-                      Text(
-                        'Trial $_currentTrial of ${widget.totalTrials} • Aim & Strike',
-                        style: const TextStyle(
-                          fontSize: 13.0,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.4,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.play_circle_filled_rounded, size: 15.0, color: goldAccent),
+                        const SizedBox(width: 5.0),
+                        Text(
+                          'Round $_currentTrial of ${widget.totalTrials} • Aim & Strike',
+                          style: const TextStyle(
+                            fontSize: 12.0,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildLaunchCue() {
-    final double baselineY = (_strikerPos.dy * _courtSize.height) + 42.0;
-
-    return Positioned(
-      left: 16.0,
-      right: 16.0,
-      top: baselineY.clamp(30.0, _courtSize.height - 50.0),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
-          decoration: BoxDecoration(
-            color: cream,
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(color: primarySage.withValues(alpha: 0.3)),
-            boxShadow: [
-              BoxShadow(
-                color: darkGreen.withValues(alpha: 0.10),
-                blurRadius: 8.0,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.swipe_up_rounded, size: 15.0, color: darkGreen),
-              SizedBox(width: 5.0),
-              Flexible(
-                child: Text(
-                  'Pull back to aim & strike',
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w700,
-                    color: darkGreen,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1586,8 +2017,16 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
         decoration: BoxDecoration(
-          color: cream,
+          color: cardWhite,
           borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: slateBorder, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: primaryNavy.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -1669,300 +2108,292 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     );
   }
 
-  Widget _buildGameOverDialog() {
+   Widget _buildGameOverDialog() {
     final double accuracy =
         widget.totalTrials > 0 ? (_hits / widget.totalTrials) * 100 : 0.0;
+    final int avgRt = _reactionTimes.isNotEmpty
+        ? (_reactionTimes.reduce((a, b) => a + b) / _reactionTimes.length)
+            .round()
+        : 1200;
 
     return Container(
-      color: Colors.black.withValues(alpha: 0.50),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-          decoration: BoxDecoration(
-            color: cardWhite,
-            borderRadius: BorderRadius.circular(24.0),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 20.0,
-                offset: Offset(0, 8),
-              ),
-            ],
+      color: Colors.black.withValues(alpha: 0.45),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: GameCompletionDialog(
+        finalScore: _score,
+        bestScore: max(_highScore, _score),
+        metrics: [
+          GameCompletionMetric(
+            icon: Icons.check_circle_outline_rounded,
+            label: 'Accuracy',
+            value: '${accuracy.round()}%',
+            iconColor: GameCompletionDialog.darkGreen,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.military_tech_rounded,
-                size: 52.0,
-                color: goldAccent,
-              ),
-              const SizedBox(height: 8.0),
-              const Text(
-                'Session Complete!',
-                style: TextStyle(
-                  fontSize: 21.0,
-                  fontWeight: FontWeight.w800,
-                  color: textDark,
-                ),
-              ),
-              const SizedBox(height: 4.0),
-              const Text(
-                'Your Manipuri tactile exercise has been recorded.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13.0, color: textGrey),
-              ),
-              const SizedBox(height: 14.0),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Accuracy',
-                      value: '${accuracy.toStringAsFixed(0)}%',
-                      icon: Icons.track_changes_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Total Score',
-                      value: '$_score',
-                      icon: Icons.stars_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18.0),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: borderGrey, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      ),
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
-                          Navigator.of(context)
-                              .pushNamedAndRemoveUntil('/home', (route) => false);
-                        }
-                      },
-                      child: const Text(
-                        'Exit',
-                        style: TextStyle(
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.w600,
-                          color: textDark,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10.0),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primarySage,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.0),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      ),
-                      onPressed: _restartGame,
-                      child: const Text(
-                        'Play Again',
-                        style: TextStyle(
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          GameCompletionMetric(
+            icon: Icons.speed_rounded,
+            label: 'Avg Speed',
+            value: '${(avgRt / 1000).toStringAsFixed(1)}s',
+            iconColor: GameCompletionDialog.sageGreen,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: softBackground,
-        borderRadius: BorderRadius.circular(14.0),
-        border: Border.all(color: borderGrey),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18.0, color: primarySage),
-          const SizedBox(height: 3.0),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 18.0,
-                fontWeight: FontWeight.w800,
-                color: textDark,
-              ),
-            ),
-          ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11.0,
-                fontWeight: FontWeight.w500,
-                color: textGrey,
-              ),
-            ),
+          GameCompletionMetric(
+            icon: Icons.local_fire_department_rounded,
+            label: 'Best Streak',
+            value: '$_bestStreak',
+            iconColor: GameCompletionDialog.darkGreen,
           ),
         ],
+        onHome: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/home', (route) => false);
+          }
+        },
+        onPlayAgain: _restartGame,
       ),
     );
   }
 }
 
 // ============================================================================
-// 3. CUSTOM PAINTERS: TRAJECTORY & WOODEN COURT FALLBACK
+// 3. CUSTOM PAINTERS: COMPLETE TRAJECTORY & MINIMAL TRADITIONAL KANGSHANG COURT
 // ============================================================================
 
-/// Dotted trajectory aim line rendered dynamically during touch & pull-back.
+/// Complete trajectory aim line rendered dynamically during touch & pull-back.
+/// Full predictive trajectory with wall bank reflection, obstacle hazard detection, power tension ring, and ZERO auto-aim.
 class _TrajectoryGuidePainter extends CustomPainter {
   final Offset discOrigin;
   final Offset targetCenter;
   final Offset aimStart;
   final Offset aimCurrent;
+  final double strikerDiameter;
+  final List<ShanabaObstacle> obstacles;
 
   _TrajectoryGuidePainter({
     required this.discOrigin,
     required this.targetCenter,
     required this.aimStart,
     required this.aimCurrent,
+    this.strikerDiameter = 36.0,
+    this.obstacles = const [],
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double startX = discOrigin.dx * size.width;
-    final double startY = discOrigin.dy * size.height;
+    final double courtW = size.width;
+    final double courtH = size.height;
 
-    final double pullDx = aimCurrent.dx - aimStart.dx;
-    final double pullDy = aimCurrent.dy - aimStart.dy;
+    final double startX = discOrigin.dx * courtW;
+    final double startY = discOrigin.dy * courtH;
 
-    double endX;
-    double endY;
+    // 1. Calculate drag vector directly in screen pixels
+    final double dragPxX = (aimCurrent.dx - aimStart.dx) * courtW;
+    final double dragPxY = (aimCurrent.dy - aimStart.dy) * courtH;
+    final double dragDistPx = sqrt(dragPxX * dragPxX + dragPxY * dragPxY);
 
-    if (pullDy.abs() > 0.02 || pullDx.abs() > 0.02) {
-      endX = startX - (pullDx * size.width * 2.2);
-      endY = startY - (pullDy * size.height * 2.2);
-    } else {
-      endX = targetCenter.dx * size.width;
-      endY = targetCenter.dy * size.height;
+    // Dynamic Pull Power Ring around striker (Tactile motor feedback)
+    final double power = (dragDistPx / (courtH * 0.16)).clamp(0.0, 1.0);
+    final double ringRadius = (strikerDiameter / 2) + 6.0;
+
+    final Paint powerTrackPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4;
+    canvas.drawCircle(Offset(startX, startY), ringRadius, powerTrackPaint);
+
+    if (power > 0.04) {
+      final Paint powerArcPaint = Paint()
+        ..shader = const SweepGradient(
+          colors: [
+            Color(0xFF5F866D),
+            Color(0xFFD4A373),
+            Color(0xFFE06D53),
+          ],
+          stops: [0.0, 0.6, 1.0],
+        ).createShader(Rect.fromCircle(center: Offset(startX, startY), radius: ringRadius))
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 2.8;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset(startX, startY), radius: ringRadius),
+        -pi / 2,
+        power * 2 * pi,
+        false,
+        powerArcPaint,
+      );
     }
 
-    final double dx = endX - startX;
-    final double dy = endY - startY;
-    final double dist = sqrt((dx * dx) + (dy * dy));
+    // If user has not pulled enough, draw minimal idle aiming indicator (NO AUTO-AIM)
+    if (dragDistPx < 8.0) {
+      final Paint idleDotPaint = Paint()
+        ..color = const Color(0xFF5F866D).withValues(alpha: 0.40)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(startX, startY - ringRadius - 6.0), 2.2, idleDotPaint);
+      canvas.drawCircle(Offset(startX, startY - ringRadius - 13.0), 1.8, idleDotPaint);
+      return;
+    }
 
-    if (dist <= 1.0) return;
+    // 2. Launch direction vector in screen pixels (100% identical to _onCourtPanEnd)
+    double launchDirPxX;
+    double launchDirPxY;
 
-    final Paint dotPaint = Paint()
-      ..color = const Color(0xFFD4A373).withValues(alpha: 0.85)
-      ..strokeCap = StrokeCap.round;
+    if (dragPxY > 0.0) {
+      launchDirPxX = -dragPxX;
+      launchDirPxY = -dragPxY;
+    } else {
+      launchDirPxX = dragPxX;
+      launchDirPxY = dragPxY;
+    }
 
-    final double step = 16.0;
-    final int count = (dist / step).clamp(2, 24).toInt();
+    final double launchDist = sqrt(launchDirPxX * launchDirPxX + launchDirPxY * launchDirPxY);
+    if (launchDist <= 0.001) return;
+    launchDirPxX /= launchDist;
+    launchDirPxY /= launchDist;
 
-    for (int i = 1; i <= count; i++) {
-      final double progress = i / count;
-      final double px = startX + (dx * progress);
-      final double py = startY + (dy * progress);
-      final double dotRadius = 2.5 + (progress * 1.5);
-      canvas.drawCircle(Offset(px, py), dotRadius, dotPaint);
+    // Ensure trajectory projects towards the top of the court
+    if (launchDirPxY >= -0.15) {
+      launchDirPxY = -0.15;
+      final double reNorm = sqrt(launchDirPxX * launchDirPxX + launchDirPxY * launchDirPxY);
+      launchDirPxX /= reNorm;
+      launchDirPxY /= reNorm;
+    }
+
+    // Exact physical boundary limits for the striker's center (matching physics _strikerMinX / maxX)
+    final double strikerRadiusPx = strikerDiameter / 2;
+    final double minBounceX = (courtW * _KingShanabaGameScreenState.courtRailLeft) + strikerRadiusPx;
+    final double maxBounceX = (courtW * _KingShanabaGameScreenState.courtRailRight) - strikerRadiusPx;
+    final double topRailY = (courtH * _KingShanabaGameScreenState.courtRailTop) + strikerRadiusPx;
+
+    final Paint guideDotPaint = Paint()
+      ..color = const Color(0xFFD4A373).withValues(alpha: 0.92)
+      ..style = PaintingStyle.fill;
+
+    final Paint bounceDotPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+
+    // Complete Trajectory with full predictive raycast & bank bounce
+    double currX = startX;
+    double currY = startY;
+    double curDirX = launchDirPxX;
+    double curDirY = launchDirPxY;
+    bool hasBounced = false;
+
+    const double stepSize = 12.5;
+    const int maxSteps = 60; // Generous length reaching the Chei target line
+
+    for (int step = 1; step <= maxSteps; step++) {
+      currX += curDirX * stepSize;
+      currY += curDirY * stepSize;
+
+      // Stop if reached top rail
+      if (currY <= topRailY) break;
+
+      // 1. Check obstacle collision: highlight warning halo on obstacle if trajectory intersects it
+      bool hitObstacle = false;
+      for (final obs in obstacles) {
+        final double obsPxX = obs.position.dx * courtW;
+        final double obsPxY = obs.position.dy * courtH;
+        final double distToObs = sqrt(pow(currX - obsPxX, 2) + pow(currY - obsPxY, 2));
+        final double minDist = strikerRadiusPx + obs.radius;
+
+        if (distToObs <= minDist) {
+          // Obstacle danger halo indicating collision
+          canvas.drawCircle(
+            Offset(obsPxX, obsPxY),
+            obs.radius + 5.0,
+            Paint()
+              ..color = const Color(0xFFE06D53).withValues(alpha: 0.45)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2.0,
+          );
+          hitObstacle = true;
+          break;
+        }
+      }
+
+      if (hitObstacle) {
+        // Draw terminal impact mark and stop guide ray
+        canvas.drawCircle(
+          Offset(currX, currY),
+          strikerRadiusPx * 0.7,
+          Paint()
+            ..color = const Color(0xFFE06D53).withValues(alpha: 0.70)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6,
+        );
+        break;
+      }
+
+      // 2. Wall bounce check for left and right court rails
+      if (!hasBounced) {
+        if (currX <= minBounceX) {
+          currX = minBounceX;
+          curDirX = curDirX.abs(); // Pure specular reflection matching physics
+          hasBounced = true;
+          // Bank contact point halo marker
+          canvas.drawCircle(
+            Offset(currX, currY),
+            5.0,
+            Paint()
+              ..color = const Color(0xFFD4A373)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.6,
+          );
+        } else if (currX >= maxBounceX) {
+          currX = maxBounceX;
+          curDirX = -curDirX.abs(); // Pure specular reflection matching physics
+          hasBounced = true;
+          // Bank contact point halo marker
+          canvas.drawCircle(
+            Offset(currX, currY),
+            5.0,
+            Paint()
+              ..color = const Color(0xFFD4A373)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.6,
+          );
+        }
+      }
+
+      final double progress = step / maxSteps;
+      final double dotRadius = (hasBounced ? 2.4 : 2.8) * (1.0 - (progress * 0.28));
+      canvas.drawCircle(
+        Offset(currX, currY),
+        max(1.4, dotRadius),
+        hasBounced ? bounceDotPaint : guideDotPaint,
+      );
     }
   }
 
   @override
   bool shouldRepaint(covariant _TrajectoryGuidePainter oldDelegate) {
-    return oldDelegate.discOrigin != discOrigin ||
+    if (oldDelegate.discOrigin != discOrigin ||
         oldDelegate.aimCurrent != aimCurrent ||
-        oldDelegate.targetCenter != targetCenter;
+        oldDelegate.aimStart != aimStart ||
+        oldDelegate.targetCenter != targetCenter ||
+        oldDelegate.strikerDiameter != strikerDiameter ||
+        oldDelegate.obstacles.length != obstacles.length) {
+      return true;
+    }
+    for (int i = 0; i < obstacles.length; i++) {
+      if (oldDelegate.obstacles[i].position != obstacles[i].position) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
-/// Fallback wooden court painter if image asset is unavailable.
-class _ManipuriCourtFallbackPainter extends CustomPainter {
+/// Renders a minimal, authentic Manipuri Kangshang playing court with clean, serene markings
+class _MinimalThemedCourtPainter extends CustomPainter {
   final Offset targetCenter;
-  final Size courtSize;
 
-  _ManipuriCourtFallbackPainter({
-    required this.targetCenter,
-    required this.courtSize,
-  });
+  _MinimalThemedCourtPainter({required this.targetCenter});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Rect courtRect = Offset.zero & size;
-
-    final Paint woodPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFE2A860),
-          Color(0xFFC78B43),
-          Color(0xFFB07231),
-        ],
-      ).createShader(courtRect);
-
-    canvas.drawRect(courtRect, woodPaint);
-
-    final Paint linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
-      ..strokeWidth = 2.4
-      ..style = PaintingStyle.stroke;
-
-    final Rect innerBounds = Rect.fromLTRB(
-      size.width * 0.08,
-      size.height * 0.06,
-      size.width * 0.92,
-      size.height * 0.94,
-    );
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(innerBounds, const Radius.circular(16.0)),
-        linePaint);
-
-    // Center target line
-    canvas.drawLine(
-      Offset(innerBounds.left, targetCenter.dy * size.height),
-      Offset(innerBounds.right, targetCenter.dy * size.height),
-      linePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ManipuriCourtFallbackPainter oldDelegate) {
-    return oldDelegate.targetCenter != targetCenter;
-  }
-}
-
-/// Renders subtle, soft court rail markings showing the authentic playable area
-class _CourtInnerRailPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double left = size.width * _KingShanabaGameScreenState.courtRailLeft;
@@ -1970,42 +2401,227 @@ class _CourtInnerRailPainter extends CustomPainter {
     final double right = size.width * _KingShanabaGameScreenState.courtRailRight;
     final double bottom = size.height * _KingShanabaGameScreenState.courtRailBottom;
 
-    final Paint railPaint = Paint()
-      ..color = const Color(0xFFEDE7D7).withValues(alpha: 0.50)
+    // 1. Subtle, serene court floor grain lines (Authentic polished timber court)
+    final Paint grainPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.035)
+      ..strokeWidth = 1.0;
+    for (double gx = left + 22.0; gx < right; gx += 26.0) {
+      canvas.drawLine(Offset(gx, top + 8.0), Offset(gx, bottom - 8.0), grainPaint);
+    }
+
+    // 2. Primary outer court rail perimeter (Rounded rectangle)
+    final Paint outerRailPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.8;
 
-    final RRect innerRail = RRect.fromRectAndRadius(
+    final RRect outerRail = RRect.fromRectAndRadius(
       Rect.fromLTRB(left, top, right, bottom),
-      const Radius.circular(14.0),
+      const Radius.circular(16.0),
     );
-    canvas.drawRRect(innerRail, railPaint);
+    canvas.drawRRect(outerRail, outerRailPaint);
 
-    // Inner subtle guide line
-    final Paint innerDashPaint = Paint()
-      ..color = const Color(0xFF5F866D).withValues(alpha: 0.22)
+    // 3. Subtle inner rail line
+    final Paint innerRailPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final RRect innerRail = RRect.fromRectAndRadius(
+      Rect.fromLTRB(left + 3.5, top + 3.5, right - 3.5, bottom - 3.5),
+      const Radius.circular(13.0),
+    );
+    canvas.drawRRect(innerRail, innerRailPaint);
+
+    // 4. Traditional Corner Brackets (Kangshang Corner Accents)
+    final Paint cornerPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+    const double bracketLen = 12.0;
+
+    // Top-Left
+    canvas.drawLine(Offset(left + 4.0, top + 14.0), Offset(left + 4.0, top + 14.0 + bracketLen), cornerPaint);
+    canvas.drawLine(Offset(left + 14.0, top + 4.0), Offset(left + 14.0 + bracketLen, top + 4.0), cornerPaint);
+    // Top-Right
+    canvas.drawLine(Offset(right - 4.0, top + 14.0), Offset(right - 4.0, top + 14.0 + bracketLen), cornerPaint);
+    canvas.drawLine(Offset(right - 14.0, top + 4.0), Offset(right - 14.0 - bracketLen, top + 4.0), cornerPaint);
+    // Bottom-Left
+    canvas.drawLine(Offset(left + 4.0, bottom - 14.0), Offset(left + 4.0, bottom - 14.0 - bracketLen), cornerPaint);
+    canvas.drawLine(Offset(left + 14.0, bottom - 4.0), Offset(left + 14.0 + bracketLen, bottom - 4.0), cornerPaint);
+    // Bottom-Right
+    canvas.drawLine(Offset(right - 4.0, bottom - 14.0), Offset(right - 4.0, bottom - 14.0 - bracketLen), cornerPaint);
+    canvas.drawLine(Offset(right - 14.0, bottom - 4.0), Offset(right - 14.0 - bracketLen, bottom - 4.0), cornerPaint);
+
+    // 5. Chei Target Line (Top scoring zone)
+    final double cheiY = size.height * 0.13;
+    final Paint cheiPaint = Paint()
+      ..color = const Color(0xFFD4A373).withValues(alpha: 0.40)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    canvas.drawLine(Offset(left + 10.0, cheiY), Offset(right - 10.0, cheiY), cheiPaint);
+
+    // Chei zone boundary tick marks
+    canvas.drawLine(Offset(left + 18.0, cheiY - 5.0), Offset(left + 18.0, cheiY + 5.0), cheiPaint);
+    canvas.drawLine(Offset(right - 18.0, cheiY - 5.0), Offset(right - 18.0, cheiY + 5.0), cheiPaint);
+
+    // Subtle target landing aura on court floor
+    final Offset targetPixelCenter = Offset(
+      targetCenter.dx * size.width,
+      targetCenter.dy * size.height,
+    );
+    final Paint targetZonePaint = Paint()
+      ..color = const Color(0xFFD4A373).withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawCircle(targetPixelCenter, 22.0, targetZonePaint);
+    canvas.drawCircle(
+      targetPixelCenter,
+      36.0,
+      Paint()
+        ..color = const Color(0xFF5F866D).withValues(alpha: 0.08)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // 6. Lamjel Half-Court Line (Center dividing line)
+    final Paint midLinePaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    final RRect innerGuide = RRect.fromRectAndRadius(
-      Rect.fromLTRB(left + 3.0, top + 3.0, right - 3.0, bottom - 3.0),
-      const Radius.circular(12.0),
-    );
-    canvas.drawRRect(innerGuide, innerDashPaint);
+    const double dashWidth = 6.0;
+    const double dashSpace = 5.0;
+    final double midY = size.height * 0.50;
+    double startX = left + 16.0;
+    final double endX = right - 16.0;
+    while (startX < endX) {
+      canvas.drawLine(
+        Offset(startX, midY),
+        Offset(min(startX + dashWidth, endX), midY),
+        midLinePaint,
+      );
+      startX += dashWidth + dashSpace;
+    }
 
-    // Subtle target zone baseline marking
-    final Paint linePaint = Paint()
-      ..color = const Color(0xFFEDE7D7).withValues(alpha: 0.35)
+    // Center court diamond emblem
+    final double midX = size.width * 0.50;
+    final Path diamond = Path()
+      ..moveTo(midX, midY - 4.5)
+      ..lineTo(midX + 4.5, midY)
+      ..lineTo(midX, midY + 4.5)
+      ..lineTo(midX - 4.5, midY)
+      ..close();
+    canvas.drawPath(
+      diamond,
+      Paint()
+        ..color = const Color(0xFF5F866D).withValues(alpha: 0.35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // 7. Khanglen Striker Baseline (Launch stations at bottom)
+    final double baselineY = size.height * 0.88;
+    final Paint baselinePaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.5;
 
     canvas.drawLine(
-      Offset(left + 10.0, size.height * 0.30),
-      Offset(right - 10.0, size.height * 0.30),
-      linePaint,
+      Offset(left + 14.0, baselineY),
+      Offset(right - 14.0, baselineY),
+      baselinePaint,
     );
+
+    // Traditional Kang launch station pips (Left, Center, Right)
+    final Paint stationDotPaint = Paint()
+      ..color = const Color(0xFF5F866D).withValues(alpha: 0.45)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.50, baselineY), 2.5, stationDotPaint);
+    canvas.drawCircle(Offset(size.width * 0.32, baselineY), 2.0, stationDotPaint);
+    canvas.drawCircle(Offset(size.width * 0.68, baselineY), 2.0, stationDotPaint);
+
+    // 8. Bank Rail Cushion Indicators (Left & Right rebound surfaces)
+    final Paint cushionPaint = Paint()
+      ..color = const Color(0xFFD4A373).withValues(alpha: 0.28)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(left + 6.0, top + 40.0), Offset(left + 6.0, bottom - 40.0), cushionPaint);
+    canvas.drawLine(Offset(right - 6.0, top + 40.0), Offset(right - 6.0, bottom - 40.0), cushionPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _MinimalThemedCourtPainter oldDelegate) {
+    return oldDelegate.targetCenter != targetCenter;
+  }
 }
+
+/// Minimal, elegant Manipuri Kang Striker Disc
+class MinimalStrikerDisc extends StatelessWidget {
+  final double diameter;
+
+  const MinimalStrikerDisc({super.key, this.diameter = 36.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          center: Alignment(-0.25, -0.30),
+          radius: 0.85,
+          colors: [
+            Color(0xFF3F6E55),
+            Color(0xFF234B36),
+            Color(0xFF142F21),
+          ],
+          stops: [0.0, 0.65, 1.0],
+        ),
+        border: Border.all(
+          color: const Color(0xFFDCE8DA),
+          width: 1.6,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF142F21).withValues(alpha: 0.35),
+            blurRadius: 6.0,
+            offset: const Offset(0, 3.0),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Container(
+          width: diameter * 0.52,
+          height: diameter * 0.52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFFD4A373).withValues(alpha: 0.55),
+              width: 1.2,
+            ),
+          ),
+          child: Center(
+            child: Container(
+              width: diameter * 0.22,
+              height: diameter * 0.22,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xFFFFE082),
+                    Color(0xFFD4A373),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compatibility alias
+typedef KangStrikerDisc = MinimalStrikerDisc;

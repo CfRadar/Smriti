@@ -147,8 +147,8 @@ void main() {
         findsOneWidget,
       );
 
-      // Check presence of court and game images
-      expect(find.byType(Image), findsWidgets);
+      // Check presence of minimal themed playing area elements
+      expect(find.byType(MinimalStrikerDisc), findsOneWidget);
     });
 
     testWidgets('Toggles sound and pause states gracefully',

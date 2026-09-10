@@ -30,6 +30,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../controllers/voice_command_controller.dart';
 import '../models/voice_command.dart';
 import '../widgets/animated_fragmented_divider.dart';
+import '../widgets/game_completion_dialog.dart';
 
 // ============================================================================
 // 1. GRID COORDINATES & GAMEPLAY ENUMS
@@ -395,6 +396,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   bool _isSoundEnabled = true;
 
   // Session & state tracking
+  static const String _prefKeyHighScore = 'smriti_bamboo_dance_high_score';
   bool _isPaused = false;
   bool _isCompleted = false;
   bool _isTrialInputLocked = false;
@@ -402,6 +404,10 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   int _totalTrialsRun = 0;
   int _stageTrialsRun = 0;
   int _correctStepsCount = 0;
+  int _highScore = 0;
+  int _currentStreak = 0;
+  int _bestStreak = 0;
+  final List<int> _reactionTimes = [];
   DateTime? _trialStartTime;
 
   // Grid coordinates & persistent dancer location
@@ -428,6 +434,12 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   List<DanceDirection> _memoryPatternQueue = [];
   int _memoryPatternIndex = 0;
 
+  // Hint & guidance tracking
+  late final AnimationController _hintPulseController;
+  Timer? _idleHintTimer;
+  bool _isHintVisible = false;
+  int _consecutiveOffTargetTaps = 0;
+
   Timer? _nextTrialTimer;
 
   final Random _random = Random();
@@ -441,7 +453,9 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   static const Color peachAccent = Color(0xFFFFAB91); // Signature peach
   static const Color pinkAccent = Color(0xFFF48FB1); // Signature pink
   static const Color orangeAccent = Color(0xFFFF7043); // Radiant orange
-  static const Color lightBlue = Color(0xFFDFF0FA); // Light cadence pill
+  static const Color cardWhite = Color(0xFFFFFFFF);
+  static const Color darkGreen = Color(0xFF214E3B);
+  static const Color primarySage = Color(0xFF5F866D);
 
   @override
   void initState() {
@@ -499,6 +513,12 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
       duration: const Duration(milliseconds: 380),
     );
 
+    // Hint pulse animation controller
+    _hintPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     // Moving peach & pink fragmented underline animation controller
     _underlineController = AnimationController(
       vsync: this,
@@ -507,6 +527,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
 
     _initAudio();
     _registerVoiceCommands();
+    SharedPreferences.getInstance().then((prefs) {
+      if (mounted) {
+        setState(() {
+          _highScore = prefs.getInt(_prefKeyHighScore) ?? 0;
+        });
+      }
+    });
     _startNextTrial(initialDelay: const Duration(milliseconds: 400));
   }
 
@@ -625,6 +652,17 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     }
 
     _bambooShiftController.forward(from: 0.0);
+
+    // Reset hint state and schedule gentle idle hint if user does not tap
+    _idleHintTimer?.cancel();
+    _consecutiveOffTargetTaps = 0;
+    if (_isHintVisible) {
+      _isHintVisible = false;
+      _hintPulseController.reset();
+    }
+    _idleHintTimer = Timer(const Duration(milliseconds: 2800), () {
+      _showTargetHint();
+    });
 
     setState(() {
       _characterMood = CharacterMood.idle;
@@ -834,13 +872,48 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     if (dist <= hitRadius) {
       _processStep(isCorrect: true);
     } else {
+      _handleOffTargetTap();
+    }
+  }
+
+  /// Handles when user taps off-target or misses the target circle
+  void _handleOffTargetTap() {
+    if (_isPaused || _isCompleted || _isTrialInputLocked || _trialStartTime == null) return;
+
+    _consecutiveOffTargetTaps++;
+    HapticFeedback.lightImpact();
+
+    // Give a clear, gentle visual and haptic hint to tap on the target
+    _showTargetHint();
+
+    // Allow multiple chances for patient; stumble only on persistent multiple misses (>= 3)
+    if (_consecutiveOffTargetTaps >= 3) {
       _processStep(isCorrect: false);
+    }
+  }
+
+  /// Activates the animated hint cue on and around the target circle
+  void _showTargetHint() {
+    if (!mounted || _isPaused || _isCompleted || _isTrialInputLocked) return;
+    if (!_isHintVisible) {
+      setState(() {
+        _isHintVisible = true;
+      });
+      _hintPulseController.repeat(reverse: true);
     }
   }
 
   void _processStep({required bool isCorrect}) {
     if (_isPaused || _isCompleted || _isTrialInputLocked || _trialStartTime == null) return;
     _isTrialInputLocked = true;
+
+    _idleHintTimer?.cancel();
+    if (_isHintVisible) {
+      setState(() {
+        _isHintVisible = false;
+      });
+      _hintPulseController.reset();
+    }
 
     HapticFeedback.lightImpact();
     _playButtonTapSound();
@@ -850,9 +923,16 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
 
     _totalTrialsRun++;
     _stageTrialsRun++;
+    _reactionTimes.add(reactionTimeMs);
     if (isCorrect) {
       _correctStepsCount++;
+      _currentStreak++;
+      if (_currentStreak > _bestStreak) {
+        _bestStreak = _currentStreak;
+      }
       _scorePopController.forward(from: 0.0);
+    } else {
+      _currentStreak = 0;
     }
 
     _engine.recordTrialResult(
@@ -898,6 +978,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
 
     if (_totalTrialsRun >= widget.totalTargetTrials) {
       _isCompleted = true;
+      final score = _correctStepsCount * 20;
+      if (score > _highScore) {
+        _highScore = score;
+        SharedPreferences.getInstance().then((prefs) {
+          prefs.setInt(_prefKeyHighScore, _highScore);
+        });
+      }
       final nextDelayMs = isCorrect ? 900 : 700;
       _nextTrialTimer?.cancel();
       _nextTrialTimer = Timer(Duration(milliseconds: nextDelayMs), () {
@@ -934,10 +1021,18 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   }
 
   void _restartGameSession() {
+    _idleHintTimer?.cancel();
+    _isHintVisible = false;
+    _consecutiveOffTargetTaps = 0;
+    _hintPulseController.reset();
+
     setState(() {
       _totalTrialsRun = 0;
       _stageTrialsRun = 0;
       _correctStepsCount = 0;
+      _currentStreak = 0;
+      _bestStreak = 0;
+      _reactionTimes.clear();
       _isCompleted = false;
       _isEndingOverlayVisible = false;
       _isTrialInputLocked = false;
@@ -957,6 +1052,9 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   }
 
   void _pauseGame() {
+    _idleHintTimer?.cancel();
+    _hintPulseController.stop();
+
     setState(() {
       _isPaused = true;
       _rhythmPulseController.stop();
@@ -968,6 +1066,14 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     setState(() {
       _isPaused = false;
       _rhythmPulseController.repeat(reverse: true);
+      if (_isHintVisible) {
+        _hintPulseController.repeat(reverse: true);
+      } else if (!_isTrialInputLocked && !_isCompleted) {
+        _idleHintTimer?.cancel();
+        _idleHintTimer = Timer(const Duration(milliseconds: 2800), () {
+          _showTargetHint();
+        });
+      }
       if (_isSoundEnabled) {
         _bgMusicPlayer?.resume();
       }
@@ -977,6 +1083,8 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   @override
   void dispose() {
     _nextTrialTimer?.cancel();
+    _idleHintTimer?.cancel();
+    _hintPulseController.dispose();
     VoiceCommandController.instance.unregisterGame();
     _rhythmPulseController.dispose();
     _bambooShiftController.dispose();
@@ -1011,102 +1119,230 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   children: [
                     _buildTopBar(),
                     const AnimatedFragmentedDivider(),
+                    _buildHeaderStats(),
                     // Expanded court maximizing screen real estate
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: LayoutBuilder(
-                          builder: (context, courtConstraints) {
-                            final courtSize = min(
-                              courtConstraints.maxWidth,
-                              courtConstraints.maxHeight,
-                            );
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: _handleOffTargetTap,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: LayoutBuilder(
+                            builder: (context, courtConstraints) {
+                              final courtSize = min(
+                                courtConstraints.maxWidth,
+                                courtConstraints.maxHeight,
+                              );
 
-                            return Center(
-                              child: SizedBox(
-                                width: courtSize,
-                                height: courtSize,
-                                child: AnimatedBuilder(
-                                  animation: Listenable.merge([
-                                    _rhythmPulseController,
-                                    _bambooShiftController,
-                                    _characterJumpController,
-                                    _stumbleController,
-                                  ]),
-                                  builder: (context, _) {
-                                    final center = Offset(courtSize / 2, courtSize / 2);
-                                    final cellSpacing = courtSize * 0.28;
-                                    final targetCenter = Offset(
-                                      center.dx + (_targetGridPos.col - 1) * cellSpacing,
-                                      center.dy + (_targetGridPos.row - 1) * cellSpacing,
-                                    );
-                                    final targetRadius =
-                                        (courtSize * 0.08).clamp(26.0, 38.0);
+                              return Center(
+                                child: SizedBox(
+                                  width: courtSize,
+                                  height: courtSize,
+                                  child: AnimatedBuilder(
+                                    animation: Listenable.merge([
+                                      _rhythmPulseController,
+                                      _bambooShiftController,
+                                      _characterJumpController,
+                                      _stumbleController,
+                                      _hintPulseController,
+                                    ]),
+                                    builder: (context, _) {
+                                      final center = Offset(courtSize / 2, courtSize / 2);
+                                      final cellSpacing = courtSize * 0.28;
+                                      final targetCenter = Offset(
+                                        center.dx + (_targetGridPos.col - 1) * cellSpacing,
+                                        center.dy + (_targetGridPos.row - 1) * cellSpacing,
+                                      );
+                                      final targetRadius =
+                                          (courtSize * 0.08).clamp(26.0, 38.0);
 
-                                    return Stack(
-                                      children: [
-                                        // 1. Interactive canvas court
-                                        Positioned.fill(
-                                          child: GestureDetector(
-                                            key: const ValueKey('bamboo_court_canvas'),
-                                            behavior: HitTestBehavior.opaque,
-                                            onTapDown: (details) => _handleCourtTap(
-                                              details.localPosition,
-                                              Size(courtSize, courtSize),
-                                            ),
-                                            child: CustomPaint(
-                                              size: Size(courtSize, courtSize),
-                                              painter: BambooCourtPainter(
-                                                pulseFactor: _rhythmPulseController.value,
-                                                characterMood: _characterMood,
-                                                stepDirection: _characterStepDirection,
-                                                jumpProgress: _characterJumpController.value,
-                                                stumbleProgress: _stumbleController.value,
-                                                targetDirection: _expectedDirection,
-                                                targetGridPos: _targetGridPos,
-                                                prevTargetGridPos: _prevTargetGridPos,
-                                                dancerGridPos: _dancerGridPos,
-                                                prevDancerGridPos: _prevDancerGridPos,
-                                                bambooShiftProgress: _bambooShiftController.value,
-                                                trialStep: _totalTrialsRun,
-                                                isAlternateNotes: _engine.isAlternateNotes,
-                                                verticalCloseWithRight: _verticalCloseWithRight,
-                                                prevVerticalCloseWithRight: _prevVerticalCloseWithRight,
-                                                horizontalCloseWithBottom: _horizontalCloseWithBottom,
-                                                prevHorizontalCloseWithBottom: _prevHorizontalCloseWithBottom,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        // 2. Direct touch target circle widget
-                                        Positioned(
-                                          left: targetCenter.dx - targetRadius,
-                                          top: targetCenter.dy - targetRadius,
-                                          width: targetRadius * 2,
-                                          height: targetRadius * 2,
-                                          child: Semantics(
-                                            button: true,
-                                            label: 'Step target circle',
+                                      return Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          // 1. Interactive canvas court
+                                          Positioned.fill(
                                             child: GestureDetector(
-                                              key: const ValueKey('bamboo_target_circle'),
+                                              key: const ValueKey('bamboo_court_canvas'),
                                               behavior: HitTestBehavior.opaque,
-                                              onTap: () => _processStep(isCorrect: true),
-                                              child: Container(
-                                                decoration: const BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Colors.transparent,
+                                              onTapDown: (details) => _handleCourtTap(
+                                                details.localPosition,
+                                                Size(courtSize, courtSize),
+                                              ),
+                                              child: CustomPaint(
+                                                size: Size(courtSize, courtSize),
+                                                painter: BambooCourtPainter(
+                                                  pulseFactor: _rhythmPulseController.value,
+                                                  characterMood: _characterMood,
+                                                  stepDirection: _characterStepDirection,
+                                                  jumpProgress: _characterJumpController.value,
+                                                  stumbleProgress: _stumbleController.value,
+                                                  targetDirection: _expectedDirection,
+                                                  targetGridPos: _targetGridPos,
+                                                  prevTargetGridPos: _prevTargetGridPos,
+                                                  dancerGridPos: _dancerGridPos,
+                                                  prevDancerGridPos: _prevDancerGridPos,
+                                                  bambooShiftProgress: _bambooShiftController.value,
+                                                  trialStep: _totalTrialsRun,
+                                                  isAlternateNotes: _engine.isAlternateNotes,
+                                                  verticalCloseWithRight: _verticalCloseWithRight,
+                                                  prevVerticalCloseWithRight: _prevVerticalCloseWithRight,
+                                                  horizontalCloseWithBottom: _horizontalCloseWithBottom,
+                                                  prevHorizontalCloseWithBottom: _prevHorizontalCloseWithBottom,
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    );
-                                  },
+                                          // 2. Direct touch target circle widget
+                                          Positioned(
+                                            left: targetCenter.dx - targetRadius,
+                                            top: targetCenter.dy - targetRadius,
+                                            width: targetRadius * 2,
+                                            height: targetRadius * 2,
+                                            child: Semantics(
+                                              button: true,
+                                              label: 'Step target circle',
+                                              child: GestureDetector(
+                                                key: const ValueKey('bamboo_target_circle'),
+                                                behavior: HitTestBehavior.opaque,
+                                                onTap: () => _processStep(isCorrect: true),
+                                                child: Container(
+                                                  decoration: const BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.transparent,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // 3. Hint guidance when user hasn't tapped on the target
+                                          if (_isHintVisible) ...[
+                                            // A. Pulsing ripple beacon expanding around target circle
+                                            Positioned(
+                                              left: targetCenter.dx - (targetRadius * (1.15 + 0.45 * _hintPulseController.value)),
+                                              top: targetCenter.dy - (targetRadius * (1.15 + 0.45 * _hintPulseController.value)),
+                                              width: targetRadius * 2 * (1.15 + 0.45 * _hintPulseController.value),
+                                              height: targetRadius * 2 * (1.15 + 0.45 * _hintPulseController.value),
+                                              child: IgnorePointer(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: orangeAccent.withValues(
+                                                        alpha: (0.9 - 0.7 * _hintPulseController.value).clamp(0.0, 1.0),
+                                                      ),
+                                                      width: 2.5,
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: orangeAccent.withValues(
+                                                          alpha: (0.35 - 0.25 * _hintPulseController.value).clamp(0.0, 1.0),
+                                                        ),
+                                                        blurRadius: 10,
+                                                        spreadRadius: 2,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // B. Bouncing hand/pointer icon pointing directly at target circle
+                                            Positioned(
+                                              left: targetCenter.dx - 18,
+                                              top: targetCenter.dy - targetRadius - 40 + (sin(_hintPulseController.value * pi) * 7),
+                                              child: IgnorePointer(
+                                                child: Container(
+                                                  width: 36,
+                                                  height: 36,
+                                                  decoration: BoxDecoration(
+                                                    gradient: const LinearGradient(
+                                                      colors: [Color(0xFFFF8A65), Color(0xFFFF7043)],
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                    ),
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(color: Colors.white, width: 2),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: orangeAccent.withValues(alpha: 0.45),
+                                                        blurRadius: 8,
+                                                        offset: const Offset(0, 2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.touch_app_rounded,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // C. Floating hint pill with encouraging guidance message
+                                            Positioned(
+                                              key: const ValueKey('bamboo_target_hint'),
+                                              left: (targetCenter.dx - 90).clamp(8.0, courtSize - 188.0),
+                                              top: _targetGridPos.row <= 1
+                                                  ? (targetCenter.dy + targetRadius + 10).clamp(0.0, courtSize - 44.0)
+                                                  : (targetCenter.dy - targetRadius - 48).clamp(0.0, courtSize - 44.0),
+                                              child: Semantics(
+                                                button: true,
+                                                label: 'Hint: Tap on the target circle',
+                                                child: GestureDetector(
+                                                  onTap: () => _processStep(isCorrect: true),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6.5),
+                                                    decoration: BoxDecoration(
+                                                      gradient: const LinearGradient(
+                                                        colors: [Color(0xFFFFF9F5), Color(0xFFFFEDE6)],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      border: Border.all(
+                                                        color: orangeAccent,
+                                                        width: 1.5,
+                                                      ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: orangeAccent.withValues(alpha: 0.25),
+                                                          blurRadius: 10,
+                                                          offset: const Offset(0, 2.5),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.touch_app_rounded,
+                                                          color: orangeAccent,
+                                                          size: 15,
+                                                        ),
+                                                        SizedBox(width: 5),
+                                                        Text(
+                                                          'Tap on the target! 🎯',
+                                                          style: TextStyle(
+                                                            color: primaryNavy,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w700,
+                                                            letterSpacing: 0.1,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -1120,6 +1356,284 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
         ),
       ),
     );
+  }
+
+  /// Top status header box matching Picture Recognition, Pattern Memory, and King Shanaba
+  Widget _buildHeaderStats() {
+    final currentStep =
+        (_totalTrialsRun + 1).clamp(1, widget.totalTargetTrials);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14.0, 6.0, 14.0, 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: cardWhite,
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(color: slateBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: primaryNavy.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 1. Step progress & Done count
+          Flexible(
+            flex: 4,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.music_note_rounded,
+                      size: 18, color: darkGreen),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Step $currentStep / ${widget.totalTargetTrials}',
+                    style: const TextStyle(
+                      color: primaryNavy,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Done: $_correctStepsCount',
+                    style: const TextStyle(
+                      color: primarySage,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // 2. Tappable Stage badge
+          Flexible(
+            flex: 2,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: InkWell(
+                onTap: _openStagePickerSheet,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: darkGreen.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: darkGreen.withValues(alpha: 0.22),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bolt_rounded,
+                          size: 14, color: darkGreen),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Stage ${_engine.currentStageNumber}',
+                        style: const TextStyle(
+                          color: darkGreen,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+
+          // 3. Points box
+          Flexible(
+            flex: 2,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E7),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.65),
+                    width: 1.1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFA000).withValues(alpha: 0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.stars_rounded,
+                      color: Color(0xFFF57C00),
+                      size: 15,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${_correctStepsCount * 10}',
+                      style: const TextStyle(
+                        color: primaryNavy,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Text(
+                      'pts',
+                      style: TextStyle(
+                        color: textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Caregiver / manual stage picker bottom sheet
+  void _openStagePickerSheet() {
+    _pauseGame();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Dance Stages (1–6)',
+                          style: TextStyle(
+                            color: primaryNavy,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: textMuted),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: BambooStageConfig.defaultStages.length,
+                        itemBuilder: (context, index) {
+                          final cfg = BambooStageConfig.defaultStages[index];
+                          final isSelected =
+                              cfg.stageNumber == _engine.currentStageNumber;
+
+                          return ListTile(
+                            onTap: () {
+                              setSheetState(() {});
+                              setState(() {
+                                _engine.currentStageNumber = cfg.stageNumber;
+                                _engine.adaptiveBpm = cfg.bpm;
+                                _engine.adaptiveTimingWindowMs =
+                                    cfg.timingWindowMs;
+                                _updatePulseDuration();
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            tileColor: isSelected
+                                ? primarySage.withValues(alpha: 0.12)
+                                : null,
+                            leading: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: isSelected
+                                  ? primarySage
+                                  : slateBorder.withValues(alpha: 0.6),
+                              child: Text(
+                                '${cfg.stageNumber}',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : primaryNavy,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              'Stage ${cfg.stageNumber}: ${cfg.name}',
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
+                                color: primaryNavy,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${cfg.subtitle} • ${cfg.bpm} BPM',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: textMuted,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: primarySage,
+                                  )
+                                : null,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      if (_isPaused && !_isCompleted) {
+        _resumeGame();
+      }
+    });
   }
 
   /// Ambient floating pastel orbs to fill empty screen spaces harmoniously
@@ -1314,19 +1828,16 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Right side controls: Sound toggle, Pause/Play toggle, and Score counter with animations
+  /// Right side controls: Sound toggle and Pause/Play toggle with guaranteed spacing
   Widget _buildNavRightControls() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Sound toggle with idle breath + active animation
         _buildNavSoundButton(),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
         // Pause / Play toggle with idle pulse & pause state indicator
         _buildNavPausePlayButton(),
-        const SizedBox(width: 4),
-        // Score counter on the nav right with idle float & pop on score
-        _buildNavScoreBadge(),
       ],
     );
   }
@@ -1462,74 +1973,15 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Score counter on the nav right with idle floating & pop bounce on score
-  Widget _buildNavScoreBadge() {
-    final score = _correctStepsCount * 10;
-    return AnimatedBuilder(
-      animation: Listenable.merge([_navIdleController, _scorePopController]),
-      builder: (context, child) {
-        final popScale = Curves.elasticOut.transform(_scorePopController.value);
-        final idleScale = 1.0 + (_navIdleController.value * 0.03);
-        final scale = idleScale + (popScale * 0.20);
-
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFF6EE), Color(0xFFFDEEF2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _scorePopController.value > 0.05
-                    ? orangeAccent
-                    : peachAccent,
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: peachAccent.withValues(
-                    alpha: 0.20 + (_scorePopController.value * 0.30),
-                  ),
-                  blurRadius: 4 + (_scorePopController.value * 4),
-                  offset: const Offset(0, 1.5),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.stars_rounded,
-                  color: Color(0xFFFF9800),
-                  size: 14,
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  '$score',
-                  style: const TextStyle(
-                    color: primaryNavy,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   /// Celebratory ending display dialog overlay celebrating session completion
   Widget _buildCelebratoryEndingDisplay() {
     final accuracyPercent = _totalTrialsRun > 0
         ? ((_correctStepsCount / _totalTrialsRun) * 100).round()
         : 100;
+    final int avgRt = _reactionTimes.isNotEmpty
+        ? (_reactionTimes.reduce((a, b) => a + b) / _reactionTimes.length).round()
+        : 1100;
+    final score = _correctStepsCount * 20;
 
     return Positioned.fill(
       child: AnimatedBuilder(
@@ -1540,9 +1992,10 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
             curve: Curves.easeOutBack,
           ).value;
           return Container(
-            color: Colors.black.withValues(alpha: 0.5 * _celebrationController.value),
+            color: Colors.black
+                .withValues(alpha: 0.45 * _celebrationController.value),
             alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Transform.scale(
               scale: 0.85 + (0.15 * animValue),
               child: Opacity(
@@ -1552,216 +2005,34 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
             ),
           );
         },
-        child: Container(
-          width: 360,
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Colors.white, Color(0xFFF0F4F8)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+        child: GameCompletionDialog(
+          finalScore: score,
+          bestScore: max(_highScore, score),
+          metrics: [
+            GameCompletionMetric(
+              icon: Icons.check_circle_outline_rounded,
+              label: 'Accuracy',
+              value: '$accuracyPercent%',
+              iconColor: GameCompletionDialog.darkGreen,
             ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: peachAccent,
-              width: 2.2,
+            GameCompletionMetric(
+              icon: Icons.speed_rounded,
+              label: 'Avg Speed',
+              value: '${(avgRt / 1000).toStringAsFixed(1)}s',
+              iconColor: GameCompletionDialog.sageGreen,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: primaryNavy.withValues(alpha: 0.18),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 68,
-                height: 68,
-                decoration: BoxDecoration(
-                  color: lightBlue,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: primaryNavy, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryNavy.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.celebration_rounded,
-                    size: 38,
-                    color: primaryNavy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryNavy,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Text(
-                  '🌸 CONGRATULATIONS 🌸',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${widget.totalTargetTrials} Dance Steps Completed!',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: primaryNavy,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  'You danced beautifully! Great for rhythm & memory.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: textMuted,
-                    fontSize: 12.5,
-                    height: 1.3,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: slateBorder),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        const Text(
-                          'Steps',
-                          style: TextStyle(color: textMuted, fontSize: 12),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$_totalTrialsRun',
-                          style: const TextStyle(
-                            color: primaryNavy,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(width: 1, height: 28, color: slateBorder),
-                    Column(
-                      children: [
-                        const Text(
-                          'Harmony',
-                          style: TextStyle(color: textMuted, fontSize: 12),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$accuracyPercent%',
-                          style: const TextStyle(
-                            color: primaryNavy,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(width: 1, height: 28, color: slateBorder),
-                    Column(
-                      children: [
-                        const Text(
-                          'Stage',
-                          style: TextStyle(color: textMuted, fontSize: 12),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${_engine.currentStageNumber} / 6',
-                          style: const TextStyle(
-                            color: primaryNavy,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryNavy,
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.replay_rounded, size: 20),
-                      label: const Text(
-                        'Play Again',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onPressed: _restartGameSession,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: primaryNavy,
-                        side: const BorderSide(color: primaryNavy, width: 1.8),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      icon: const Icon(Icons.home_rounded, size: 20),
-                      label: const Text(
-                        'Home',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            GameCompletionMetric(
+              icon: Icons.local_fire_department_rounded,
+              label: 'Best Streak',
+              value: '$_bestStreak',
+              iconColor: GameCompletionDialog.darkGreen,
+            ),
+          ],
+          onHome: () {
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/home', (route) => false);
+          },
+          onPlayAgain: _restartGameSession,
         ),
       ),
     );

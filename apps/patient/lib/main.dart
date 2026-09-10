@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'games/blink_game.dart';
+import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
@@ -55,7 +56,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
   void _registerVoiceRoutes() {
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.openBlinkingGame,
-      () => _openRoute(const BlinkGameScreen()),
+      () => _openRoute(const PictureRecognitionGameScreen()),
     );
     VoiceCommandController.instance.registerRoute(
       VoiceIntent.openMemoryGame,
@@ -66,6 +67,17 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       () => _openRoute(const KingShanabaGameScreen()),
     );
     for (final alias in [
+      'picture recognition',
+      'picture recognition game',
+      'picture game',
+      'pictures game',
+      'recognition game',
+      'find pictures',
+      'find items',
+      'ছবি চিনাক্তকৰণ',
+      'ছবি খেল',
+      'ছবি',
+      'चित्र पहचान',
       'blinking game',
       'blink game',
       'blinking',
@@ -74,7 +86,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     ]) {
       VoiceCommandController.instance.registerGameRoute(
         alias,
-        () => _openRoute(const BlinkGameScreen()),
+        () => _openRoute(const PictureRecognitionGameScreen()),
       );
     }
     for (final alias in [
@@ -627,9 +639,9 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
-  void _openBlinkGame(BuildContext context) {
+  void _openPictureRecognitionGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BlinkGameScreen()),
+      MaterialPageRoute(builder: (_) => const PictureRecognitionGameScreen()),
     );
   }
 
@@ -1322,15 +1334,18 @@ class _GameHubPageState extends State<GameHubPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Choose an activity',
-              style: TextStyle(
-                color: Color(0xFF1E3A5F),
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
+            const Flexible(
+              child: Text(
+                'Choose an activity',
+                style: TextStyle(
+                  color: Color(0xFF1E3A5F),
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -1367,12 +1382,12 @@ class _GameHubPageState extends State<GameHubPage> {
           children: [
             _gameCard(
               context,
-              icon: Icons.visibility_rounded,
-              title: 'Blink Memory',
+              icon: Icons.image_search_rounded,
+              title: 'Picture Recognition',
               gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
               iconColor: const Color(0xFFE65100),
               isAvailable: true,
-              onTap: () => _openBlinkGame(context),
+              onTap: () => _openPictureRecognitionGame(context),
             ),
             _gameCard(
               context,
