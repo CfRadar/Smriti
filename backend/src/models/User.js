@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     profileImage: { type: String },
     isActive: { type: Boolean, default: true },
+    fcmToken: { type: String, default: null }, // Firebase Cloud Messaging device token for push notifications
   },
   { timestamps: true }
 );
