@@ -9,6 +9,7 @@ import 'games/king_shanaba_game.dart';
 import 'games/pattern_memory_game.dart';
 import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
+import 'screens/folklore_list_screen.dart';
 import 'services/reminder_service.dart';
 import 'services/voice_service.dart';
 import 'widgets/animated_fragmented_divider.dart';
@@ -845,7 +846,11 @@ class _GameHubPageState extends State<GameHubPage> {
           photoTint: const Color(0xFFE9D9F7),
           photoHighlight: const Color(0xFFD7B4EE),
           illustration: const _BookIllustration(),
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FolkloreListScreen()),
+            );
+          },
         ),
       ],
     );
