@@ -21,7 +21,8 @@ export const addMemory = async (req, res, next) => {
 
 export const deleteMemory = async (req, res, next) => {
   try {
-    await FamilyMemory.findByIdAndDelete(req.params.id);
+    const memory = await FamilyMemory.findByIdAndDelete(req.params.id);
+    if (!memory) return sendError(res, 'Memory not found', 404);
     return sendSuccess(res, null, 'Memory removed');
   } catch (error) {
     return sendError(res, error.message, 500);
