@@ -9,7 +9,9 @@ import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
 import 'services/reminder_service.dart';
 import 'services/voice_service.dart';
-import 'widgets/voice_status_indicator.dart';
+import 'widgets/animated_fragmented_divider.dart';
+import 'widgets/animated_star_badge.dart';
+import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -240,25 +242,74 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<double> _scaleAnimation;
+
+  // { slides in from the left  (offset goes from -1.0 → 0.0 of screen width)
+  late final Animation<double> _leftSlide;
+  // } slides in from the right (offset goes from +1.0 → 0.0)
+  late final Animation<double> _rightSlide;
+  // Brackets fade out as they meet
+  late final Animation<double> _bracketFade;
+  // "S" + "mriti" fades / scales in
+  late final Animation<double> _logoFade;
+  late final Animation<double> _logoScale;
+  // Underline pops in
+  late final Animation<double> _underlineFade;
+  // Subtitle fades last
+  late final Animation<double> _subtitleFade;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 1900),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
+
+    _leftSlide = Tween<double>(begin: -1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.52, curve: Curves.easeOutCubic),
+      ),
     );
-    _scaleAnimation = Tween<double>(begin: .9, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    _rightSlide = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.52, curve: Curves.easeOutCubic),
+      ),
     );
+    _bracketFade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.45, 0.68, curve: Curves.easeIn),
+      ),
+    );
+    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.55, 0.82, curve: Curves.easeOut),
+      ),
+    );
+    _logoScale = Tween<double>(begin: 0.78, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.55, 0.82, curve: Curves.easeOutBack),
+      ),
+    );
+    _underlineFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.75, 0.92, curve: Curves.easeOut),
+      ),
+    );
+    _subtitleFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.84, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
     _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2200), _openGameHub);
+    Future.delayed(const Duration(milliseconds: 2800), _openGameHub);
   }
 
   void _openGameHub() {
@@ -266,7 +317,7 @@ class _SplashPageState extends State<SplashPage>
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const GameHubPage(),
-        transitionDuration: const Duration(milliseconds: 550),
+        transitionDuration: const Duration(milliseconds: 500),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
           child: child,
@@ -283,60 +334,157 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5EC),
+      backgroundColor: const Color(0xFFF0F4F8), // matches main UI screenBg
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Column(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  height: 76,
-                  width: 76,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF214E3B),
-                    borderRadius: BorderRadius.circular(24),
+                // ── Logo area ──────────────────────────────────────────
+                SizedBox(
+                  width: 160,
+                  height: 110,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // { bracket from the left
+                      Opacity(
+                        opacity: _bracketFade.value.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(_leftSlide.value * sw * 0.55, 0),
+                          child: const Text(
+                            '{',
+                            style: TextStyle(
+                              fontSize: 96,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w200,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // } bracket from the right
+                      Opacity(
+                        opacity: _bracketFade.value.clamp(0.0, 1.0),
+                        child: Transform.translate(
+                          offset: Offset(_rightSlide.value * sw * 0.55, 0),
+                          child: const Text(
+                            '}',
+                            style: TextStyle(
+                              fontSize: 96,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w200,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // "S" emerges from the collision
+                      Opacity(
+                        opacity: _logoFade.value,
+                        child: Transform.scale(
+                          scale: _logoScale.value,
+                          child: const Text(
+                            'S',
+                            style: TextStyle(
+                              fontSize: 92,
+                              height: 1,
+                              color: Color(0xFF1E3A5F),
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.psychology_alt_rounded,
-                      color: Colors.white, size: 42),
                 ),
+
+                // ── "mriti" text ──────────────────────────────────────
+                Opacity(
+                  opacity: _logoFade.value,
+                  child: Transform.scale(
+                    scale: _logoScale.value,
+                    child: const Text(
+                      'mriti',
+                      style: TextStyle(
+                        color: Color(0xFF1E3A5F),
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 5,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── Peach / pink underline (matches nav bar) ──────────
+                Opacity(
+                  opacity: _underlineFade.value,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFAB91),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 28,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF48FB1),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 const SizedBox(height: 22),
-                const Text(
-                  'SMRITI',
-                  style: TextStyle(
-                    color: Color(0xFF214E3B),
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Care that feels like home.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF66736C),
-                    fontSize: 17,
-                    height: 1.4,
-                    fontStyle: FontStyle.italic,
+
+                // ── Subtitle ──────────────────────────────────────────
+                Opacity(
+                  opacity: _subtitleFade.value,
+                  child: const Text(
+                    'Care that feels like home.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF8298AB),
+                      fontSize: 16,
+                      height: 1.4,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
+
 class GameHubPage extends StatefulWidget {
   const GameHubPage({super.key});
 
   static const Color ivory = Color(0xFFF8F5EC);
+  static const Color screenBg = Color(0xFFF0F4F8); // Harmonious cool sky-mist tint matching nav bar
+  static const Color softPeach = Color(0xFFFDF0E7);
   static const Color darkGreen = Color(0xFF214E3B);
   static const Color green = Color(0xFF5F866D);
   static const Color lightGreen = Color(0xFFDCE8DA);
@@ -350,6 +498,20 @@ class GameHubPage extends StatefulWidget {
 class _GameHubPageState extends State<GameHubPage> {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
+  final bool _showRoutineSection = false;
+  bool _reminderExpanded = true;
+  int _currentReminderIndex = 0;
+  final GlobalKey _tickKey = GlobalKey();
+
+  static final PatientReminder _dummyReminder = PatientReminder(
+    id: '__dummy_water__',
+    title: 'Drink Water',
+    description: 'Stay hydrated — have a glass of water!',
+    type: 'hydration',
+    scheduledTime: DateTime.now(),
+    isVoicePromptEnabled: false,
+    status: 'pending',
+  );
 
   @override
   void initState() {
@@ -363,13 +525,18 @@ class _GameHubPageState extends State<GameHubPage> {
       final list = await ReminderService.instance.fetchReminders();
       if (mounted) {
         setState(() {
-          _reminders = list;
+          // Prepend the dummy reminder so it always shows
+          final withoutDummy = list.where((r) => r.id != _dummyReminder.id).toList();
+          _reminders = [_dummyReminder, ...withoutDummy];
           _loadingReminders = false;
         });
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _loadingReminders = false);
+        setState(() {
+          _reminders = [_dummyReminder];
+          _loadingReminders = false;
+        });
       }
     }
   }
@@ -397,7 +564,7 @@ class _GameHubPageState extends State<GameHubPage> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('বঢ়িয়া! (Well done!) ${reminder.title} marked completed.'),
+          content: Text('Well done! ${reminder.title} marked completed.'),
           backgroundColor: GameHubPage.darkGreen,
           duration: const Duration(seconds: 2),
         ),
@@ -407,7 +574,7 @@ class _GameHubPageState extends State<GameHubPage> {
 
   void _speakReminder(PatientReminder reminder) {
     final promptText = reminder.voicePromptText ??
-        'দেউতা, এয়া আপোনাৰ ${reminder.title} সময় হ\'ল। (Time for your ${reminder.title})';
+        'Time for your ${reminder.title}.';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -447,7 +614,7 @@ class _GameHubPageState extends State<GameHubPage> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text(
-              'Close / বন্ধ কৰক',
+              'Close',
               style: TextStyle(
                 color: GameHubPage.green,
                 fontSize: 16,
@@ -486,15 +653,22 @@ class _GameHubPageState extends State<GameHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
     return Scaffold(
-      backgroundColor: GameHubPage.ivory,
+      backgroundColor: GameHubPage.screenBg,
+      // Always show bottom sheet – shows 'No reminders' when empty and expanded
+      bottomSheet: _buildReminderBottomSheet(pendingReminders),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHeader()),
-            SliverToBoxAdapter(child: _buildRemindersSection()),
+            const SliverToBoxAdapter(
+              child: AnimatedFragmentedDivider(),
+            ),
+            if (_showRoutineSection)
+              SliverToBoxAdapter(child: _buildRemindersSection()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 28, 22, 40),
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
               sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
             ),
           ],
@@ -503,48 +677,423 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Row(
-        children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: GameHubPage.darkGreen,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.psychology_alt_rounded,
-                color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'SMRITI',
-              style: TextStyle(
-                color: GameHubPage.darkGreen,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
-              ),
-            ),
-          ),
-          const VoiceStatusIndicator(compact: true),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Accessibility settings',
-            onPressed: () {},
-            style: IconButton.styleFrom(
-              backgroundColor: GameHubPage.lightGreen,
-              fixedSize: const Size(44, 44),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-            ),
-            icon: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 23),
+  Widget _buildReminderBottomSheet(List<PatientReminder> reminders) {
+    if (_currentReminderIndex >= reminders.length) {
+      _currentReminderIndex = 0;
+    }
+    final isEmpty = reminders.isEmpty;
+    final reminder = isEmpty ? null : reminders[_currentReminderIndex];
+    final timeStr = reminder != null
+        ? DateFormat('h:mm a').format(reminder.scheduledTime)
+        : '';
+    final hasMultiple = reminders.length > 1;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Handle / toggle bar ──────────────────────────────────────
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _reminderExpanded = !_reminderExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isEmpty
+                          ? const Color(0xFFF0F4F8)
+                          : const Color(0xFFFFECE5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      isEmpty
+                          ? Icons.notifications_off_rounded
+                          : Icons.notifications_rounded,
+                      color: isEmpty
+                          ? const Color(0xFF8298AB)
+                          : const Color(0xFFFF7043),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isEmpty
+                          ? 'No reminders'
+                          : (_reminderExpanded ? 'Reminder' : reminder!.title),
+                      style: TextStyle(
+                        color: isEmpty
+                            ? const Color(0xFF8298AB)
+                            : const Color(0xFF1E3A5F),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (!isEmpty && hasMultiple)
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFECE5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentReminderIndex + 1}/${reminders.length}',
+                        style: const TextStyle(
+                          color: Color(0xFFFF7043),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  // Animated arrow – hidden when empty
+                  if (!isEmpty)
+                    AnimatedRotation(
+                      turns: _reminderExpanded ? 0.0 : 0.5,
+                      duration: const Duration(milliseconds: 300),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF8298AB),
+                        size: 24,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Expanded content (hidden when no reminders or collapsed) ──
+          if (!isEmpty)
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 280),
+              crossFadeState: _reminderExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              firstChild: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: _ReminderCard(
+                  reminder: reminder!,
+                  timeStr: timeStr,
+                  hasMultiple: hasMultiple,
+                  currentIndex: _currentReminderIndex,
+                  totalCount: reminders.length,
+                  tickKey: _tickKey,
+                  onPrev: _currentReminderIndex > 0
+                      ? () => setState(() => _currentReminderIndex--)
+                      : null,
+                  onNext: _currentReminderIndex < reminders.length - 1
+                      ? () => setState(() => _currentReminderIndex++)
+                      : null,
+                  onSpeak: reminder.isVoicePromptEnabled
+                      ? () => _speakReminder(reminder)
+                      : null,
+                  onDone: () {
+                    // Get tick button global position before acknowledging
+                    final tickBox = _tickKey.currentContext
+                        ?.findRenderObject() as RenderBox?;
+                    final tickPos = tickBox != null
+                        ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
+                        : Offset.zero;
+                    AnimatedStarBadge.globalKey.currentState
+                        ?.celebrate(tickPos);
+                    _acknowledgeReminder(reminder);
+                  },
+                  getTypeIcon: _getTypeIcon,
+                ),
+              ),
+              secondChild: const SizedBox(height: 4),
+            ),
+        ],
+      ),
+    );
+  }
+
+
+  void _openAccessibilitySettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F1F5),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Settings',
+                      style: TextStyle(
+                        color: GameHubPage.darkGreen,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Accessibility & Voice preferences',
+                      style: TextStyle(color: GameHubPage.textGrey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
+              title: const Text(
+                'Voice Assistant',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: const Text('Tap to activate or deactivate voice commands.'),
+              trailing: ValueListenableBuilder<VoiceStatus>(
+                valueListenable: VoiceService.instance.statusNotifier,
+                builder: (context, status, _) {
+                  final active = VoiceService.instance.isEnabled &&
+                      (status == VoiceStatus.listening ||
+                          status == VoiceStatus.processing ||
+                          status == VoiceStatus.initializing);
+
+                  return Tooltip(
+                    message: active
+                        ? 'Tap to deactivate Voice Assistant'
+                        : 'Tap to activate Voice Assistant',
+                    child: InkWell(
+                      onTap: () async {
+                        await VoiceService.instance.setEnabled(!active);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: active ? const Color(0xFFE8F5E9) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: active ? const Color(0xFF81C784) : const Color(0xFFCBD5E1),
+                            width: 1.3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: active
+                                  ? Colors.green.withValues(alpha: 0.12)
+                                  : Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1.5),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: active ? const Color(0xFF2E7D32) : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              active ? 'Active' : 'Deactivated',
+                              style: TextStyle(
+                                color: active ? const Color(0xFF1B5E20) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const Divider(),
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.volume_up_rounded, color: GameHubPage.green),
+              title: Text('Routine Reminders'),
+              subtitle: Text('Spoken audio reminders.'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2F8),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Title always perfectly centered
+          _buildTitleWithUnderline(),
+
+          // Settings on the far left
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _buildSettingsButton(),
+          ),
+
+          // Star + voice on the far right
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
+                const SizedBox(width: 6),
+                const VoiceWaveButton(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton() {
+    return Semantics(
+      button: true,
+      label: 'Accessibility and settings',
+      child: Tooltip(
+        message: 'Settings',
+        child: InkWell(
+          onTap: () => _openAccessibilitySettings(context),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFCFE0ED),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.tune_rounded,
+              color: GameHubPage.darkGreen,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleWithUnderline() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'Smriti',
+          style: TextStyle(
+            color: GameHubPage.darkGreen,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Peach underline segment
+            Container(
+              width: 22,
+              height: 3.5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFAB91), // Peach
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 6), // Separated from between
+            // Pink underline segment
+            Container(
+              width: 22,
+              height: 3.5,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF48FB1), // Pink
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -561,7 +1110,7 @@ class _GameHubPageState extends State<GameHubPage> {
             children: [
               const Expanded(
                 child: Text(
-                  'Today\'s Routine (দৈনিক দিনচৰ্যা)',
+                  'Today\'s Routine',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -601,7 +1150,7 @@ class _GameHubPageState extends State<GameHubPage> {
                   SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'No routine tasks right now. Relax and enjoy your day! (কোনো বাকী কাম নাই)',
+                      'No routine tasks right now. Relax and enjoy your day!',
                       style: TextStyle(
                         color: GameHubPage.darkGreen,
                         fontSize: 15,
@@ -739,7 +1288,7 @@ class _GameHubPageState extends State<GameHubPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isCompleted ? 'Done' : 'Done / কৰা হ\'ল',
+                  isCompleted ? 'Done' : 'Done',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -754,91 +1303,123 @@ class _GameHubPageState extends State<GameHubPage> {
     );
   }
 
+  void _showComingSoon(BuildContext context, String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title is coming soon!'),
+        backgroundColor: GameHubPage.darkGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Widget _buildGamesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Choose an activity',
-          style: TextStyle(
-            color: GameHubPage.darkGreen,
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 7),
-        const Text(
-          'Small exercises for memory and attention.',
-          style: TextStyle(color: GameHubPage.textGrey, fontSize: 15),
-        ),
-        const SizedBox(height: 20),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 650 ? 3 : 2;
-            return GridView.count(
-              crossAxisCount: columns,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: columns == 2 ? .84 : 1.05,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _gameCard(
-                  context,
-                  icon: Icons.grid_3x3_rounded,
-                  title: 'Blink Memory',
-                  isAvailable: true,
-                  onTap: () => _openBlinkGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.grid_view_rounded,
-                  title: 'Pattern Memory',
-                  isAvailable: true,
-                  onTap: () => _openPatternGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.sports_esports_rounded,
-                  title: 'King Shanaba',
-                  isAvailable: true,
-                  onTap: () => _openKingShanabaGame(context),
-                ),
-                _gameCard(
-                  context,
-                  icon: Icons.park_rounded,
-                  title: 'Bamboo Dance',
-                  isAvailable: true,
-                  onTap: () => _openBambooDanceGame(context),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 25),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: GameHubPage.cream,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.favorite_rounded, color: GameHubPage.green, size: 25),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'There is no rush. Go at your own pace.',
-                  style: TextStyle(
-                    color: GameHubPage.darkGreen,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Choose an activity',
+              style: TextStyle(
+                color: Color(0xFF1E3A5F),
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
               ),
-            ],
-          ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2EAF2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
+                  SizedBox(width: 4),
+                  Text(
+                    '6 Games',
+                    style: TextStyle(
+                      color: Color(0xFF1E3A5F),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 11,
+          mainAxisSpacing: 11,
+          childAspectRatio: 1.05,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _gameCard(
+              context,
+              icon: Icons.visibility_rounded,
+              title: 'Blink Memory',
+              gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
+              iconColor: const Color(0xFFE65100),
+              isAvailable: true,
+              onTap: () => _openBlinkGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.grid_view_rounded,
+              title: 'Pattern Memory',
+              gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
+              iconColor: const Color(0xFF4A148C),
+              isAvailable: true,
+              onTap: () => _openPatternGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.sports_esports_rounded,
+              title: 'King Shanaba',
+              gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
+              iconColor: const Color(0xFF1B5E20),
+              isAvailable: true,
+              onTap: () => _openKingShanabaGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.music_note_rounded,
+              title: 'Bamboo Dance',
+              gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
+              iconColor: const Color(0xFFB71C1C),
+              isAvailable: true,
+              onTap: () => _openBambooDanceGame(context),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.auto_stories_rounded,
+              title: 'Story Recall',
+              gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
+              iconColor: const Color(0xFF0D47A1),
+              isAvailable: false,
+              onTap: () => _showComingSoon(context, 'Story Recall'),
+            ),
+            _gameCard(
+              context,
+              icon: Icons.spa_rounded,
+              title: 'Mindful Breath',
+              gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
+              iconColor: const Color(0xFF880E4F),
+              isAvailable: false,
+              onTap: () => _showComingSoon(context, 'Mindful Breath'),
+            ),
+          ],
         ),
       ],
     );
@@ -848,54 +1429,145 @@ class _GameHubPageState extends State<GameHubPage> {
     BuildContext context, {
     required IconData icon,
     required String title,
+    required List<Color> gradientColors,
+    required Color iconColor,
     bool isAvailable = false,
     VoidCallback? onTap,
   }) {
     return Semantics(
-      button: isAvailable,
-      enabled: isAvailable,
-      label: isAvailable ? '$title. Start game.' : '$title. Coming soon.',
+      button: true,
+      enabled: true,
+      label: isAvailable ? '$title. Play game.' : '$title. Coming soon.',
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(22),
         child: Container(
           decoration: BoxDecoration(
-            color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE5E1D7),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isAvailable ? GameHubPage.lightGreen : const Color(0xFFE3DED1),
-              width: 1.5,
+              color: const Color(0xFF8298AB), // Soft medium slate-blue grey
+              width: 4.0, // Substantial wide border
             ),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Icon(
-                  icon,
-                  color: isAvailable
-                      ? GameHubPage.darkGreen.withValues(alpha: .24)
-                      : GameHubPage.textGrey.withValues(alpha: .22),
-                  size: 92,
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF64748B).withValues(alpha: 0.14),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  color: Colors.white.withValues(alpha: .78),
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isAvailable ? GameHubPage.darkGreen : GameHubPage.textGrey,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(19.2),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Playful Gradient Background
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: gradientColors,
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                // Playful Center Icon in white circular glass badge
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        icon,
+                        color: iconColor,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Soon Tag for upcoming games
+                if (!isAvailable)
+                  Positioned(
+                    top: 7,
+                    right: 7,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.40),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.schedule_rounded, color: Colors.white, size: 9),
+                          SizedBox(width: 3),
+                          Text(
+                            'Soon',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // Translucent black overlay at bottom with large white curved font
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6.5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.54),
+                    ),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
+                        fontFamilyFallback: [
+                          'sans-serif-rounded',
+                          'Comfortaa',
+                          'Sniglet',
+                          'Comic Sans MS',
+                          'Chalkboard SE',
+                          'Fredoka One',
+                          'cursive',
+                        ],
+                        shadows: [
+                          Shadow(
+                            color: Colors.black87,
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1257,3 +1929,227 @@ class LandingPage extends StatelessWidget {
         ),
       );
 }
+
+// ─── _ReminderCard ─────────────────────────────────────────────────────────────
+
+class _ReminderCard extends StatefulWidget {
+  final PatientReminder reminder;
+  final String timeStr;
+  final bool hasMultiple;
+  final int currentIndex;
+  final int totalCount;
+  final GlobalKey tickKey;
+  final VoidCallback? onPrev;
+  final VoidCallback? onNext;
+  final VoidCallback? onSpeak;
+  final VoidCallback onDone;
+  final IconData Function(String) getTypeIcon;
+
+  const _ReminderCard({
+    required this.reminder,
+    required this.timeStr,
+    required this.hasMultiple,
+    required this.currentIndex,
+    required this.totalCount,
+    required this.tickKey,
+    required this.onPrev,
+    required this.onNext,
+    required this.onSpeak,
+    required this.onDone,
+    required this.getTypeIcon,
+  });
+
+  @override
+  State<_ReminderCard> createState() => _ReminderCardState();
+}
+
+class _ReminderCardState extends State<_ReminderCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _tickCtrl;
+  late final Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _tickCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 1.38)
+              .chain(CurveTween(curve: Curves.easeOut)),
+          weight: 35),
+      TweenSequenceItem(
+          tween: Tween(begin: 1.38, end: 0.85)
+              .chain(CurveTween(curve: Curves.easeIn)),
+          weight: 30),
+      TweenSequenceItem(
+          tween: Tween(begin: 0.85, end: 1.0)
+              .chain(CurveTween(curve: Curves.elasticOut)),
+          weight: 35),
+    ]).animate(_tickCtrl);
+  }
+
+  @override
+  void dispose() {
+    _tickCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onTickTap() {
+    _tickCtrl.forward(from: 0).then((_) => widget.onDone());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.reminder;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFFAB91).withValues(alpha: 0.55),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Type icon
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFECE5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.getTypeIcon(r.type),
+              color: const Color(0xFFFF7043),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Text info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.title,
+                  style: const TextStyle(
+                    color: Color(0xFF1E3A5F),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (r.description != null && r.description!.isNotEmpty)
+                  Text(
+                    r.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF8298AB),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded,
+                        size: 12, color: Color(0xFFFF7043)),
+                    const SizedBox(width: 3),
+                    Text(
+                      widget.timeStr,
+                      style: const TextStyle(
+                        color: Color(0xFFFF7043),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (widget.hasMultiple) ...[
+                      const SizedBox(width: 10),
+                      _navChip(
+                        icon: Icons.chevron_left_rounded,
+                        enabled: widget.onPrev != null,
+                        onTap: widget.onPrev,
+                      ),
+                      const SizedBox(width: 4),
+                      _navChip(
+                        icon: Icons.chevron_right_rounded,
+                        enabled: widget.onNext != null,
+                        onTap: widget.onNext,
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // ── Tick button with bounce animation ──
+          GestureDetector(
+            key: widget.tickKey,
+            onTap: _onTickTap,
+            child: AnimatedBuilder(
+              animation: _scaleAnim,
+              builder: (_, child) => Transform.scale(
+                scale: _scaleAnim.value,
+                child: child,
+              ),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1E3A5F), Color(0xFF2D5A8E)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navChip({
+    required IconData icon,
+    required bool enabled,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        opacity: enabled ? 1.0 : 0.3,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF2F8),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: const Color(0xFF1E3A5F)),
+        ),
+      ),
+    );
+  }
+}
+
