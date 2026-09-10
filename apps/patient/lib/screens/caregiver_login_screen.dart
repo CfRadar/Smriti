@@ -1,4 +1,5 @@
 // lib/screens/caregiver_login_screen.dart
+// Caregiver sign-in screen matching Smriti's soothing ivory & forest green patient theme.
 
 import 'package:flutter/material.dart';
 import '../services/caregiver_api_service.dart';
@@ -13,13 +14,12 @@ class CaregiverLoginScreen extends StatefulWidget {
 
 class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
     with SingleTickerProviderStateMixin {
-  // ── Colors ──────────────────────────────────────────────────────────────────
-  static const Color _bg = Color(0xFF0D1F17);
-  static const Color _card = Color(0xFF162A1E);
-  static const Color _green = Color(0xFF214E3B);
-  static const Color _accent = Color(0xFF5F866D);
+  // ── Smriti Design System Colors ───────────────────────────────────────────
   static const Color _ivory = Color(0xFFF8F5EC);
-  static const Color _muted = Color(0xFF8A9E93);
+  static const Color _darkGreen = Color(0xFF214E3B);
+  static const Color _green = Color(0xFF5F866D);
+  static const Color _lightGreen = Color(0xFFDCE8DA);
+  static const Color _textGrey = Color(0xFF66736C);
 
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -36,7 +36,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
   void initState() {
     super.initState();
     _anim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
+        vsync: this, duration: const Duration(milliseconds: 650));
     _fadeIn = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
     _anim.forward();
   }
@@ -77,13 +77,13 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: _ivory,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeIn,
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 children: [
                   // ── Logo ──────────────────────────────────────────────────
@@ -91,44 +91,65 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: _green,
+                      color: _lightGreen,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _green.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: _accent.withOpacity(0.35),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: _darkGreen.withValues(alpha: 0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.favorite_rounded,
-                        color: Color(0xFFF8F5EC), size: 36),
+                    child: const Icon(
+                      Icons.health_and_safety_rounded,
+                      color: _darkGreen,
+                      size: 38,
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
+                  const SizedBox(height: 18),
+                  const Text(
                     'Caregiver Portal',
                     style: TextStyle(
-                      color: _ivory,
+                      color: _darkGreen,
                       fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'Sign in to manage your patient',
-                    style: TextStyle(color: _muted, fontSize: 14),
+                  const Text(
+                    'Sign in to manage reminders, memories & analytics',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _textGrey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 32),
 
-                  // ── Card ──────────────────────────────────────────────────
+                  // ── Form Card ─────────────────────────────────────────────
                   Container(
-                    padding: const EdgeInsets.all(28),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: _card,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                          color: _accent.withOpacity(0.2), width: 1),
+                        color: _lightGreen,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _darkGreen.withValues(alpha: 0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: Form(
                       key: _formKey,
@@ -137,8 +158,8 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                         children: [
                           _Field(
                             controller: _emailCtrl,
-                            label: 'Email',
-                            hint: 'your@email.com',
+                            label: 'Caregiver Email',
+                            hint: 'caregiver@smriti.com',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) =>
@@ -146,7 +167,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                                     ? 'Enter a valid email'
                                     : null,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           _Field(
                             controller: _passCtrl,
                             label: 'Password',
@@ -158,7 +179,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                                 _obscure
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: _muted,
+                                color: _textGrey,
                                 size: 20,
                               ),
                               onPressed: () =>
@@ -166,29 +187,33 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                             ),
                             validator: (v) =>
                                 (v == null || v.length < 6)
-                                    ? 'Password too short'
+                                    ? 'Password must be at least 6 characters'
                                     : null,
                           ),
                           if (_error != null) ...[
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 16),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                  horizontal: 14, vertical: 11),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF3B1919),
-                                borderRadius: BorderRadius.circular(10),
+                                color: const Color(0xFFFDE8E8),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: const Color(0xFFF8B4B4)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline,
-                                      color: Color(0xFFFF6B6B), size: 16),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.error_outline_rounded,
+                                      color: Color(0xFFC81E1E), size: 18),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       _error!,
                                       style: const TextStyle(
-                                          color: Color(0xFFFF6B6B),
-                                          fontSize: 13),
+                                        color: Color(0xFF9B1C1C),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -196,42 +221,52 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                             ),
                           ],
                           const SizedBox(height: 24),
-                          FilledButton(
-                            onPressed: _loading ? null : _login,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _green,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                          SizedBox(
+                            height: 50,
+                            child: FilledButton(
+                              onPressed: _loading ? null : _login,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _darkGreen,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
-                            ),
-                            child: _loading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Sign In',
-                                    style: TextStyle(
+                              child: _loading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Sign In to Dashboard',
+                                      style: TextStyle(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.w600),
-                                  ),
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  TextButton(
+                  TextButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      '← Back to role selection',
-                      style: TextStyle(color: _muted, fontSize: 13),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        size: 16, color: _textGrey),
+                    label: const Text(
+                      'Back to role selection',
+                      style: TextStyle(
+                        color: _textGrey,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -244,7 +279,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
   }
 }
 
-// ── Reusable field widget ────────────────────────────────────────────────────
+// ── Form input field styled to match patient theme ───────────────────────────
 
 class _Field extends StatelessWidget {
   const _Field({
@@ -267,54 +302,64 @@ class _Field extends StatelessWidget {
   final Widget? suffix;
   final String? Function(String?)? validator;
 
-  static const Color _accent = Color(0xFF5F866D);
-  static const Color _muted = Color(0xFF8A9E93);
-  static const Color _ivory = Color(0xFFF8F5EC);
-  static const Color _fieldBg = Color(0xFF0D1F17);
+  static const Color _darkGreen = Color(0xFF214E3B);
+  static const Color _green = Color(0xFF5F866D);
+  static const Color _textGrey = Color(0xFF66736C);
+  static const Color _fieldBg = Color(0xFFF8F9FA);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: _muted, fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _darkGreen,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 7),
         TextFormField(
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
-          style: const TextStyle(color: _ivory, fontSize: 15),
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: _muted.withOpacity(0.6), fontSize: 14),
-            prefixIcon: Icon(icon, color: _accent, size: 20),
+            hintStyle: TextStyle(
+              color: _textGrey.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(icon, color: _green, size: 20),
             suffixIcon: suffix,
             filled: true,
             fillColor: _fieldBg,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _accent.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _accent.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _accent, width: 1.5),
+            focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: _darkGreen, width: 1.8),
             ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+            errorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: Color(0xFFE02424), width: 1.5),
             ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+            focusedErrorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: Color(0xFFE02424), width: 1.8),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
