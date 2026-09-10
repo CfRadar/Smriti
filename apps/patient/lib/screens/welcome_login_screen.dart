@@ -1,5 +1,5 @@
 // lib/screens/welcome_login_screen.dart
-// Entry portal matching Smriti's soothing ivory & forest green patient theme.
+// Role selection matching the exact Smriti activity hub theme.
 
 import 'package:flutter/material.dart';
 import '../services/caregiver_api_service.dart';
@@ -14,35 +14,16 @@ class WelcomeLoginScreen extends StatefulWidget {
   State<WelcomeLoginScreen> createState() => _WelcomeLoginScreenState();
 }
 
-class _WelcomeLoginScreenState extends State<WelcomeLoginScreen>
-    with SingleTickerProviderStateMixin {
-  // ── Smriti Patient Interface Design Tokens ────────────────────────────────
-  static const Color _ivory = Color(0xFFF8F5EC);
-  static const Color _darkGreen = Color(0xFF214E3B);
-  static const Color _green = Color(0xFF5F866D);
-  static const Color _lightGreen = Color(0xFFDCE8DA);
-  static const Color _cream = Color(0xFFEDE7D7);
-  static const Color _textGrey = Color(0xFF66736C);
-
-  late final AnimationController _anim;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
+class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
+  static const Color _screenBg = Color(0xFFF0F4F8);
+  static const Color _darkBlue = Color(0xFF1E3A4B);
 
   bool _isCaregiverLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 650),
-    );
-    _fade = CurvedAnimation(parent: _anim, curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
-
     _checkCaregiverAuth();
-    _anim.forward();
   }
 
   Future<void> _checkCaregiverAuth() async {
@@ -52,17 +33,11 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen>
     }
   }
 
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
-  }
-
   void _navigateToPatient() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => const GameHubPage(),
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 350),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
           child: child,
@@ -86,151 +61,155 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _ivory,
+      backgroundColor: _screenBg,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: SlideTransition(
-            position: _slide,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 12),
-
-                  // ── Brand Header ──────────────────────────────────────────
-                  Center(
-                    child: Column(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Top Header matching the screenshot ─────────────────────────
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Smriti',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: _darkBlue,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 76,
-                          height: 76,
+                          width: 20,
+                          height: 3.5,
                           decoration: BoxDecoration(
-                            color: _lightGreen,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: _green.withValues(alpha: 0.25),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _darkGreen.withValues(alpha: 0.08),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.psychology_rounded,
-                              color: _darkGreen,
-                              size: 42,
-                            ),
+                            color: const Color(0xFFF6A883),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'SMRITI',
-                          style: TextStyle(
-                            color: _darkGreen,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 2.0,
+                        const SizedBox(width: 5),
+                        Container(
+                          width: 20,
+                          height: 3.5,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF48FB1),
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Cognitive Care & Assisted Memory Companion',
-                          textAlign: TextAlign.center,
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // ── Section Title Bar ──────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Choose a role',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _darkBlue,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFCBD5E1),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.people_alt_rounded,
+                          size: 13,
+                          color: _darkBlue,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          '2 Roles',
                           style: TextStyle(
-                            color: _textGrey,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.1,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: _darkBlue,
                           ),
                         ),
                       ],
                     ),
                   ),
+                ],
+              ),
 
-                  const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      'Choose mode to begin:',
-                      style: TextStyle(
-                        color: _darkGreen,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ── Card 1: Patient Mode ──────────────────────────────────
+              // ── 2-Role Cards Grid (matching game cards design) ────────────
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.05,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  // 1. Patient Card (Soft Mint Green)
                   _RoleCard(
-                    title: 'I am a Patient',
-                    subtitle:
-                        'Play daily brain-training games, listen to folklore stories, check reminders, and speak with your voice assistant.',
+                    title: 'Patient',
                     icon: Icons.sports_esports_rounded,
-                    badgeText: 'Games & Voice Companion',
-                    buttonLabel: 'Enter Patient Mode',
-                    badgeBg: _lightGreen,
-                    badgeColor: _darkGreen,
-                    buttonColor: _darkGreen,
+                    gradientColors: const [
+                      Color(0xFFC8E6C9),
+                      Color(0xFF81C784),
+                    ],
+                    iconColor: const Color(0xFF1B5E20),
                     onTap: _navigateToPatient,
                   ),
 
-                  const SizedBox(height: 18),
-
-                  // ── Card 2: Caregiver Mode ────────────────────────────────
+                  // 2. Caregiver Card (Soft Lavender)
                   _RoleCard(
-                    title: 'I am a Caregiver',
-                    subtitle:
-                        'Monitor cognitive recovery scores, set up voice reminders, and manage family photo memories.',
+                    title: 'Caregiver',
                     icon: Icons.health_and_safety_rounded,
-                    badgeText: _isCaregiverLoggedIn
-                        ? 'Caregiver Active • Tap to open'
-                        : 'Caregiver Portal & Care',
-                    buttonLabel: _isCaregiverLoggedIn
-                        ? 'Open Caregiver Dashboard'
-                        : 'Caregiver Sign In',
-                    badgeBg: _cream,
-                    badgeColor: _darkGreen,
-                    buttonColor: _green,
+                    gradientColors: const [
+                      Color(0xFFE1BEE7),
+                      Color(0xFFBA68C8),
+                    ],
+                    iconColor: const Color(0xFF4A148C),
                     onTap: _navigateToCaregiver,
                   ),
-
-                  const SizedBox(height: 28),
-
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.verified_outlined,
-                          size: 16,
-                          color: _textGrey,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'All data is stored locally with offline synchronization.',
-                          style: TextStyle(
-                            color: _textGrey.withValues(alpha: 0.85),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
                 ],
               ),
-            ),
+
+              const Spacer(),
+
+              // ── Gentle footer hint ─────────────────────────────────────────
+              Center(
+                child: Text(
+                  'Tap a role to enter the app',
+                  style: TextStyle(
+                    color: const Color(0xFF7D8BA3).withValues(alpha: 0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
           ),
         ),
       ),
@@ -238,149 +217,126 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen>
   }
 }
 
-// ── Warm Light Role Card ─────────────────────────────────────────────────────
+// ── Game Card Style Role Component ───────────────────────────────────────────
 
-class _RoleCard extends StatelessWidget {
+class _RoleCard extends StatefulWidget {
   const _RoleCard({
     required this.title,
-    required this.subtitle,
     required this.icon,
-    required this.badgeText,
-    required this.buttonLabel,
-    required this.badgeBg,
-    required this.badgeColor,
-    required this.buttonColor,
+    required this.gradientColors,
+    required this.iconColor,
     required this.onTap,
   });
 
   final String title;
-  final String subtitle;
   final IconData icon;
-  final String badgeText;
-  final String buttonLabel;
-  final Color badgeBg;
-  final Color badgeColor;
-  final Color buttonColor;
+  final List<Color> gradientColors;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  static const Color _darkGreen = Color(0xFF214E3B);
-  static const Color _textGrey = Color(0xFF66736C);
+  @override
+  State<_RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<_RoleCard> {
+  double _scale = 1.0;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: badgeBg,
-          width: 2.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _darkGreen.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _scale = 0.96),
+      onTapUp: (_) => setState(() => _scale = 1.0),
+      onTapCancel: () => setState(() => _scale = 1.0),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: Colors.white,
+              width: 2.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF64748B).withValues(alpha: 0.16),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(19.2),
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: badgeBg,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(icon, color: _darkGreen, size: 28),
+                // Gradient Body
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: widget.gradientColors,
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: badgeBg,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              badgeText,
-                              style: TextStyle(
-                                color: badgeColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: _darkGreen,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w700,
-                            ),
+                  ),
+                ),
+
+                // Center Icon in circular glass pill
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.76),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.iconColor.withValues(alpha: 0.22),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: _textGrey,
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: onTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.iconColor,
+                        size: 34,
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          buttonLabel,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
+                  ),
+                ),
+
+                // Translucent dark bottom bar with one-word label
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.54),
+                    ),
+                    child: Text(
+                      widget.title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black87,
+                            blurRadius: 4,
+                            offset: Offset(0, 1.5),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

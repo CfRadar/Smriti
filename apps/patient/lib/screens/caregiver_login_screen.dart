@@ -15,9 +15,7 @@ class CaregiverLoginScreen extends StatefulWidget {
 class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
     with SingleTickerProviderStateMixin {
   // ── Smriti Design System Colors ───────────────────────────────────────────
-  static const Color _ivory = Color(0xFFF8F5EC);
   static const Color _darkGreen = Color(0xFF214E3B);
-  static const Color _green = Color(0xFF5F866D);
   static const Color _lightGreen = Color(0xFFDCE8DA);
   static const Color _textGrey = Color(0xFF66736C);
 
@@ -77,7 +75,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _ivory,
+      backgroundColor: const Color(0xFFF0F4F8),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeIn,
@@ -86,52 +84,87 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 children: [
+                  // ── Smriti Header ─────────────────────────────────────────
+                  const Text(
+                    'Smriti',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E3A4B),
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF6A883),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Container(
+                        width: 20,
+                        height: 3.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF48FB1),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
                   // ── Logo ──────────────────────────────────────────────────
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
-                      color: _lightGreen,
+                      color: const Color(0xFFE1BEE7),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _green.withValues(alpha: 0.25),
-                        width: 1.5,
+                        color: Colors.white,
+                        width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: _darkGreen.withValues(alpha: 0.08),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
+                          color: const Color(0xFF64748B).withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.health_and_safety_rounded,
-                      color: _darkGreen,
-                      size: 38,
+                      color: Color(0xFF4A148C),
+                      size: 34,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 14),
                   const Text(
                     'Caregiver Portal',
                     style: TextStyle(
-                      color: _darkGreen,
-                      fontSize: 26,
+                      color: Color(0xFF1E3A4B),
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   const Text(
-                    'Sign in to manage reminders, memories & analytics',
+                    'Sign in to manage reminders & review analytics',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: _textGrey,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // ── Form Card ─────────────────────────────────────────────
                   Container(
