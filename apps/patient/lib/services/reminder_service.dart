@@ -8,9 +8,28 @@ class ReminderService {
   static final ReminderService instance = ReminderService._internal();
   ReminderService._internal();
 
-  final String _baseUrl = 'http://localhost:5000/api';
   static const String _cacheKey = 'smriti_cached_reminders';
   static const String _patientIdKey = 'smriti_active_patient_id';
+  static const List<String> _candidateBaseUrls = [
+    'http://10.0.2.2:5000/api',
+    'http://localhost:5000/api',
+    'http://127.0.0.1:5000/api',
+  ];
+
+  Future<String> _resolveBaseUrl() async {
+    for (final candidate in _candidateBaseUrls) {
+      try {
+        final response = await http
+            .get(Uri.parse('$candidate/patients'))
+            .timeout(const Duration(seconds: 1));
+        if (response.statusCode < 500) {
+          return candidate;
+        }
+      } catch (_) {}
+    }
+
+    return kIsWeb ? 'http://localhost:5000/api' : 'http://10.0.2.2:5000/api';
+  }
 
   /// Resolves active patient ID from cache or API
   Future<String> getActivePatientId() async {
@@ -20,9 +39,11 @@ class ReminderService {
       return savedId;
     }
 
+    final baseUrl = await _resolveBaseUrl();
+
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/patients'))
+          .get(Uri.parse('$baseUrl/patients'))
           .timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -43,10 +64,11 @@ class ReminderService {
   /// Fetches reminders for the current patient, falling back to local cache if offline
   Future<List<PatientReminder>> fetchReminders({String? patientId}) async {
     final pId = patientId ?? await getActivePatientId();
+    final baseUrl = await _resolveBaseUrl();
 
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/reminders/$pId'))
+          .get(Uri.parse('$baseUrl/reminders/$pId'))
           .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
@@ -73,10 +95,11 @@ class ReminderService {
   /// Acknowledges/completes a reminder both on the backend and locally
   Future<bool> acknowledgeReminder(String reminderId) async {
     bool networkSuccess = false;
+    final baseUrl = await _resolveBaseUrl();
     try {
       final response = await http
           .patch(
-            Uri.parse('$_baseUrl/reminders/$reminderId/status'),
+            Uri.parse('$baseUrl/reminders/$reminderId/status'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'status': 'acknowledged'}),
           )

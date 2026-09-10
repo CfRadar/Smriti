@@ -700,26 +700,110 @@ class _GameHubPageState extends State<GameHubPage> {
           ),
         ],
       ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedTabIndex,
-        onTap: (index) => setState(() => _selectedTabIndex = index),
-        backgroundColor: Colors.white,
-        selectedItemColor: GameHubPage.darkGreen,
-        unselectedItemColor: const Color(0xFF7A8C9C),
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.sports_esports_rounded),
-            label: 'Games',
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F7F9),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E3A5F).withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _selectedTabIndex,
+              onTap: (index) => setState(() => _selectedTabIndex = index),
+              backgroundColor: Colors.transparent,
+              selectedItemColor: GameHubPage.darkGreen,
+              unselectedItemColor: const Color(0xFF7D8BA3),
+              selectedLabelStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+              selectedFontSize: 12,
+              unselectedFontSize: 11,
+              type: BottomNavigationBarType.fixed,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              elevation: 0,
+              items: [
+                BottomNavigationBarItem(
+                  icon: _bottomNavIcon(
+                    icon: Icons.videogame_asset_rounded,
+                    selected: _selectedTabIndex == 0,
+                    selectedColor: const Color(0xFFE9F5D6),
+                  ),
+                  activeIcon: _bottomNavIcon(
+                    icon: Icons.videogame_asset_rounded,
+                    selected: true,
+                    selectedColor: const Color(0xFFE9F5D6),
+                  ),
+                  label: 'Games',
+                ),
+                BottomNavigationBarItem(
+                  icon: _bottomNavIcon(
+                    icon: Icons.auto_awesome_rounded,
+                    selected: _selectedTabIndex == 1,
+                    selectedColor: const Color(0xFFEDE4F7),
+                  ),
+                  activeIcon: _bottomNavIcon(
+                    icon: Icons.auto_awesome_rounded,
+                    selected: true,
+                    selectedColor: const Color(0xFFEDE4F7),
+                  ),
+                  label: 'Activities',
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_activity_rounded),
-            label: 'Activities',
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bottomNavIcon({
+    required IconData icon,
+    required bool selected,
+    required Color selectedColor,
+  }) {
+    return AnimatedScale(
+      scale: selected ? 1.08 : 1.0,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutBack,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: selected ? selectedColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: GameHubPage.darkGreen.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: selected ? 24 : 22,
+          color: selected ? GameHubPage.darkGreen : const Color(0xFF7D8BA3),
+        ),
       ),
     );
   }
@@ -737,114 +821,33 @@ class _GameHubPageState extends State<GameHubPage> {
             letterSpacing: 0.3,
           ),
         ),
-        const SizedBox(height: 14),
-        _activityCard(
+        const SizedBox(height: 26),
+        _ActivityCard(
+          delay: 80,
           icon: Icons.mic_rounded,
           title: 'Karaoke',
-          subtitle: 'Enjoy a calm, music-filled moment.',
-          gradientColors: const [Color(0xFFB3E5FC), Color(0xFF81D4FA)],
-          iconColor: const Color(0xFF0D47A1),
+          subtitle: 'Enjoy a calm music moment.',
+          accentColor: const Color(0xFF86D5E6),
+          glowColor: const Color(0xFF52B5D8),
+          photoTint: const Color(0xFFBFEAF8),
+          photoHighlight: const Color(0xFF8ED7F4),
+          illustration: const _MicrophoneIllustration(),
+          onTap: () {},
         ),
-        const SizedBox(height: 12),
-        _activityCard(
+        const SizedBox(height: 22),
+        _ActivityCard(
+          delay: 220,
           icon: Icons.auto_stories_rounded,
-          title: 'Folklores',
-          subtitle: 'Explore stories and cultural memories.',
-          gradientColors: const [Color(0xFFE1BEE7), Color(0xFFCE93D8)],
-          iconColor: const Color(0xFF4A148C),
+          title: 'Folk Stories',
+          subtitle: 'Enjoy calm music and explore stories.',
+          accentColor: const Color(0xFFEAC4F2),
+          glowColor: const Color(0xFFD795E4),
+          photoTint: const Color(0xFFE9D9F7),
+          photoHighlight: const Color(0xFFD7B4EE),
+          illustration: const _BookIllustration(),
+          onTap: () {},
         ),
       ],
-    );
-  }
-
-  Widget _activityCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Color> gradientColors,
-    required Color iconColor,
-  }) {
-    return Semantics(
-      button: true,
-      label: title,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(22),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: const Color(0xFFCFE0ED),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradientColors,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: iconColor.withValues(alpha: 0.18),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: iconColor, size: 30),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Color(0xFF1E3A5F),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          color: Color(0xFF5B6D7D),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF1E3A5F),
-                  size: 26,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1810,6 +1813,531 @@ class _GameHubPageState extends State<GameHubPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ActivityCard extends StatefulWidget {
+  final int delay;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final Color glowColor;
+  final Color photoTint;
+  final Color photoHighlight;
+  final Widget illustration;
+  final VoidCallback onTap;
+
+  const _ActivityCard({
+    required this.delay,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accentColor,
+    required this.glowColor,
+    required this.photoTint,
+    required this.photoHighlight,
+    required this.illustration,
+    required this.onTap,
+  });
+
+  @override
+  State<_ActivityCard> createState() => _ActivityCardState();
+}
+
+class _ActivityCardState extends State<_ActivityCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _scale;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0.16, 0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(_controller);
+    _scale = Tween<double>(begin: 0.96, end: 1.0).chain(
+      CurveTween(curve: Curves.easeOutCubic),
+    ).animate(_controller);
+
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(_slide.value.dx * 120, _slide.value.dy * 120),
+            child: Transform.scale(
+              scale: _scale.value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Semantics(
+        button: true,
+        label: widget.title,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: widget.onTap,
+          child: AnimatedScale(
+            scale: _pressed ? 0.985 : 1.0,
+            duration: const Duration(milliseconds: 130),
+            curve: Curves.easeOut,
+            child: Container(
+              height: 210,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color.alphaBlend(
+                      widget.accentColor.withValues(alpha: 0.45),
+                      Colors.white,
+                    ),
+                    widget.accentColor.withValues(alpha: 0.72),
+                  ],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  width: 1.6,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.glowColor.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 12, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              _FloatingIcon(icon: widget.icon, color: widget.glowColor),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 16,
+                                  color: Color(0xFF1E3A5F),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Flexible(
+                            child: Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF1E3A5F),
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Flexible(
+                            child: Text(
+                              widget.subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF536A7B),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.favorite_rounded,
+                                size: 14,
+                                color: Color(0xFF1E3A5F),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  widget.title == 'Karaoke' ? 'Mood boost' : 'Story time',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1E3A5F),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10, right: 12, bottom: 10),
+                      child: SlantedPhotoArea(
+                        color: widget.photoTint,
+                        highlightColor: widget.photoHighlight,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      widget.photoTint,
+                                      widget.photoHighlight,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 18,
+                              right: 18,
+                              child: Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.center,
+                              child: AnimatedBuilder(
+                                animation: _controller,
+                                builder: (context, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, -8 + (1 - _fade.value) * 8),
+                                    child: child,
+                                  );
+                                },
+                                child: widget.illustration,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingIcon extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+
+  const _FloatingIcon({required this.icon, required this.color});
+
+  @override
+  State<_FloatingIcon> createState() => _FloatingIconState();
+}
+
+class _FloatingIconState extends State<_FloatingIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, -4 + 4 * _controller.value),
+          child: child,
+        );
+      },
+      child: Container(
+        width: 58,
+        height: 58,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withValues(alpha: 0.24),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Icon(
+          widget.icon,
+          color: widget.color,
+          size: 30,
+        ),
+      ),
+    );
+  }
+}
+
+class SlantedPhotoArea extends StatelessWidget {
+  final Widget child;
+  final Color color;
+  final Color highlightColor;
+
+  const SlantedPhotoArea({
+    super.key,
+    required this.child,
+    required this.color,
+    required this.highlightColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipPath(
+      clipper: _SlantedPhotoClipper(),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, highlightColor],
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SlantedPhotoClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * 0.18, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width * 0.02, size.height);
+    path.lineTo(0, size.height * 0.12);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _MicrophoneIllustration extends StatelessWidget {
+  const _MicrophoneIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110,
+      height: 110,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
+            ),
+          ),
+          Positioned(
+            bottom: 12,
+            child: Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D47A1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 18,
+            left: 14,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFF4C2),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 18,
+            right: 16,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFE7A3),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookIllustration extends StatelessWidget {
+  const _BookIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 110,
+      height: 110,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 16,
+            child: Transform.rotate(
+              angle: -0.32,
+              child: Container(
+                width: 58,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB284CF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+                ),
+                child: const Icon(
+                  Icons.menu_book_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 16,
+            child: Transform.rotate(
+              angle: 0.32,
+              child: Container(
+                width: 58,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD59FE8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+                ),
+                child: const Icon(
+                  Icons.auto_stories_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 18,
+            right: 26,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFF3C3),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            left: 26,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFD9E8),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

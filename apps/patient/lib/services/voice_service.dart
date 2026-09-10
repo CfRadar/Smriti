@@ -258,8 +258,13 @@ class VoiceService {
       debugPrint('Unable to start listening: $e');
       statusNotifier.value = VoiceStatus.error;
       if (e.toString().contains('InvalidStateError')) {
-        await _speechToText.cancel();
-        _scheduleListeningRestart();
+        try {
+          await _speechToText.cancel();
+        } catch (_) {}
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        if (!_disposed && _isEnabled && !_processing && !_speechToText.isListening) {
+          _scheduleListeningRestart();
+        }
       }
     } finally {
       _starting = false;
@@ -317,7 +322,7 @@ class VoiceService {
   }
 
   void _scheduleListeningRestart() {
-    if (!_isEnabled || _disposed || _processing || _restartScheduled) {
+    if (!_isEnabled || _disposed || _processing || _restartScheduled || _starting) {
       return;
     }
 
@@ -325,7 +330,7 @@ class VoiceService {
     _restartTimer = Timer(const Duration(milliseconds: 600), () async {
       _restartScheduled = false;
       _restartTimer = null;
-      if (!_disposed && !_processing && !_speechToText.isListening) {
+      if (!_disposed && !_processing && !_starting && !_speechToText.isListening) {
         await startListening();
       }
     });
