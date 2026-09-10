@@ -25,11 +25,15 @@ class VoiceService {
   static final VoiceService instance = VoiceService._();
 
   static const String _commandLogKey = 'smriti_voice_command_log';
+  static const String _voiceEnabledKey = 'smriti_voice_assistant_enabled';
   static const int _maxStoredCommands = 50;
 
   final SpeechToText _speechToText = SpeechToText();
   final ValueNotifier<VoiceStatus> statusNotifier =
       ValueNotifier<VoiceStatus>(VoiceStatus.initializing);
+
+  bool _isEnabled = true;
+  bool get isEnabled => _isEnabled;
 
   bool _initialized = false;
   bool _disposed = false;
@@ -39,6 +43,34 @@ class VoiceService {
   bool _permissionGranted = false;
   bool _speechAvailable = false;
   Timer? _restartTimer;
+
+  /// User-facing activation/deactivation of the voice assistant.
+  Future<void> setEnabled(bool enabled) async {
+    _isEnabled = enabled;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_voiceEnabledKey, enabled);
+    } catch (e) {
+      debugPrint('Failed to save voice enabled state: $e');
+    }
+
+    if (!enabled) {
+      _restartTimer?.cancel();
+      _restartTimer = null;
+      _restartScheduled = false;
+      try {
+        if (_speechToText.isListening) {
+          await _speechToText.stop();
+        }
+      } catch (e) {
+        debugPrint('Error stopping speech recognizer on deactivate: $e');
+      }
+      statusNotifier.value = VoiceStatus.disabled;
+    } else {
+      statusNotifier.value = VoiceStatus.initializing;
+      await startListening();
+    }
+  }
 
   static bool isPermissionDeniedError(String? errorMessage) {
     final normalized = (errorMessage ?? '').toLowerCase();
@@ -85,11 +117,26 @@ class VoiceService {
     }
 
     _initialized = true;
-    statusNotifier.value = VoiceStatus.initializing;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isEnabled = prefs.getBool(_voiceEnabledKey) ?? true;
+    } catch (_) {}
+
+    if (!_isEnabled) {
+      statusNotifier.value = VoiceStatus.disabled;
+    } else {
+      statusNotifier.value = VoiceStatus.initializing;
+    }
 
     try {
       final available = await _speechToText.initialize(
         onStatus: (status) {
+          if (!_isEnabled) {
+            statusNotifier.value = VoiceStatus.disabled;
+            return;
+          }
+
           if (!_processing && !_permissionGranted) {
             statusNotifier.value = VoiceStatus.error;
             return;
@@ -104,7 +151,7 @@ class VoiceService {
 
           if (nextStatus == VoiceStatus.listening &&
               (status == 'done' || status == 'stopped' || status == 'notListening')) {
-            if (!_processing) {
+            if (!_processing && _isEnabled) {
               _scheduleListeningRestart();
             }
           }
@@ -115,7 +162,7 @@ class VoiceService {
           }
 
           if (status == 'done' || status == 'stopped' || status == 'notListening') {
-            if (!_processing && _permissionGranted) {
+            if (!_processing && _permissionGranted && _isEnabled) {
               statusNotifier.value = VoiceStatus.listening;
             }
           }
@@ -149,7 +196,11 @@ class VoiceService {
         _permissionGranted = true;
       }
 
-      await startListening();
+      if (_isEnabled) {
+        await startListening();
+      } else {
+        statusNotifier.value = VoiceStatus.disabled;
+      }
       return true;
     } catch (e) {
       debugPrint('Voice service initialization error: $e');
@@ -163,6 +214,11 @@ class VoiceService {
     _restartTimer?.cancel();
     _restartTimer = null;
     _restartScheduled = false;
+
+    if (!_isEnabled) {
+      statusNotifier.value = VoiceStatus.disabled;
+      return;
+    }
 
     if (!_permissionGranted) {
       statusNotifier.value = VoiceStatus.error;
@@ -261,7 +317,7 @@ class VoiceService {
   }
 
   void _scheduleListeningRestart() {
-    if (_disposed || _processing || _restartScheduled) {
+    if (!_isEnabled || _disposed || _processing || _restartScheduled) {
       return;
     }
 

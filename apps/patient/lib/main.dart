@@ -886,22 +886,76 @@ class _GameHubPageState extends State<GameHubPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
-              title: const Text('Voice Assistant'),
-              subtitle: const Text('Tap the wave button on top-right to speak commands.'),
+              title: const Text(
+                'Voice Assistant',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: const Text('Tap to activate or deactivate voice commands.'),
               trailing: ValueListenableBuilder<VoiceStatus>(
                 valueListenable: VoiceService.instance.statusNotifier,
                 builder: (context, status, _) {
-                  final active = status == VoiceStatus.listening || status == VoiceStatus.processing;
-                  return Chip(
-                    label: Text(
-                      active ? 'Active' : 'Idle',
-                      style: TextStyle(
-                        color: active ? Colors.green.shade800 : Colors.grey.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                  final active = VoiceService.instance.isEnabled &&
+                      (status == VoiceStatus.listening ||
+                          status == VoiceStatus.processing ||
+                          status == VoiceStatus.initializing);
+
+                  return Tooltip(
+                    message: active
+                        ? 'Tap to deactivate Voice Assistant'
+                        : 'Tap to activate Voice Assistant',
+                    child: InkWell(
+                      onTap: () async {
+                        await VoiceService.instance.setEnabled(!active);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: active ? const Color(0xFFE8F5E9) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: active ? const Color(0xFF81C784) : const Color(0xFFCBD5E1),
+                            width: 1.3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: active
+                                  ? Colors.green.withValues(alpha: 0.12)
+                                  : Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1.5),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: active ? const Color(0xFF2E7D32) : const Color(0xFF94A3B8),
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Text(
+                              active ? 'Active' : 'Deactivated',
+                              style: TextStyle(
+                                color: active ? const Color(0xFF1B5E20) : const Color(0xFF64748B),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    backgroundColor: active ? Colors.green.shade50 : Colors.grey.shade100,
                   );
                 },
               ),
