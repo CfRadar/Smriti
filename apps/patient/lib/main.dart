@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'services/fcm_token_service.dart';
+import 'screens/caregiver_login_screen.dart';
+import 'screens/caregiver_dashboard_screen.dart';
 import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
@@ -273,6 +275,8 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       ),
       routes: {
         '/home': (context) => const GameHubPage(),
+        '/caregiver-login': (context) => const CaregiverLoginScreen(),
+        '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
       },
       home: const SplashPage(),
       builder: (context, child) {
@@ -836,6 +840,24 @@ class _GameHubPageState extends State<GameHubPage>
                 }
               },
             ),
+          // ── Caregiver portal button ──────────────────────────────────────
+          Positioned(
+            bottom: 110,
+            right: 20,
+            child: Tooltip(
+              message: 'Caregiver Portal',
+              child: FloatingActionButton.small(
+                heroTag: 'caregiver_fab',
+                backgroundColor: const Color(0xFF214E3B),
+                onPressed: () {
+                  Navigator.of(context)
+                      .pushNamed('/caregiver-login');
+                },
+                child: const Icon(Icons.medical_services_outlined,
+                    color: Colors.white, size: 20),
+              ),
+            ),
+          ),
         ],
       ),
     );
