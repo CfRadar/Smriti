@@ -33,5 +33,6 @@ flutter:
     - assets/images/cloth/
     - assets/images/food/
     - assets/images/items/
+    - assets/images/thumbnail/
     - assets/audio/
     - assets/research.txt

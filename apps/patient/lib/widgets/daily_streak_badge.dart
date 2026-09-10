@@ -236,9 +236,9 @@ class StreakFlamePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // Position at lower center of flame base
+    // Center aligned horizontally and vertically
     final textX = (w - fillPainter.width) / 2;
-    final textY = h * 0.50 + (h * 0.44 - fillPainter.height) / 2;
+    final textY = (h - fillPainter.height) / 2;
 
     strokePainter.paint(canvas, Offset(textX, textY));
     fillPainter.paint(canvas, Offset(textX, textY));
@@ -345,6 +345,7 @@ class DailyStreakBadgeState extends State<DailyStreakBadge>
                   _isFrozen
                       ? 'STREAK FROZEN'
                       : (_streak == 1 ? 'DAY CONSISTENT' : 'DAYS CONSISTENT'),
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _isFrozen ? const Color(0xFF80D8FF) : const Color(0xFFB0B0B0),
                     fontSize: 14,
@@ -437,7 +438,7 @@ class DailyStreakBadgeState extends State<DailyStreakBadge>
                       painter: StreakFlamePainter(
                         streakCount: _streak,
                         emberPhase: _animCtrl.value,
-                        showNumber: false,
+                        showNumber: true,
                         isFrozen: _isFrozen,
                       ),
                     ),
