@@ -20,6 +20,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -1515,25 +1516,28 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
     );
   }
 
-  /// Caregiver / manual stage picker bottom sheet
   void _openStagePickerSheet() {
     _pauseGame();
     showModalBottomSheet(
       context: context,
-      backgroundColor: cardWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.90),
+              child: StatefulBuilder(
+                builder: (context, setSheetState) {
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1627,14 +1631,17 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
               ),
             );
           },
-        );
-      },
-    ).then((_) {
-      if (_isPaused && !_isCompleted) {
-        _resumeGame();
-      }
-    });
+        ),
+      ),
+    ),
+  );
+},
+).then((_) {
+  if (_isPaused && !_isCompleted) {
+    _resumeGame();
   }
+});
+}
 
   /// Ambient floating pastel orbs to fill empty screen spaces harmoniously
   Widget _buildAmbientDecorations(BoxConstraints constraints) {

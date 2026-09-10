@@ -322,6 +322,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
   // Game Progress
   static const String _prefKeyHighScore = 'smriti_king_shanaba_high_score';
+  static const String _prefKeyLevel = 'smriti_king_shanaba_level';
   int _currentTrial = 1;
   int _score = 0;
   int _hits = 0;
@@ -425,8 +426,10 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
     _setupAnimations();
     SharedPreferences.getInstance().then((prefs) {
       if (mounted) {
+        final savedLevel = prefs.getInt(_prefKeyLevel) ?? 1;
         setState(() {
           _highScore = prefs.getInt(_prefKeyHighScore) ?? 0;
+          _adaptiveEngine.level = savedLevel.clamp(1, 5);
         });
       }
     });
@@ -645,6 +648,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
         _highScore = _score;
         SharedPreferences.getInstance().then((prefs) {
           prefs.setInt(_prefKeyHighScore, _highScore);
+          prefs.setInt(_prefKeyLevel, _adaptiveEngine.level);
         });
       }
       setState(() {
@@ -1100,6 +1104,11 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       reactionTimeMs: safeReactionTime,
     );
 
+    // Persist the level whenever the adaptive engine updates it
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setInt(_prefKeyLevel, _adaptiveEngine.level);
+    });
+
     final telemetry = ShanabaTrialTelemetry(
       sessionId: widget.sessionId,
       trialNumber: _currentTrial,
@@ -1259,9 +1268,6 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
 
                                               // 10. Pause Overlay
                                               if (_isPaused) _buildPauseOverlay(),
-
-                                              // 11. Game Over Dialog
-                                              if (_isGameOver) _buildGameOverDialog(),
                                             ],
                                           ),
                                         ),
@@ -1278,6 +1284,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                     _buildInstructionFooter(),
                   ],
                 ),
+                if (_isGameOver) Positioned.fill(child: _buildGameOverDialog()),
               ],
             );
           },
@@ -1614,9 +1621,11 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
           // 1. Round tracker
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -1634,6 +1643,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               ),
             ],
           ),
+
+          const SizedBox(width: 12),
 
           // 2. Level badge
           Container(
@@ -1662,6 +1673,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               ],
             ),
           ),
+
+          const SizedBox(width: 12),
 
           // 3. Unified Points box
           Container(
@@ -1712,7 +1725,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   /// Minimal, elegant Manipuri Chekphei target disc (no cartoon icons)
@@ -2028,17 +2042,17 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
             ),
           ],
         ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.record_voice_over_rounded, size: 14.0, color: darkGreen),
-            SizedBox(width: 6.0),
-            Flexible(
-              child: Text(
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.record_voice_over_rounded, size: 14.0, color: darkGreen),
+              SizedBox(width: 6.0),
+              Text(
                 'Pull back to aim & strike • Voice: "pause", "resume", "exit"',
                 textAlign: TextAlign.center,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12.0,
                   fontWeight: FontWeight.w700,
@@ -2046,8 +2060,8 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                   letterSpacing: 0.3,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2117,41 +2131,47 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
         : 1200;
 
     return Container(
-      color: Colors.black.withValues(alpha: 0.45),
+      color: Colors.black.withValues(alpha: 0.55),
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: GameCompletionDialog(
-        finalScore: _score,
-        bestScore: max(_highScore, _score),
-        metrics: [
-          GameCompletionMetric(
-            icon: Icons.check_circle_outline_rounded,
-            label: 'Accuracy',
-            value: '${accuracy.round()}%',
-            iconColor: GameCompletionDialog.darkGreen,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+            child: GameCompletionDialog(
+              finalScore: _score,
+              bestScore: max(_highScore, _score),
+              metrics: [
+                GameCompletionMetric(
+                  icon: Icons.check_circle_outline_rounded,
+                  label: 'Accuracy',
+                  value: '${accuracy.round()}%',
+                  iconColor: GameCompletionDialog.darkGreen,
+                ),
+                GameCompletionMetric(
+                  icon: Icons.speed_rounded,
+                  label: 'Avg Speed',
+                  value: '${(avgRt / 1000).toStringAsFixed(1)}s',
+                  iconColor: GameCompletionDialog.sageGreen,
+                ),
+                GameCompletionMetric(
+                  icon: Icons.local_fire_department_rounded,
+                  label: 'Best Streak',
+                  value: '$_bestStreak',
+                  iconColor: GameCompletionDialog.darkGreen,
+                ),
+              ],
+              onHome: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/home', (route) => false);
+                }
+              },
+              onPlayAgain: _restartGame,
+            ),
           ),
-          GameCompletionMetric(
-            icon: Icons.speed_rounded,
-            label: 'Avg Speed',
-            value: '${(avgRt / 1000).toStringAsFixed(1)}s',
-            iconColor: GameCompletionDialog.sageGreen,
-          ),
-          GameCompletionMetric(
-            icon: Icons.local_fire_department_rounded,
-            label: 'Best Streak',
-            value: '$_bestStreak',
-            iconColor: GameCompletionDialog.darkGreen,
-          ),
-        ],
-        onHome: () {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          } else {
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil('/home', (route) => false);
-          }
-        },
-        onPlayAgain: _restartGame,
+        ),
       ),
     );
   }

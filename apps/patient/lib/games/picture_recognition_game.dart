@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -949,17 +950,21 @@ class _PictureRecognitionGameScreenState
     pauseGame();
     showModalBottomSheet(
       context: context,
-      backgroundColor: cardWhite,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (ctx) {
-        return StatefulBuilder(
-          builder: (sheetContext, setSheetState) {
-            return SafeArea(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.90),
+              child: StatefulBuilder(
+                builder: (sheetContext, setSheetState) {
+                  return SafeArea(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1059,14 +1064,17 @@ class _PictureRecognitionGameScreenState
               ),
             );
           },
-        );
-      },
-    ).then((_) {
-      if (_isPaused && !_isGameOver) {
-        resumeGame();
-      }
-    });
+        ),
+      ),
+    ),
+  );
+},
+).then((_) {
+  if (_isPaused && !_isGameOver) {
+    resumeGame();
   }
+});
+}
 
   void _showGameOverSummary() {
     final totalAttempts = _totalCorrectSelections + _totalMistakes;

@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -817,109 +818,116 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   void _openDifficultySheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: cardWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Difficulty Preset (1–10)',
-                          style: TextStyle(
-                            color: textDark,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, color: textGrey),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: 10,
-                        itemBuilder: (context, index) {
-                          final lvl = index + 1;
-                          final cfg = PatternDifficultyConfig.getForLevel(lvl);
-                          final isSelected = lvl == _currentLevel;
-
-                          return ListTile(
-                            onTap: () {
-                              setSheetState(() {});
-                              setState(() {
-                                _currentLevel = lvl;
-                                _correctStreak = 0;
-                              });
-                              _savePreferences();
-                              Navigator.of(context).pop();
-                              _startCountdown();
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            tileColor: isSelected
-                                ? primarySage.withValues(alpha: 0.12)
-                                : null,
-                            leading: CircleAvatar(
-                              radius: 18,
-                              backgroundColor: isSelected
-                                  ? primarySage
-                                  : borderGrey.withValues(alpha: 0.6),
-                              child: Text(
-                                '$lvl',
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.90),
+              child: StatefulBuilder(
+                builder: (context, setSheetState) {
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Difficulty Preset (1–10)',
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : textDark,
+                                  color: textDark,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
                                 ),
                               ),
-                            ),
-                            title: Text(
-                              'Level $lvl (${cfg.gridSize}×${cfg.gridSize})',
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
-                                color: textDark,
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: textGrey),
+                                onPressed: () => Navigator.of(context).pop(),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Flexible(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: 10,
+                              itemBuilder: (context, index) {
+                                final lvl = index + 1;
+                                final cfg = PatternDifficultyConfig.getForLevel(lvl);
+                                final isSelected = lvl == _currentLevel;
+
+                                return ListTile(
+                                  onTap: () {
+                                    setSheetState(() {});
+                                    setState(() {
+                                      _currentLevel = lvl;
+                                      _correctStreak = 0;
+                                    });
+                                    _savePreferences();
+                                    Navigator.of(context).pop();
+                                    _startCountdown();
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  tileColor: isSelected
+                                      ? primarySage.withValues(alpha: 0.12)
+                                      : null,
+                                  leading: CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor: isSelected
+                                        ? primarySage
+                                        : borderGrey.withValues(alpha: 0.6),
+                                    child: Text(
+                                      '$lvl',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : textDark,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    'Level $lvl (${cfg.gridSize}×${cfg.gridSize})',
+                                    style: TextStyle(
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                      color: textDark,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: textGrey,
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: primarySage,
+                                        )
+                                      : null,
+                                );
+                              },
                             ),
-                            subtitle: Text(
-                              '${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: textGrey,
-                              ),
-                            ),
-                            trailing: isSelected
-                                ? const Icon(
-                                    Icons.check_circle_rounded,
-                                    color: primarySage,
-                                  )
-                                : null,
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );

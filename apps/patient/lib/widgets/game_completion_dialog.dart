@@ -67,7 +67,7 @@ class GameCompletionDialog extends StatelessWidget {
       backgroundColor: cardWhite,
       elevation: 6,
       insetPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(22.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,

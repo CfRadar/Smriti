@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -12,14 +13,46 @@ import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
 import 'screens/folklore_list_screen.dart';
 import 'services/reminder_service.dart';
+import 'services/streak_service.dart';
 import 'services/voice_service.dart';
 import 'widgets/animated_fragmented_divider.dart';
 import 'widgets/animated_star_badge.dart';
+import 'widgets/daily_streak_badge.dart';
+import 'widgets/streak_celebration_overlay.dart';
 import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
 void main() {
   runApp(const SmritiApp());
+}
+
+Route<T> buildSmoothGameRoute<T>(Widget page) {
+  return PageRouteBuilder<T>(
+    transitionDuration: const Duration(milliseconds: 460),
+    reverseTransitionDuration: const Duration(milliseconds: 380),
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1.0).animate(curved),
+            child: child,
+          ),
+        ),
+      );
+    },
+  );
 }
 
 class SmritiApp extends StatefulWidget {
@@ -201,7 +234,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     final nav = _navigatorKey.currentState;
     if (nav != null) {
       nav.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => page),
+        buildSmoothGameRoute(page),
         (route) => route.isFirst,
       );
       return;
@@ -209,7 +242,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
     final context = _navigatorKey.currentContext;
     if (context == null || !context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => page),
+      buildSmoothGameRoute(page),
       (route) => route.isFirst,
     );
   }
@@ -510,14 +543,29 @@ class GameHubPage extends StatefulWidget {
   State<GameHubPage> createState() => _GameHubPageState();
 }
 
-class _GameHubPageState extends State<GameHubPage> {
+class _GameHubPageState extends State<GameHubPage>
+    with TickerProviderStateMixin {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
   final bool _showRoutineSection = false;
   bool _showReminderOverlay = false;
+  bool _hasSeenReminders = false;
   int _selectedTabIndex = 0;
   int _currentReminderIndex = 0;
   final GlobalKey _tickKey = GlobalKey();
+  final GlobalKey<AnimatedStarBadgeState> _starBadgeKey =
+      GlobalKey<AnimatedStarBadgeState>();
+  final GlobalKey<DailyStreakBadgeState> _streakBadgeKey =
+      GlobalKey<DailyStreakBadgeState>();
+
+  int _streakCount = 1;
+  bool _isIceBreak = false;
+  bool _showingStreakIntro = false;
+  Timer? _streakCelebrationTimer;
+
+  late final AnimationController _reminderPopController;
+  late final Animation<double> _reminderScaleAnim;
+  late final Animation<double> _reminderFadeAnim;
 
   static final PatientReminder _dummyReminder = PatientReminder(
     id: '__dummy_water__',
@@ -532,7 +580,73 @@ class _GameHubPageState extends State<GameHubPage> {
   @override
   void initState() {
     super.initState();
+    _reminderPopController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _reminderScaleAnim = CurvedAnimation(
+      parent: _reminderPopController,
+      curve: Curves.easeOutBack,
+      reverseCurve: Curves.easeInBack,
+    );
+    _reminderFadeAnim = CurvedAnimation(
+      parent: _reminderPopController,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
+
     _loadReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkStreakCelebration();
+    });
+  }
+
+  @override
+  void dispose() {
+    _streakCelebrationTimer?.cancel();
+    _reminderPopController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkStreakCelebration() async {
+    final s = await StreakService.instance.getStreak();
+    final isIceBreak = await StreakService.instance.shouldShowIceBreakAnimation();
+    final shouldCelebrate = await StreakService.instance.shouldShowCelebration();
+    if (mounted) {
+      setState(() {
+        _streakCount = s;
+        _isIceBreak = isIceBreak;
+      });
+      if (shouldCelebrate) {
+        _streakCelebrationTimer = Timer(const Duration(milliseconds: 550), () {
+          if (mounted) {
+            setState(() => _showingStreakIntro = true);
+          }
+        });
+      }
+    }
+  }
+
+  void _toggleReminderOverlay() {
+    if (_showReminderOverlay) {
+      _closeReminderOverlay();
+    } else {
+      setState(() {
+        _showReminderOverlay = true;
+        _hasSeenReminders = true;
+      });
+      _reminderPopController.forward(from: 0.0);
+    }
+  }
+
+  void _closeReminderOverlay() {
+    if (_showReminderOverlay) {
+      _reminderPopController.reverse().then((_) {
+        if (mounted) {
+          setState(() => _showReminderOverlay = false);
+        }
+      });
+    }
   }
 
   Future<void> _loadReminders() async {
@@ -645,25 +759,25 @@ class _GameHubPageState extends State<GameHubPage> {
 
   void _openPictureRecognitionGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PictureRecognitionGameScreen()),
+      buildSmoothGameRoute(const PictureRecognitionGameScreen()),
     );
   }
 
   void _openPatternGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PatternMemoryGameScreen()),
+      buildSmoothGameRoute(const PatternMemoryGameScreen()),
     );
   }
 
   void _openKingShanabaGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const KingShanabaGameScreen()),
+      buildSmoothGameRoute(const KingShanabaGameScreen()),
     );
   }
 
   void _openBambooDanceGame(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const BambooDanceGameScreen()),
+      buildSmoothGameRoute(const BambooDanceGameScreen()),
     );
   }
 
@@ -672,13 +786,14 @@ class _GameHubPageState extends State<GameHubPage> {
     final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
     return Scaffold(
       backgroundColor: GameHubPage.screenBg,
+      extendBody: true,
       bottomNavigationBar: _buildBottomNavigationBar(),
       body: Stack(
         children: [
           SafeArea(
             child: CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(child: _buildHeader()),
+                SliverToBoxAdapter(child: _buildHeader(pendingReminders)),
                 const SliverToBoxAdapter(
                   child: AnimatedFragmentedDivider(),
                 ),
@@ -688,14 +803,33 @@ class _GameHubPageState extends State<GameHubPage> {
                   padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
                   sliver: SliverToBoxAdapter(
                     child: _selectedTabIndex == 0
-                        ? _buildGamesSection(context)
-                        : _buildActivitiesScreen(),
+                        ? KeyedSubtree(
+                            key: const ValueKey('games_tab'),
+                            child: _buildGamesSection(context),
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey('activities_tab'),
+                            child: _buildActivitiesScreen(),
+                          ),
                   ),
                 ),
               ],
             ),
           ),
           if (_showReminderOverlay) _buildReminderOverlay(pendingReminders),
+          if (_showingStreakIntro)
+            StreakCelebrationOverlay(
+              streakCount: _streakCount,
+              targetKey: _streakBadgeKey,
+              isIceBreak: _isIceBreak,
+              onFinished: () async {
+                await StreakService.instance.markCelebrationShown();
+                if (mounted) {
+                  setState(() => _showingStreakIntro = false);
+                  _streakBadgeKey.currentState?.refreshStreak();
+                }
+              },
+            ),
         ],
       ),
     );
@@ -703,36 +837,35 @@ class _GameHubPageState extends State<GameHubPage> {
 
   Widget _buildBottomNavigationBar() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
+      color: Colors.transparent,
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F7F9),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1E3A5F).withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              currentIndex: _selectedTabIndex,
-              onTap: (index) => setState(() => _selectedTabIndex = index),
+                child: BottomNavigationBar(
+                  currentIndex: _selectedTabIndex,
+                  onTap: (index) => setState(() => _selectedTabIndex = index),
               backgroundColor: Colors.transparent,
               selectedItemColor: GameHubPage.darkGreen,
               unselectedItemColor: const Color(0xFF7D8BA3),
@@ -782,7 +915,9 @@ class _GameHubPageState extends State<GameHubPage> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _bottomNavIcon({
@@ -797,24 +932,24 @@ class _GameHubPageState extends State<GameHubPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        width: 42,
-        height: 42,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
           color: selected ? selectedColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(11),
           boxShadow: selected
               ? [
                   BoxShadow(
                     color: GameHubPage.darkGreen.withValues(alpha: 0.10),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
                 ]
               : null,
         ),
         child: Icon(
           icon,
-          size: selected ? 24 : 22,
+          size: selected ? 20 : 18,
           color: selected ? GameHubPage.darkGreen : const Color(0xFF7D8BA3),
         ),
       ),
@@ -873,31 +1008,28 @@ class _GameHubPageState extends State<GameHubPage> {
     return Stack(
       children: [
         Positioned.fill(
-          child: AnimatedOpacity(
-            opacity: _showReminderOverlay ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 220),
-            child: IgnorePointer(
-              ignoring: !_showReminderOverlay,
-              child: GestureDetector(
-                onTap: () => setState(() => _showReminderOverlay = false),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: _showReminderOverlay ? 2.5 : 0.0,
-                      sigmaY: _showReminderOverlay ? 2.5 : 0.0,
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
+          child: AnimatedBuilder(
+            animation: _reminderFadeAnim,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _reminderFadeAnim.value,
+                child: child,
+              );
+            },
+            child: GestureDetector(
+              onTap: _closeReminderOverlay,
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.25),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                  child: const SizedBox.expand(),
                 ),
               ),
             ),
           ),
         ),
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          top: _showReminderOverlay ? 70 : -420,
+        Positioned(
+          top: 72,
           left: 0,
           right: 0,
           child: SafeArea(
@@ -906,7 +1038,26 @@ class _GameHubPageState extends State<GameHubPage> {
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildReminderPopup(visibleReminders),
+                  child: AnimatedBuilder(
+                    animation: _reminderPopController,
+                    builder: (context, child) {
+                      return FadeTransition(
+                        opacity: _reminderFadeAnim,
+                        child: Transform.scale(
+                          alignment: Alignment.topLeft,
+                          scale: _reminderScaleAnim.value,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(-0.20, -0.10),
+                              end: Offset.zero,
+                            ).animate(_reminderScaleAnim),
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                    child: _buildReminderPopup(visibleReminders),
+                  ),
                 ),
               ),
             ),
@@ -927,114 +1078,123 @@ class _GameHubPageState extends State<GameHubPage> {
         : '';
     final hasMultiple = reminders.length > 1;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.14),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFECE5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.notifications_rounded,
-                    color: Color(0xFFFF7043),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'Reminders',
-                    style: TextStyle(
-                      color: Color(0xFF1E3A5F),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => setState(() => _showReminderOverlay = false),
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF1E3A5F)),
-                  tooltip: 'Close reminders',
-                ),
-              ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.88),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.92),
+              width: 1.5,
             ),
-            const SizedBox(height: 12),
-            if (isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F7FB),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Row(
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1E3A5F).withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Icon(Icons.check_circle_rounded,
-                        color: GameHubPage.green, size: 24),
-                    SizedBox(width: 12),
-                    Expanded(
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.alarm_on_rounded,
+                        color: GameHubPage.darkGreen,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
                       child: Text(
-                        'No reminders right now. Everything looks good.',
+                        'Reminders',
                         style: TextStyle(
                           color: GameHubPage.darkGreen,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _closeReminderOverlay,
+                      icon: const Icon(Icons.close_rounded, color: GameHubPage.darkGreen),
+                      tooltip: 'Close reminders',
+                    ),
                   ],
                 ),
-              )
-            else
-              _ReminderCard(
-                reminder: reminder!,
-                timeStr: timeStr,
-                hasMultiple: hasMultiple,
-                currentIndex: _currentReminderIndex,
-                totalCount: reminders.length,
-                tickKey: _tickKey,
-                onPrev: _currentReminderIndex > 0
-                    ? () => setState(() => _currentReminderIndex--)
-                    : null,
-                onNext: _currentReminderIndex < reminders.length - 1
-                    ? () => setState(() => _currentReminderIndex++)
-                    : null,
-                onSpeak: reminder.isVoicePromptEnabled
-                    ? () => _speakReminder(reminder)
-                    : null,
-                onDone: () {
-                  final tickBox = _tickKey.currentContext
-                      ?.findRenderObject() as RenderBox?;
-                  final tickPos = tickBox != null
-                      ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
-                      : Offset.zero;
-                  AnimatedStarBadge.globalKey.currentState
-                      ?.celebrate(tickPos);
-                  _acknowledgeReminder(reminder);
-                },
-                getTypeIcon: _getTypeIcon,
-              ),
-          ],
+                const SizedBox(height: 12),
+                if (isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F7FB).withValues(alpha: 0.80),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.check_circle_rounded,
+                            color: GameHubPage.green, size: 24),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'No reminders right now. Everything looks good.',
+                            style: TextStyle(
+                              color: GameHubPage.darkGreen,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  _ReminderCard(
+                    reminder: reminder!,
+                    timeStr: timeStr,
+                    hasMultiple: hasMultiple,
+                    currentIndex: _currentReminderIndex,
+                    totalCount: reminders.length,
+                    tickKey: _tickKey,
+                    onPrev: _currentReminderIndex > 0
+                        ? () => setState(() => _currentReminderIndex--)
+                        : null,
+                    onNext: _currentReminderIndex < reminders.length - 1
+                        ? () => setState(() => _currentReminderIndex++)
+                        : null,
+                    onSpeak: reminder.isVoicePromptEnabled
+                        ? () => _speakReminder(reminder)
+                        : null,
+                    onDone: () {
+                      final tickBox = _tickKey.currentContext
+                          ?.findRenderObject() as RenderBox?;
+                      final tickPos = tickBox != null
+                          ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
+                          : Offset.zero;
+                      _starBadgeKey.currentState?.celebrate(tickPos);
+                      _acknowledgeReminder(reminder);
+                    },
+                    getTypeIcon: _getTypeIcon,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1043,17 +1203,23 @@ class _GameHubPageState extends State<GameHubPage> {
   void _openAccessibilitySettings(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Material(
+            color: Colors.white.withValues(alpha: 0.90),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             Center(
               child: Container(
                 width: 40,
@@ -1183,10 +1349,14 @@ class _GameHubPageState extends State<GameHubPage> {
           ],
         ),
       ),
-    );
+    ),
+  ),
+),
+),
+);
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(List<PatientReminder> pendingReminders) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
@@ -1206,69 +1376,37 @@ class _GameHubPageState extends State<GameHubPage> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: _buildSettingsButton(),
-          ),
-          Align(
-            alignment: Alignment.center,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildTitleWithUnderline(),
+                _buildSettingsButton(),
                 const SizedBox(width: 8),
-                _buildReminderButton(),
+                AnimatedStarBadge(
+                  key: _starBadgeKey,
+                  hasActiveReminder: pendingReminders.isNotEmpty && !_hasSeenReminders,
+                  onTap: _toggleReminderOverlay,
+                ),
               ],
             ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: _buildTitleWithUnderline(),
           ),
           Align(
             alignment: Alignment.centerRight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedStarBadge(key: AnimatedStarBadge.globalKey),
-                const SizedBox(width: 6),
+                DailyStreakBadge(
+                  key: _streakBadgeKey,
+                ),
+                const SizedBox(width: 8),
                 const VoiceWaveButton(),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildReminderButton() {
-    return Semantics(
-      button: true,
-      label: 'Reminders',
-      child: Tooltip(
-        message: 'Reminders',
-        child: InkWell(
-          onTap: () => setState(() => _showReminderOverlay = !_showReminderOverlay),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFCFE0ED),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.notifications_rounded,
-              color: GameHubPage.darkGreen,
-              size: 20,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -1575,46 +1713,49 @@ class _GameHubPageState extends State<GameHubPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Choose an activity',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFF1E3A5F),
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
+        _AnimatedGameCard(
+          delay: 40,
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Choose an activity',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF1E3A5F),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2EAF2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
-                  SizedBox(width: 4),
-                  Text(
-                    '6 Games',
-                    style: TextStyle(
-                      color: Color(0xFF1E3A5F),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2EAF2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
+                    SizedBox(width: 4),
+                    Text(
+                      '6 Games',
+                      style: TextStyle(
+                        color: Color(0xFF1E3A5F),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         GridView.count(
@@ -1625,59 +1766,77 @@ class _GameHubPageState extends State<GameHubPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            _gameCard(
-              context,
-              icon: Icons.image_search_rounded,
-              title: 'Picture Recognition',
-              gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
-              iconColor: const Color(0xFFE65100),
-              isAvailable: true,
-              onTap: () => _openPictureRecognitionGame(context),
+            _AnimatedGameCard(
+              delay: 80,
+              child: _gameCard(
+                context,
+                icon: Icons.image_search_rounded,
+                title: 'Picture Recognition',
+                gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
+                iconColor: const Color(0xFFE65100),
+                isAvailable: true,
+                onTap: () => _openPictureRecognitionGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.grid_view_rounded,
-              title: 'Pattern Memory',
-              gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
-              iconColor: const Color(0xFF4A148C),
-              isAvailable: true,
-              onTap: () => _openPatternGame(context),
+            _AnimatedGameCard(
+              delay: 80,
+              child: _gameCard(
+                context,
+                icon: Icons.grid_view_rounded,
+                title: 'Pattern Memory',
+                gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
+                iconColor: const Color(0xFF4A148C),
+                isAvailable: true,
+                onTap: () => _openPatternGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.sports_esports_rounded,
-              title: 'King Shanaba',
-              gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
-              iconColor: const Color(0xFF1B5E20),
-              isAvailable: true,
-              onTap: () => _openKingShanabaGame(context),
+            _AnimatedGameCard(
+              delay: 180,
+              child: _gameCard(
+                context,
+                icon: Icons.sports_esports_rounded,
+                title: 'King Shanaba',
+                gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
+                iconColor: const Color(0xFF1B5E20),
+                isAvailable: true,
+                onTap: () => _openKingShanabaGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.music_note_rounded,
-              title: 'Bamboo Dance',
-              gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
-              iconColor: const Color(0xFFB71C1C),
-              isAvailable: true,
-              onTap: () => _openBambooDanceGame(context),
+            _AnimatedGameCard(
+              delay: 180,
+              child: _gameCard(
+                context,
+                icon: Icons.music_note_rounded,
+                title: 'Bamboo Dance',
+                gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
+                iconColor: const Color(0xFFB71C1C),
+                isAvailable: true,
+                onTap: () => _openBambooDanceGame(context),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.auto_stories_rounded,
-              title: 'Story Recall',
-              gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
-              iconColor: const Color(0xFF0D47A1),
-              isAvailable: false,
-              onTap: () => _showComingSoon(context, 'Story Recall'),
+            _AnimatedGameCard(
+              delay: 280,
+              child: _gameCard(
+                context,
+                icon: Icons.auto_stories_rounded,
+                title: 'Story Recall',
+                gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
+                iconColor: const Color(0xFF0D47A1),
+                isAvailable: false,
+                onTap: () => _showComingSoon(context, 'Story Recall'),
+              ),
             ),
-            _gameCard(
-              context,
-              icon: Icons.spa_rounded,
-              title: 'Mindful Breath',
-              gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
-              iconColor: const Color(0xFF880E4F),
-              isAvailable: false,
-              onTap: () => _showComingSoon(context, 'Mindful Breath'),
+            _AnimatedGameCard(
+              delay: 280,
+              child: _gameCard(
+                context,
+                icon: Icons.spa_rounded,
+                title: 'Mindful Breath',
+                gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
+                iconColor: const Color(0xFF880E4F),
+                isAvailable: false,
+                onTap: () => _showComingSoon(context, 'Mindful Breath'),
+              ),
             ),
           ],
         ),
@@ -1835,6 +1994,85 @@ class _GameHubPageState extends State<GameHubPage> {
   }
 }
 
+class _AnimatedGameCard extends StatefulWidget {
+  final int delay;
+  final Widget child;
+
+  const _AnimatedGameCard({
+    required this.delay,
+    required this.child,
+  });
+
+  @override
+  State<_AnimatedGameCard> createState() => _AnimatedGameCardState();
+}
+
+class _AnimatedGameCardState extends State<_AnimatedGameCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _scale;
+  Timer? _delayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(-0.16, 0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.easeOutCubic)).animate(_controller);
+    _scale = Tween<double>(begin: 0.96, end: 1.0).chain(
+      CurveTween(curve: Curves.easeOutCubic),
+    ).animate(_controller);
+
+    if (widget.delay == 0) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(Duration(milliseconds: widget.delay), () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _delayTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fade.value,
+          child: Transform.translate(
+            offset: Offset(_slide.value.dx * 120, _slide.value.dy * 120),
+            child: Transform.scale(
+              scale: _scale.value,
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
 class _ActivityCard extends StatefulWidget {
   final int delay;
   final IconData icon;
@@ -1871,6 +2109,7 @@ class _ActivityCardState extends State<_ActivityCard>
   late final Animation<Offset> _slide;
   late final Animation<double> _scale;
   bool _pressed = false;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -1891,15 +2130,20 @@ class _ActivityCardState extends State<_ActivityCard>
       CurveTween(curve: Curves.easeOutCubic),
     ).animate(_controller);
 
-    Future.delayed(Duration(milliseconds: widget.delay), () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
+    if (widget.delay == 0) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(Duration(milliseconds: widget.delay), () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -2874,7 +3118,7 @@ class _ReminderCardState extends State<_ReminderCard>
             ),
           ),
           const SizedBox(width: 10),
-          // ── Tick button with bounce animation ──
+          // ── Green circle check button with bounce animation ──
           GestureDetector(
             key: widget.tickKey,
             onTap: _onTickTap,
@@ -2885,27 +3129,33 @@ class _ReminderCardState extends State<_ReminderCard>
                 child: child,
               ),
               child: Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E3A5F), Color(0xFF2D5A8E)],
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFF81C784).withValues(alpha: 0.85),
+                    width: 2.0,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1E3A5F).withValues(alpha: 0.35),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.38),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3.5),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 26,
+                child: const Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 27,
+                  ),
                 ),
               ),
             ),
