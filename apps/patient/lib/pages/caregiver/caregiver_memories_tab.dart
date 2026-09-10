@@ -76,6 +76,7 @@ class _CaregiverMemoriesTabState extends State<CaregiverMemoriesTab> {
     return Scaffold(
       backgroundColor: _ivory,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'memory_create_fab',
         onPressed: _showAddSheet,
         backgroundColor: _green,
         icon: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white),

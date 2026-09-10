@@ -6,7 +6,6 @@ import '../pages/caregiver/caregiver_reminders_tab.dart';
 import '../pages/caregiver/caregiver_memories_tab.dart';
 import '../pages/caregiver/caregiver_analytics_tab.dart';
 import '../services/caregiver_api_service.dart';
-import 'caregiver_login_screen.dart';
 
 class CaregiverDashboardScreen extends StatefulWidget {
   const CaregiverDashboardScreen({super.key});
@@ -58,9 +57,9 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
     if (confirm == true) {
       await CaregiverApiService.instance.logout();
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-              builder: (_) => const CaregiverLoginScreen()),
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/welcome',
+          (route) => false,
         );
       }
     }

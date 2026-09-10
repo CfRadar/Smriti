@@ -7,6 +7,7 @@ import 'controllers/voice_command_controller.dart';
 import 'services/fcm_token_service.dart';
 import 'screens/caregiver_login_screen.dart';
 import 'screens/caregiver_dashboard_screen.dart';
+import 'screens/welcome_login_screen.dart';
 import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
@@ -274,6 +275,7 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
         fontFamily: 'Arial',
       ),
       routes: {
+        '/welcome': (context) => const WelcomeLoginScreen(),
         '/home': (context) => const GameHubPage(),
         '/caregiver-login': (context) => const CaregiverLoginScreen(),
         '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
@@ -367,14 +369,14 @@ class _SplashPageState extends State<SplashPage>
     );
 
     _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2800), _openGameHub);
+    Future.delayed(const Duration(milliseconds: 2800), _openWelcomeScreen);
   }
 
-  void _openGameHub() {
+  void _openWelcomeScreen() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const GameHubPage(),
+        pageBuilder: (_, __, ___) => const WelcomeLoginScreen(),
         transitionDuration: const Duration(milliseconds: 500),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),

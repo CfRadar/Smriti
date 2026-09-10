@@ -229,8 +229,8 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                   const SizedBox(height: 24),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      '← Back to patient screen',
+                    child: const Text(
+                      '← Back to role selection',
                       style: TextStyle(color: _muted, fontSize: 13),
                     ),
                   ),

@@ -97,6 +97,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
     return Scaffold(
       backgroundColor: _ivory,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'reminder_create_fab',
         onPressed: _showCreateSheet,
         backgroundColor: _green,
         icon: const Icon(Icons.add, color: Colors.white),
