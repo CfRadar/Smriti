@@ -12,6 +12,7 @@ import 'games/pattern_memory_game.dart';
 import 'models/reminder_model.dart';
 import 'models/voice_command.dart';
 import 'screens/folklore_list_screen.dart';
+import 'screens/karaoke_screen.dart';
 import 'services/reminder_service.dart';
 import 'services/streak_service.dart';
 import 'services/voice_service.dart';
@@ -980,7 +981,11 @@ class _GameHubPageState extends State<GameHubPage>
           photoTint: const Color(0xFFBFEAF8),
           photoHighlight: const Color(0xFF8ED7F4),
           illustration: const _MicrophoneIllustration(),
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(
+              buildSmoothGameRoute(const KaraokeScreen()),
+            );
+          },
         ),
         const SizedBox(height: 22),
         _ActivityCard(
