@@ -22,10 +22,9 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: GameHubPage()));
     await tester.pump();
 
-    expect(find.text('SMRITI'), findsOneWidget);
-    expect(find.text("Today's Routine (দৈনিক দিনচৰ্যা)"), findsOneWidget);
+    expect(find.text('Smriti'), findsOneWidget);
     expect(find.text('Choose an activity'), findsOneWidget);
-    expect(find.text('Bamboo Dance'), findsOneWidget);
+    expect(find.text('Blink Memory'), findsOneWidget);
 
     expect(tester.takeException(), isNull);
   });

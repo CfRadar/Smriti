@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
@@ -499,7 +501,8 @@ class _GameHubPageState extends State<GameHubPage> {
   List<PatientReminder> _reminders = [];
   bool _loadingReminders = true;
   final bool _showRoutineSection = false;
-  bool _reminderExpanded = true;
+  bool _showReminderOverlay = false;
+  int _selectedTabIndex = 0;
   int _currentReminderIndex = 0;
   final GlobalKey _tickKey = GlobalKey();
 
@@ -656,28 +659,244 @@ class _GameHubPageState extends State<GameHubPage> {
     final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
     return Scaffold(
       backgroundColor: GameHubPage.screenBg,
-      // Always show bottom sheet – shows 'No reminders' when empty and expanded
-      bottomSheet: _buildReminderBottomSheet(pendingReminders),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader()),
-            const SliverToBoxAdapter(
-              child: AnimatedFragmentedDivider(),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader()),
+                const SliverToBoxAdapter(
+                  child: AnimatedFragmentedDivider(),
+                ),
+                if (_showRoutineSection)
+                  SliverToBoxAdapter(child: _buildRemindersSection()),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
+                  sliver: SliverToBoxAdapter(
+                    child: _selectedTabIndex == 0
+                        ? _buildGamesSection(context)
+                        : _buildActivitiesScreen(),
+                  ),
+                ),
+              ],
             ),
-            if (_showRoutineSection)
-              SliverToBoxAdapter(child: _buildRemindersSection()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
-              sliver: SliverToBoxAdapter(child: _buildGamesSection(context)),
+          ),
+          if (_showReminderOverlay) _buildReminderOverlay(pendingReminders),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _selectedTabIndex,
+        onTap: (index) => setState(() => _selectedTabIndex = index),
+        backgroundColor: Colors.white,
+        selectedItemColor: GameHubPage.darkGreen,
+        unselectedItemColor: const Color(0xFF7A8C9C),
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports_rounded),
+            label: 'Games',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_activity_rounded),
+            label: 'Activities',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivitiesScreen() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Activities',
+          style: TextStyle(
+            color: Color(0xFF1E3A5F),
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _activityCard(
+          icon: Icons.mic_rounded,
+          title: 'Karaoke',
+          subtitle: 'Enjoy a calm, music-filled moment.',
+          gradientColors: const [Color(0xFFB3E5FC), Color(0xFF81D4FA)],
+          iconColor: const Color(0xFF0D47A1),
+        ),
+        const SizedBox(height: 12),
+        _activityCard(
+          icon: Icons.auto_stories_rounded,
+          title: 'Folklores',
+          subtitle: 'Explore stories and cultural memories.',
+          gradientColors: const [Color(0xFFE1BEE7), Color(0xFFCE93D8)],
+          iconColor: const Color(0xFF4A148C),
+        ),
+      ],
+    );
+  }
+
+  Widget _activityCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Color> gradientColors,
+    required Color iconColor,
+  }) {
+    return Semantics(
+      button: true,
+      label: title,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: const Color(0xFFCFE0ED),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF64748B).withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
             ),
-          ],
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withValues(alpha: 0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: iconColor, size: 30),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Color(0xFF1E3A5F),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF5B6D7D),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF1E3A5F),
+                  size: 26,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildReminderBottomSheet(List<PatientReminder> reminders) {
+  Widget _buildReminderOverlay(List<PatientReminder> reminders) {
+    final visibleReminders = reminders.where((r) => !r.isAcknowledged).toList();
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedOpacity(
+            opacity: _showReminderOverlay ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 220),
+            child: IgnorePointer(
+              ignoring: !_showReminderOverlay,
+              child: GestureDetector(
+                onTap: () => setState(() => _showReminderOverlay = false),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: _showReminderOverlay ? 2.5 : 0.0,
+                      sigmaY: _showReminderOverlay ? 2.5 : 0.0,
+                    ),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          top: _showReminderOverlay ? 70 : -420,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildReminderPopup(visibleReminders),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReminderPopup(List<PatientReminder> reminders) {
     if (_currentReminderIndex >= reminders.length) {
       _currentReminderIndex = 0;
     }
@@ -691,141 +910,115 @@ class _GameHubPageState extends State<GameHubPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.14),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Handle / toggle bar ──────────────────────────────────────
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => setState(() => _reminderExpanded = !_reminderExpanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isEmpty
-                          ? const Color(0xFFF0F4F8)
-                          : const Color(0xFFFFECE5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      isEmpty
-                          ? Icons.notifications_off_rounded
-                          : Icons.notifications_rounded,
-                      color: isEmpty
-                          ? const Color(0xFF8298AB)
-                          : const Color(0xFFFF7043),
-                      size: 18,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFECE5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_rounded,
+                    color: Color(0xFFFF7043),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Reminders',
+                    style: TextStyle(
+                      color: Color(0xFF1E3A5F),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      isEmpty
-                          ? 'No reminders'
-                          : (_reminderExpanded ? 'Reminder' : reminder!.title),
-                      style: TextStyle(
-                        color: isEmpty
-                            ? const Color(0xFF8298AB)
-                            : const Color(0xFF1E3A5F),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (!isEmpty && hasMultiple)
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFECE5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => setState(() => _showReminderOverlay = false),
+                  icon: const Icon(Icons.close_rounded, color: Color(0xFF1E3A5F)),
+                  tooltip: 'Close reminders',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F7FB),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        color: GameHubPage.green, size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
                       child: Text(
-                        '${_currentReminderIndex + 1}/${reminders.length}',
-                        style: const TextStyle(
-                          color: Color(0xFFFF7043),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                        'No reminders right now. Everything looks good.',
+                        style: TextStyle(
+                          color: GameHubPage.darkGreen,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  // Animated arrow – hidden when empty
-                  if (!isEmpty)
-                    AnimatedRotation(
-                      turns: _reminderExpanded ? 0.0 : 0.5,
-                      duration: const Duration(milliseconds: 300),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF8298AB),
-                        size: 24,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Expanded content (hidden when no reminders or collapsed) ──
-          if (!isEmpty)
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 280),
-              crossFadeState: _reminderExpanded
-                  ? CrossFadeState.showFirst
-                  : CrossFadeState.showSecond,
-              firstChild: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: _ReminderCard(
-                  reminder: reminder!,
-                  timeStr: timeStr,
-                  hasMultiple: hasMultiple,
-                  currentIndex: _currentReminderIndex,
-                  totalCount: reminders.length,
-                  tickKey: _tickKey,
-                  onPrev: _currentReminderIndex > 0
-                      ? () => setState(() => _currentReminderIndex--)
-                      : null,
-                  onNext: _currentReminderIndex < reminders.length - 1
-                      ? () => setState(() => _currentReminderIndex++)
-                      : null,
-                  onSpeak: reminder.isVoicePromptEnabled
-                      ? () => _speakReminder(reminder)
-                      : null,
-                  onDone: () {
-                    // Get tick button global position before acknowledging
-                    final tickBox = _tickKey.currentContext
-                        ?.findRenderObject() as RenderBox?;
-                    final tickPos = tickBox != null
-                        ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
-                        : Offset.zero;
-                    AnimatedStarBadge.globalKey.currentState
-                        ?.celebrate(tickPos);
-                    _acknowledgeReminder(reminder);
-                  },
-                  getTypeIcon: _getTypeIcon,
+                  ],
                 ),
+              )
+            else
+              _ReminderCard(
+                reminder: reminder!,
+                timeStr: timeStr,
+                hasMultiple: hasMultiple,
+                currentIndex: _currentReminderIndex,
+                totalCount: reminders.length,
+                tickKey: _tickKey,
+                onPrev: _currentReminderIndex > 0
+                    ? () => setState(() => _currentReminderIndex--)
+                    : null,
+                onNext: _currentReminderIndex < reminders.length - 1
+                    ? () => setState(() => _currentReminderIndex++)
+                    : null,
+                onSpeak: reminder.isVoicePromptEnabled
+                    ? () => _speakReminder(reminder)
+                    : null,
+                onDone: () {
+                  final tickBox = _tickKey.currentContext
+                      ?.findRenderObject() as RenderBox?;
+                  final tickPos = tickBox != null
+                      ? tickBox.localToGlobal(tickBox.size.center(Offset.zero))
+                      : Offset.zero;
+                  AnimatedStarBadge.globalKey.currentState
+                      ?.celebrate(tickPos);
+                  _acknowledgeReminder(reminder);
+                },
+                getTypeIcon: _getTypeIcon,
               ),
-              secondChild: const SizedBox(height: 4),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
 
   void _openAccessibilitySettings(BuildContext context) {
     showModalBottomSheet(
@@ -991,16 +1184,21 @@ class _GameHubPageState extends State<GameHubPage> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Title always perfectly centered
-          _buildTitleWithUnderline(),
-
-          // Settings on the far left
           Align(
             alignment: Alignment.centerLeft,
             child: _buildSettingsButton(),
           ),
-
-          // Star + voice on the far right
+          Align(
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTitleWithUnderline(),
+                const SizedBox(width: 8),
+                _buildReminderButton(),
+              ],
+            ),
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: Row(
@@ -1013,6 +1211,44 @@ class _GameHubPageState extends State<GameHubPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReminderButton() {
+    return Semantics(
+      button: true,
+      label: 'Reminders',
+      child: Tooltip(
+        message: 'Reminders',
+        child: InkWell(
+          onTap: () => setState(() => _showReminderOverlay = !_showReminderOverlay),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFCFE0ED),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.notifications_rounded,
+              color: GameHubPage.darkGreen,
+              size: 20,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1320,17 +1556,21 @@ class _GameHubPageState extends State<GameHubPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Choose an activity',
-              style: TextStyle(
-                color: Color(0xFF1E3A5F),
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
+            const Expanded(
+              child: Text(
+                'Choose an activity',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Color(0xFF1E3A5F),
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
