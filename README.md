@@ -72,6 +72,8 @@ npm run dev
 # Create virtual environment with uv
 uv venv
 
+
+
 # Activate virtual environment
 # On Windows:
 .venv\Scripts\activate
