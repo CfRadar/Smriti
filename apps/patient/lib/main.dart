@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'services/fcm_token_service.dart';
@@ -794,6 +795,46 @@ class _GameHubPageState extends State<GameHubPage>
     );
   }
 
+  void _pickRandomGame(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    final games = [
+      {'name': 'Picture Recognition', 'open': () => _openPictureRecognitionGame(context)},
+      {'name': 'Pattern Memory', 'open': () => _openPatternGame(context)},
+      {'name': 'King Shanaba', 'open': () => _openKingShanabaGame(context)},
+      {'name': 'Bamboo Dance', 'open': () => _openBambooDanceGame(context)},
+    ];
+    final selected = (games..shuffle()).first;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Text('🎲', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Let\'s play ${selected['name']}!',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1E3A5F),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Play',
+          textColor: const Color(0xFFFFD54F),
+          onPressed: selected['open'] as VoidCallback,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pendingReminders = _reminders.where((r) => !r.isAcknowledged).toList();
@@ -1030,7 +1071,7 @@ class _GameHubPageState extends State<GameHubPage>
           illustration: const _BookIllustration(),
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const FolkloreListScreen()),
+              buildSmoothGameRoute(const FolkloreListScreen()),
             );
           },
         ),
@@ -1759,30 +1800,30 @@ class _GameHubPageState extends State<GameHubPage>
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Color(0xFF1E3A5F),
-                    fontSize: 19,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2EAF2),
+                  color: const Color(0xFFE8F1FB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
+                  border: Border.all(color: const Color(0xFFBFD4EB), width: 1.2),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.sports_esports_rounded, size: 13, color: Color(0xFF1E3A5F)),
-                    SizedBox(width: 4),
+                    Icon(Icons.sports_esports_rounded, size: 14, color: Color(0xFF1E3A5F)),
+                    SizedBox(width: 5),
                     Text(
                       '6 Games',
                       style: TextStyle(
                         color: Color(0xFF1E3A5F),
-                        fontSize: 11,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1792,12 +1833,12 @@ class _GameHubPageState extends State<GameHubPage>
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 2,
           crossAxisSpacing: 11,
           mainAxisSpacing: 11,
-          childAspectRatio: 1.05,
+          childAspectRatio: 1.02,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -1808,8 +1849,6 @@ class _GameHubPageState extends State<GameHubPage>
                 imageAsset: 'assets/images/thumbnail/tile000.png',
                 icon: Icons.image_search_rounded,
                 title: 'Picture Recognition',
-                gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
-                iconColor: const Color(0xFFE65100),
                 isAvailable: true,
                 onTap: () => _openPictureRecognitionGame(context),
               ),
@@ -1821,8 +1860,6 @@ class _GameHubPageState extends State<GameHubPage>
                 imageAsset: 'assets/images/thumbnail/tile001.png',
                 icon: Icons.grid_view_rounded,
                 title: 'Pattern Memory',
-                gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
-                iconColor: const Color(0xFF4A148C),
                 isAvailable: true,
                 onTap: () => _openPatternGame(context),
               ),
@@ -1834,8 +1871,6 @@ class _GameHubPageState extends State<GameHubPage>
                 imageAsset: 'assets/images/thumbnail/tile002.png',
                 icon: Icons.sports_esports_rounded,
                 title: 'King Shanaba',
-                gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
-                iconColor: const Color(0xFF1B5E20),
                 isAvailable: true,
                 onTap: () => _openKingShanabaGame(context),
               ),
@@ -1847,8 +1882,6 @@ class _GameHubPageState extends State<GameHubPage>
                 imageAsset: 'assets/images/thumbnail/tile003.png',
                 icon: Icons.music_note_rounded,
                 title: 'Bamboo Dance',
-                gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
-                iconColor: const Color(0xFFB71C1C),
                 isAvailable: true,
                 onTap: () => _openBambooDanceGame(context),
               ),
@@ -1857,10 +1890,9 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 280,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile004.png',
                 icon: Icons.auto_stories_rounded,
                 title: 'Story Recall',
-                gradientColors: const [Color(0xFFBBDEFB), Color(0xFF64B5F6)],
-                iconColor: const Color(0xFF0D47A1),
                 isAvailable: false,
                 onTap: () => _showComingSoon(context, 'Story Recall'),
               ),
@@ -1869,10 +1901,9 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 280,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile005.png',
                 icon: Icons.spa_rounded,
                 title: 'Mindful Breath',
-                gradientColors: const [Color(0xFFF8BBD0), Color(0xFFF06292)],
-                iconColor: const Color(0xFF880E4F),
                 isAvailable: false,
                 onTap: () => _showComingSoon(context, 'Mindful Breath'),
               ),
@@ -1888,8 +1919,8 @@ class _GameHubPageState extends State<GameHubPage>
     IconData? icon,
     String? imageAsset,
     required String title,
-    required List<Color> gradientColors,
-    required Color iconColor,
+    List<Color>? gradientColors,
+    Color? iconColor,
     bool isAvailable = false,
     VoidCallback? onTap,
   }) {
@@ -1897,163 +1928,119 @@ class _GameHubPageState extends State<GameHubPage>
       button: true,
       enabled: true,
       label: isAvailable ? '$title. Play game.' : '$title. Coming soon.',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFF8298AB), // Soft medium slate-blue grey
-              width: 4.0, // Substantial wide border
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF64748B).withValues(alpha: 0.14),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF8F5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFE5DFD5),
+                width: 1.5,
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(19.2),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Theme Gradient Background
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: gradientColors,
-                    ),
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2C2416).withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-
-                if (imageAsset != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 26),
-                    child: Image.asset(
-                      imageAsset,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            icon ?? Icons.sports_esports_rounded,
-                            color: iconColor,
-                            size: 34,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ] else ...[
-                  // Playful Center Icon in white circular glass badge
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: Container(
-                        padding: const EdgeInsets.all(11),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.72),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: iconColor.withValues(alpha: 0.22),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18.5),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Photo-style thumbnail on off-white
+                  if (imageAsset != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 38),
+                      child: Image.asset(
+                        imageAsset,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Icon(
+                              icon ?? Icons.sports_esports_rounded,
+                              color: const Color(0xFF536A7B),
+                              size: 38,
                             ),
-                          ],
-                        ),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 28),
                         child: Icon(
                           icon ?? Icons.sports_esports_rounded,
-                          color: iconColor,
+                          color: const Color(0xFF536A7B),
                           size: 34,
+                        ),
+                      ),
+                    ),
+
+                  // Senior-friendly Neutral "Soon" Tag
+                  if (!isAvailable)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEBE6DC),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFFD4CDC0),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: const Text(
+                          'Soon',
+                          style: TextStyle(
+                            color: Color(0xFF5F5B53),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Senior-friendly High-contrast Title Panel
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2ECE1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFFE0D8C8),
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF1E3A5F),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ),
                   ),
                 ],
-
-                // Soon Tag for upcoming games
-                if (!isAvailable)
-                  Positioned(
-                    top: 7,
-                    right: 7,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.40),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.schedule_rounded, color: Colors.white, size: 9),
-                          SizedBox(width: 3),
-                          Text(
-                            'Soon',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Translucent black overlay at bottom with large white curved font
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6.5),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.58),
-                          Colors.black.withValues(alpha: 0.85),
-                        ],
-                        stops: const [0.0, 0.45, 1.0],
-                      ),
-                    ),
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.3,
-                        fontFamilyFallback: [
-                          'sans-serif-rounded',
-                          'Comfortaa',
-                          'Sniglet',
-                          'Comic Sans MS',
-                          'Chalkboard SE',
-                          'Fredoka One',
-                          'cursive',
-                        ],
-                        shadows: [
-                          Shadow(
-                            color: Colors.black87,
-                            blurRadius: 4,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

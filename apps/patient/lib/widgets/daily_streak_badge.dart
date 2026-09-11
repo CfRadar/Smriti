@@ -236,9 +236,9 @@ class StreakFlamePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // Center aligned horizontally and vertically
+    // Center aligned horizontally and vertically in the heart/belly of the fire
     final textX = (w - fillPainter.width) / 2;
-    final textY = (h - fillPainter.height) / 2;
+    final textY = (h * 0.62) - (fillPainter.height / 2);
 
     strokePainter.paint(canvas, Offset(textX, textY));
     fillPainter.paint(canvas, Offset(textX, textY));
