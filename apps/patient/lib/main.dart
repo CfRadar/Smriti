@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'services/fcm_token_service.dart';
@@ -20,6 +19,7 @@ import 'screens/karaoke_screen.dart';
 import 'services/reminder_service.dart';
 import 'services/streak_service.dart';
 import 'services/voice_service.dart';
+import 'services/locale_service.dart';
 import 'widgets/animated_fragmented_divider.dart';
 import 'widgets/animated_star_badge.dart';
 import 'widgets/daily_streak_badge.dart';
@@ -27,7 +27,9 @@ import 'widgets/streak_celebration_overlay.dart';
 import 'widgets/voice_wave_button.dart';
 import 'package:intl/intl.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocaleService.instance.init();
   runApp(const SmritiApp());
 }
 
@@ -267,28 +269,33 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: 'SMRITI',
-      theme: ThemeData(
-        scaffoldBackgroundColor: LandingPage.ivory,
-        colorScheme: ColorScheme.fromSeed(seedColor: LandingPage.darkGreen),
-        fontFamily: 'Arial',
-      ),
-      routes: {
-        '/welcome': (context) => const WelcomeLoginScreen(),
-        '/home': (context) => const GameHubPage(),
-        '/caregiver-login': (context) => const CaregiverLoginScreen(),
-        '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
-      },
-      home: const SplashPage(),
-      builder: (context, child) {
-        if (child == null) {
-          return const SizedBox.shrink();
-        }
+    return ListenableBuilder(
+      listenable: LocaleService.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          navigatorKey: _navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'SMRITI',
+          theme: ThemeData(
+            scaffoldBackgroundColor: LandingPage.ivory,
+            colorScheme: ColorScheme.fromSeed(seedColor: LandingPage.darkGreen),
+            fontFamily: 'Arial',
+          ),
+          routes: {
+            '/welcome': (context) => const WelcomeLoginScreen(),
+            '/home': (context) => const GameHubPage(),
+            '/caregiver-login': (context) => const CaregiverLoginScreen(),
+            '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
+          },
+          home: const SplashPage(),
+          builder: (context, child) {
+            if (child == null) {
+              return const SizedBox.shrink();
+            }
 
-        return child;
+            return child;
+          },
+        );
       },
     );
   }
@@ -708,7 +715,7 @@ class _GameHubPageState extends State<GameHubPage>
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Well done! ${reminder.title} marked completed.'),
+          content: Text(context.tr('reminders.completedSuccess', {'title': reminder.title})),
           backgroundColor: GameHubPage.darkGreen,
           duration: const Duration(seconds: 2),
         ),
@@ -736,9 +743,9 @@ class _GameHubPageState extends State<GameHubPage>
                   color: GameHubPage.darkGreen, size: 28),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Voice Reminder',
-              style: TextStyle(
+            Text(
+              context.tr('reminders.voiceReminder'),
+              style: const TextStyle(
                 color: GameHubPage.darkGreen,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -757,9 +764,9 @@ class _GameHubPageState extends State<GameHubPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(
+            child: Text(
+              context.tr('common.close'),
+              style: const TextStyle(
                 color: GameHubPage.green,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -792,46 +799,6 @@ class _GameHubPageState extends State<GameHubPage>
   void _openBambooDanceGame(BuildContext context) {
     Navigator.of(context).push(
       buildSmoothGameRoute(const BambooDanceGameScreen()),
-    );
-  }
-
-  void _pickRandomGame(BuildContext context) {
-    HapticFeedback.mediumImpact();
-    final games = [
-      {'name': 'Picture Recognition', 'open': () => _openPictureRecognitionGame(context)},
-      {'name': 'Pattern Memory', 'open': () => _openPatternGame(context)},
-      {'name': 'King Shanaba', 'open': () => _openKingShanabaGame(context)},
-      {'name': 'Bamboo Dance', 'open': () => _openBambooDanceGame(context)},
-    ];
-    final selected = (games..shuffle()).first;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Text('🎲', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Let\'s play ${selected['name']}!',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1E3A5F),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'Play',
-          textColor: const Color(0xFFFFD54F),
-          onPressed: selected['open'] as VoidCallback,
-        ),
-      ),
     );
   }
 
@@ -889,7 +856,7 @@ class _GameHubPageState extends State<GameHubPage>
             bottom: 110,
             right: 20,
             child: Tooltip(
-              message: 'Caregiver Portal',
+              message: context.tr('caregiver.portal'),
               child: FloatingActionButton.small(
                 heroTag: 'caregiver_fab',
                 backgroundColor: const Color(0xFF214E3B),
@@ -967,7 +934,7 @@ class _GameHubPageState extends State<GameHubPage>
                     selected: true,
                     selectedColor: const Color(0xFFE9F5D6),
                   ),
-                  label: 'Games',
+                  label: context.tr('nav.games'),
                 ),
                 BottomNavigationBarItem(
                   icon: _bottomNavIcon(
@@ -980,7 +947,7 @@ class _GameHubPageState extends State<GameHubPage>
                     selected: true,
                     selectedColor: const Color(0xFFEDE4F7),
                   ),
-                  label: 'Activities',
+                  label: context.tr('nav.activities'),
                 ),
               ],
             ),
@@ -1032,9 +999,9 @@ class _GameHubPageState extends State<GameHubPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Activities',
-          style: TextStyle(
+        Text(
+          context.tr('nav.activities'),
+          style: const TextStyle(
             color: Color(0xFF1E3A5F),
             fontSize: 19,
             fontWeight: FontWeight.w800,
@@ -1045,8 +1012,8 @@ class _GameHubPageState extends State<GameHubPage>
         _ActivityCard(
           delay: 80,
           icon: Icons.mic_rounded,
-          title: 'Karaoke',
-          subtitle: 'Enjoy a calm music moment.',
+          title: context.tr('nav.karaoke'),
+          subtitle: context.tr('activities.karaokeSubtitle'),
           accentColor: const Color(0xFF86D5E6),
           glowColor: const Color(0xFF52B5D8),
           photoTint: const Color(0xFFBFEAF8),
@@ -1062,8 +1029,8 @@ class _GameHubPageState extends State<GameHubPage>
         _ActivityCard(
           delay: 220,
           icon: Icons.auto_stories_rounded,
-          title: 'Folk Stories',
-          subtitle: 'Enjoy calm music and explore stories.',
+          title: context.tr('activities.folklore'),
+          subtitle: context.tr('folklore.subtitle'),
           accentColor: const Color(0xFFEAC4F2),
           glowColor: const Color(0xFFD795E4),
           photoTint: const Color(0xFFE9D9F7),
@@ -1195,10 +1162,10 @@ class _GameHubPageState extends State<GameHubPage>
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Reminders',
-                        style: TextStyle(
+                        context.tr('header.reminders'),
+                        style: const TextStyle(
                           color: GameHubPage.darkGreen,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -1209,7 +1176,7 @@ class _GameHubPageState extends State<GameHubPage>
                       visualDensity: VisualDensity.compact,
                       onPressed: _closeReminderOverlay,
                       icon: const Icon(Icons.close_rounded, color: GameHubPage.darkGreen),
-                      tooltip: 'Close reminders',
+                      tooltip: context.tr('header.closeReminders'),
                     ),
                   ],
                 ),
@@ -1222,15 +1189,15 @@ class _GameHubPageState extends State<GameHubPage>
                       color: const Color(0xFFF3F7FB).withValues(alpha: 0.80),
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.check_circle_rounded,
+                        const Icon(Icons.check_circle_rounded,
                             color: GameHubPage.green, size: 24),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'No reminders right now. Everything looks good.',
-                            style: TextStyle(
+                            context.tr('reminders.noReminders'),
+                            style: const TextStyle(
                               color: GameHubPage.darkGreen,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -1282,154 +1249,261 @@ class _GameHubPageState extends State<GameHubPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (ctx) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Material(
-            color: Colors.white.withValues(alpha: 0.90),
-            child: SafeArea(
-              top: false,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F1F5),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 24),
-                ),
-                const SizedBox(width: 14),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Settings',
-                      style: TextStyle(
-                        color: GameHubPage.darkGreen,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Accessibility & Voice preferences',
-                      style: TextStyle(color: GameHubPage.textGrey, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
-              title: const Text(
-                'Voice Assistant',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              subtitle: const Text('Tap to activate or deactivate voice commands.'),
-              trailing: ValueListenableBuilder<VoiceStatus>(
-                valueListenable: VoiceService.instance.statusNotifier,
-                builder: (context, status, _) {
-                  final active = VoiceService.instance.isEnabled &&
-                      (status == VoiceStatus.listening ||
-                          status == VoiceStatus.processing ||
-                          status == VoiceStatus.initializing);
-
-                  return Tooltip(
-                    message: active
-                        ? 'Tap to deactivate Voice Assistant'
-                        : 'Tap to activate Voice Assistant',
-                    child: InkWell(
-                      onTap: () async {
-                        await VoiceService.instance.setEnabled(!active);
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: active ? const Color(0xFFE8F5E9) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: active ? const Color(0xFF81C784) : const Color(0xFFCBD5E1),
-                            width: 1.3,
+      builder: (ctx) => ListenableBuilder(
+        listenable: LocaleService.instance,
+        builder: (context, _) => ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.90),
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: active
-                                  ? Colors.green.withValues(alpha: 0.12)
-                                  : Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1.5),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: active ? const Color(0xFF2E7D32) : const Color(0xFF94A3B8),
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            Text(
-                              active ? 'Active' : 'Deactivated',
-                              style: TextStyle(
-                                color: active ? const Color(0xFF1B5E20) : const Color(0xFF64748B),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  );
-                },
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F1F5),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.tune_rounded, color: GameHubPage.darkGreen, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr('settings.title'),
+                                style: const TextStyle(
+                                  color: GameHubPage.darkGreen,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                context.tr('settings.subtitle'),
+                                style: const TextStyle(color: GameHubPage.textGrey, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Language Selector Section ──────────────────────────────
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0F2FE),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.language_rounded, color: Color(0xFF0369A1), size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.tr('settings.language'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: GameHubPage.darkGreen,
+                                  ),
+                                ),
+                                Text(
+                                  context.tr('settings.selectLanguage'),
+                                  style: const TextStyle(color: GameHubPage.textGrey, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: LocaleService.instance.supportedLanguages.map((lang) {
+                          final isSelected = LocaleService.instance.locale == lang['code'];
+                          return InkWell(
+                            onTap: () async {
+                              await LocaleService.instance.setLocale(lang['code']!);
+                            },
+                            borderRadius: BorderRadius.circular(14),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? GameHubPage.darkGreen : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected ? GameHubPage.darkGreen : const Color(0xFFCBD5E1),
+                                  width: isSelected ? 1.6 : 1.0,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: GameHubPage.darkGreen.withValues(alpha: 0.22),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isSelected) ...[
+                                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 16),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        lang['nativeName'] ?? '',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : GameHubPage.darkGreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13.5,
+                                        ),
+                                      ),
+                                      Text(
+                                        lang['name'] ?? '',
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white70 : GameHubPage.textGrey,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+
+                      // ── Voice Assistant ──────────────────────────────────────
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.record_voice_over_rounded, color: GameHubPage.green),
+                        title: Text(
+                          context.tr('settings.voiceAssistantTitle'),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        subtitle: Text(context.tr('settings.voiceAssistantSubtitle')),
+                        trailing: ValueListenableBuilder<VoiceStatus>(
+                          valueListenable: VoiceService.instance.statusNotifier,
+                          builder: (context, status, _) {
+                            final active = VoiceService.instance.isEnabled &&
+                                (status == VoiceStatus.listening ||
+                                    status == VoiceStatus.processing ||
+                                    status == VoiceStatus.initializing);
+
+                            return Tooltip(
+                              message: active
+                                  ? context.tr('header.tapToDeactivateVoice')
+                                  : context.tr('header.tapToActivateVoice'),
+                              child: InkWell(
+                                onTap: () async {
+                                  await VoiceService.instance.setEnabled(!active);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: active ? const Color(0xFFE8F5E9) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: active ? const Color(0xFF81C784) : const Color(0xFFCBD5E1),
+                                      width: 1.3,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: active
+                                            ? Colors.green.withValues(alpha: 0.12)
+                                            : Colors.black.withValues(alpha: 0.03),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1.5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AnimatedContainer(
+                                        duration: const Duration(milliseconds: 200),
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: active ? const Color(0xFF2E7D32) : const Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        active ? context.tr('header.voiceActive') : context.tr('header.voiceDeactivated'),
+                                        style: TextStyle(
+                                          color: active ? const Color(0xFF1B5E20) : const Color(0xFF64748B),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const Divider(),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.volume_up_rounded, color: GameHubPage.green),
+                        title: Text(context.tr('settings.routineReminders')),
+                        subtitle: Text(context.tr('settings.routineRemindersSubtitle')),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            const Divider(),
-            const ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.volume_up_rounded, color: GameHubPage.green),
-              title: Text('Routine Reminders'),
-              subtitle: Text('Spoken audio reminders.'),
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-),
-),
-);
+    );
   }
 
   Widget _buildHeader(List<PatientReminder> pendingReminders) {
@@ -1490,9 +1564,9 @@ class _GameHubPageState extends State<GameHubPage>
   Widget _buildSettingsButton() {
     return Semantics(
       button: true,
-      label: 'Accessibility and settings',
+      label: context.tr('header.accessibilitySettings'),
       child: Tooltip(
-        message: 'Settings',
+        message: context.tr('header.settings'),
         child: InkWell(
           onTap: () => _openAccessibilitySettings(context),
           borderRadius: BorderRadius.circular(14),
@@ -1578,12 +1652,12 @@ class _GameHubPageState extends State<GameHubPage>
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Today\'s Routine',
+                  context.tr('reminders.todayRoutine'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: GameHubPage.darkGreen,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -1592,7 +1666,7 @@ class _GameHubPageState extends State<GameHubPage>
               ),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded, color: GameHubPage.green),
-                tooltip: 'Refresh routine',
+                tooltip: context.tr('reminders.refreshRoutine'),
                 onPressed: _loadReminders,
               ),
             ],
@@ -1614,14 +1688,14 @@ class _GameHubPageState extends State<GameHubPage>
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: GameHubPage.lightGreen),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: GameHubPage.green, size: 28),
-                  SizedBox(width: 14),
+                  const Icon(Icons.check_circle_rounded, color: GameHubPage.green, size: 28),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'No routine tasks right now. Relax and enjoy your day!',
-                      style: TextStyle(
+                      context.tr('reminders.noRoutineTasks'),
+                      style: const TextStyle(
                         color: GameHubPage.darkGreen,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -1734,7 +1808,7 @@ class _GameHubPageState extends State<GameHubPage>
           if (reminder.isVoicePromptEnabled && !isCompleted) ...[
             IconButton(
               icon: const Icon(Icons.volume_up_rounded, color: GameHubPage.green, size: 26),
-              tooltip: 'Listen to prompt',
+              tooltip: context.tr('reminders.listenPrompt'),
               onPressed: () => _speakReminder(reminder),
             ),
           ],
@@ -1758,7 +1832,7 @@ class _GameHubPageState extends State<GameHubPage>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  isCompleted ? 'Done' : 'Done',
+                  context.tr('reminders.done'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -1776,7 +1850,7 @@ class _GameHubPageState extends State<GameHubPage>
   void _showComingSoon(BuildContext context, String title) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$title is coming soon!'),
+        content: Text(context.tr('games.comingSoon', {'title': title})),
         backgroundColor: GameHubPage.darkGreen,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -1793,12 +1867,12 @@ class _GameHubPageState extends State<GameHubPage>
           delay: 40,
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Choose an activity',
+                  context.tr('games.chooseActivity'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Color(0xFF1E3A5F),
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -1814,14 +1888,14 @@ class _GameHubPageState extends State<GameHubPage>
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFBFD4EB), width: 1.2),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.sports_esports_rounded, size: 14, color: Color(0xFF1E3A5F)),
-                    SizedBox(width: 5),
+                    const Icon(Icons.sports_esports_rounded, size: 14, color: Color(0xFF1E3A5F)),
+                    const SizedBox(width: 5),
                     Text(
-                      '6 Games',
-                      style: TextStyle(
+                      context.tr('games.gameCount', {'count': '6'}),
+                      style: const TextStyle(
                         color: Color(0xFF1E3A5F),
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -1848,7 +1922,7 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile000.png',
                 icon: Icons.image_search_rounded,
-                title: 'Picture Recognition',
+                title: context.tr('games.pictureRecognition'),
                 isAvailable: true,
                 onTap: () => _openPictureRecognitionGame(context),
               ),
@@ -1859,7 +1933,7 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile001.png',
                 icon: Icons.grid_view_rounded,
-                title: 'Pattern Memory',
+                title: context.tr('games.patternMemory'),
                 isAvailable: true,
                 onTap: () => _openPatternGame(context),
               ),
@@ -1870,7 +1944,7 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile002.png',
                 icon: Icons.sports_esports_rounded,
-                title: 'King Shanaba',
+                title: context.tr('games.kingShanaba'),
                 isAvailable: true,
                 onTap: () => _openKingShanabaGame(context),
               ),
@@ -1881,7 +1955,7 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile003.png',
                 icon: Icons.music_note_rounded,
-                title: 'Bamboo Dance',
+                title: context.tr('games.bambooDance'),
                 isAvailable: true,
                 onTap: () => _openBambooDanceGame(context),
               ),
@@ -1892,9 +1966,9 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile004.png',
                 icon: Icons.auto_stories_rounded,
-                title: 'Story Recall',
+                title: context.tr('games.folkloreStories'),
                 isAvailable: false,
-                onTap: () => _showComingSoon(context, 'Story Recall'),
+                onTap: () => _showComingSoon(context, context.tr('games.folkloreStories')),
               ),
             ),
             _AnimatedGameCard(
@@ -1903,9 +1977,9 @@ class _GameHubPageState extends State<GameHubPage>
                 context,
                 imageAsset: 'assets/images/thumbnail/tile005.png',
                 icon: Icons.spa_rounded,
-                title: 'Mindful Breath',
+                title: context.tr('games.zenGarden'),
                 isAvailable: false,
-                onTap: () => _showComingSoon(context, 'Mindful Breath'),
+                onTap: () => _showComingSoon(context, context.tr('games.zenGarden')),
               ),
             ),
           ],
@@ -1919,15 +1993,13 @@ class _GameHubPageState extends State<GameHubPage>
     IconData? icon,
     String? imageAsset,
     required String title,
-    List<Color>? gradientColors,
-    Color? iconColor,
     bool isAvailable = false,
     VoidCallback? onTap,
   }) {
     return Semantics(
       button: true,
       enabled: true,
-      label: isAvailable ? '$title. Play game.' : '$title. Coming soon.',
+      label: isAvailable ? context.tr('games.playGame', {'title': title}) : context.tr('games.gameComingSoon', {'title': title}),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1999,9 +2071,9 @@ class _GameHubPageState extends State<GameHubPage>
                             width: 1.0,
                           ),
                         ),
-                        child: const Text(
-                          'Soon',
-                          style: TextStyle(
+                        child: Text(
+                          context.tr('common.soon'),
+                          style: const TextStyle(
                             color: Color(0xFF5F5B53),
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
@@ -2324,7 +2396,9 @@ class _ActivityCardState extends State<_ActivityCard>
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
-                                  widget.title == 'Karaoke' ? 'Mood boost' : 'Story time',
+                                  widget.icon == Icons.mic_rounded
+                                      ? context.tr('activities.moodBoost')
+                                      : context.tr('activities.storyTime'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -2708,7 +2782,7 @@ class LandingPage extends StatelessWidget {
                             letterSpacing: 2)),
                     const Spacer(),
                     IconButton(
-                      tooltip: 'Start memory game',
+                      tooltip: context.tr('landing.startMemoryGame'),
                       onPressed: () => _openGame(context),
                       style: IconButton.styleFrom(
                         backgroundColor: lightGreen,
@@ -2728,26 +2802,26 @@ class LandingPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _badge('CARE  •  MEMORY  •  CONNECTION'),
+                    _badge(context.tr('landing.badge')),
                     const SizedBox(height: 20),
-                    const Text('Care that feels\nlike home.',
-                        style: TextStyle(
+                    Text(context.tr('landing.headline'),
+                        style: const TextStyle(
                             color: darkGreen,
                             fontSize: 43,
                             height: 1.08,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 17),
-                    const Text(
-                        'Thoughtful support for everyday life, designed around the people who matter most.',
-                        style: TextStyle(
+                    Text(
+                        context.tr('landing.subheadline'),
+                        style: const TextStyle(
                             color: textGrey, fontSize: 15, height: 1.55)),
                     const SizedBox(height: 25),
-                    _primaryButton(context, 'Get Started'),
+                    _primaryButton(context, context.tr('landing.getStarted')),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
-              _heroVisual(),
+              _heroVisual(context),
               const SizedBox(height: 42),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -2755,10 +2829,10 @@ class LandingPage extends StatelessWidget {
                   children: [
                     _iconTile(Icons.favorite_rounded, cream, green),
                     const SizedBox(width: 13),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                          'Making care more human,\naccessible and meaningful.',
-                          style: TextStyle(
+                          context.tr('landing.quote'),
+                          style: const TextStyle(
                               color: darkGreen,
                               fontSize: 14,
                               height: 1.4,
@@ -2788,19 +2862,19 @@ class LandingPage extends StatelessWidget {
                 child: Column(
                   children: [
                     Row(children: [
-                      _feature(Icons.favorite_rounded, 'Compassionate',
-                          'Care with empathy'),
+                      _feature(Icons.favorite_rounded, context.tr('landing.compassionate'),
+                          context.tr('landing.compassionateSub')),
                       const SizedBox(width: 14),
                       _feature(
-                          Icons.person_rounded, 'Personal', 'Built around you'),
+                          Icons.person_rounded, context.tr('landing.personal'), context.tr('landing.personalSub')),
                     ]),
                     const SizedBox(height: 14),
                     Row(children: [
                       _feature(
-                          Icons.shield_rounded, 'Trusted', 'Safe and reliable'),
+                          Icons.shield_rounded, context.tr('landing.trusted'), context.tr('landing.trustedSub')),
                       const SizedBox(width: 14),
                       _feature(
-                          Icons.groups_rounded, 'Connected', 'Never alone'),
+                          Icons.groups_rounded, context.tr('landing.connected'), context.tr('landing.connectedSub')),
                     ]),
                   ],
                 ),
@@ -2835,22 +2909,22 @@ class LandingPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 22),
                 child: Column(
                   children: [
-                    const Text('Ready to begin?',
+                    Text(context.tr('landing.readyToBegin'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: darkGreen,
                             fontSize: 27,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 9),
-                    const Text(
-                        'Take the first step towards\nbetter, more connected care.',
+                    Text(
+                        context.tr('landing.takeFirstStep'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: textGrey, fontSize: 14, height: 1.5)),
                     const SizedBox(height: 20),
                     SizedBox(
                         width: 180,
-                        child: _primaryButton(context, 'Play Memory Game',
+                        child: _primaryButton(context, context.tr('landing.playMemoryGame'),
                             compact: true)),
                   ],
                 ),
@@ -2919,7 +2993,7 @@ class LandingPage extends StatelessWidget {
         ),
       );
 
-  Widget _heroVisual() => Padding(
+  Widget _heroVisual(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22),
         child: Container(
           height: 285,
@@ -2952,8 +3026,8 @@ class LandingPage extends StatelessWidget {
                           size: 46, color: darkGreen),
                     ),
                     const SizedBox(height: 15),
-                    const Text('Together through every moment',
-                        style: TextStyle(
+                    Text(context.tr('landing.togetherMoment'),
+                        style: const TextStyle(
                             color: darkGreen,
                             fontSize: 14,
                             fontWeight: FontWeight.w600)),

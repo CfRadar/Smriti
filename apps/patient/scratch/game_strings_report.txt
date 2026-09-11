@@ -1,0 +1,262 @@
+
+==================== lib/games/picture_recognition_game.dart ====================
+  - Fauna
+  - Traditional Attire
+  - Delicacy
+  - Craft & Heritage
+  - One-Horned Rhino
+  - গঁড় (Gorh)
+  - Assam (Kaziranga)
+  - Sangai Deer
+  - চাঙাই (Sangai)
+  - Manipur (Keibul Lamjao)
+  - Golden Langur
+  - Assam & Bodoland
+  - Mithun (Gayal)
+  - মিথুন (Mithun)
+  - Nagaland & Arunachal
+  - Great Hornbill
+  - ধনেশ পক্ষী (Dhanesh)
+  - Arunachal & Nagaland
+  - Hoolock Gibbon
+  - হলৌ বান্দৰ (Hoolock)
+  - Assam & Hoollongapar
+  - Himalayan Bear
+  - Arunachal Pradesh
+  - Takin / Serow
+  - টাকিন (Takin)
+  - Mizoram & Sikkim
+  - Naga Headgear
+  - Nagaland
+  - Assamese Jaapi
+  - জাপি (Jaapi)
+  - Assam
+  - Mizo Puan Textile
+  - Puan Chei
+  - Mizoram
+  - Tribal Festive Attire
+  - North East India
+  - Traditional Loin Loom
+  - কঁকাল তাঁত (Loom)
+  - Nagaland & Manipur
+  - Mekhela Chador
+  - Assam Silk
+  - Naga Warrior Shawl
+  - Tsungkotepsu Shawl
+  - Nagaland (Ao Naga)
+  - Mizo Folk Costume
+  - Cheraw Costume
+  - Bhoot Jolokia
+  - ভোট জলকীয়া (Ghost Pepper)
+  - Assam & Nagaland
+  - Assamese Thali
+  - অসমীয়া কাঁহী (Thali)
+  - Jadoh Rice
+  - Ja Doh (Khasi Rice)
+  - Meghalaya
+  - Smoked Pork Delicacy
+  - Steamed Momos
+  - মমো (Momos)
+  - Sikkim & Arunachal
+  - Galho Stew
+  - Galho Rice Stew
+  - Bamboo Shoot Curry
+  - Assam (Khorisa)
+  - Fermented Bamboo Pickle
+  - Manipur & Assam
+  - Poita Bhat Feast
+  - পঁইতা ভাত (Poita Bhat)
+  - Bamboo Steamed Meal
+  - Mizoram & Tripura
+  - Cane & Bamboo Basket
+  - বাঁহ-বেতৰ ডলা (Basket)
+  - Assam & Tripura
+  - Asharikandi Clay Birds
+  - Assam (Dhubri)
+  - Sarthebari Bell
+  - কাঁহৰ ঘণ্টা (Bell Metal)
+  - Assam (Sarthebari)
+  - Bamboo Vaibel Pipe
+  - Mizo Vaibel (Pipe)
+  - Kansa Brass Bowls
+  - Living Root Bridge
+  - Jingkieng Jri
+  - Meghalaya (Cherrapunji)
+  - Majuli Traditional Mask
+  - মাজুলীৰ মুখা (Mukha)
+  - Assam (Majuli)
+  - Naga Warrior Spear
+  - নগা যাঠি (Warrior Spear)
+  - Assamese Bihu Dhol
+  - বিহু ঢোল (Dhol Drum)
+  - Single Target • 8.0s
+  - Dual Targets • 6.0s/item
+  - Triple Targets • 4.5s/item
+  - Triple Targets • 3.5s/item
+  - sessionId
+  - roundNumber
+  - gameType
+  - cognitiveDomain
+  - targetCount
+  - targetItemIds
+  - selectedItemIds
+  - isSuccess
+  - responseTimeMs
+  - scoreMultiplier
+  - Error saving picture game telemetry locally: $e
+  - Error syncing picture game telemetry: $e
+  - I'm Ready / Start
+  - })} (${cfg.targetCount} Target${cfg.targetCount > 1 ? 
+  - Accuracy
+  - Avg Speed
+  - ${(avgTimeMs / 1000).toStringAsFixed(1)}s
+  - Best Streak
+  - $_bestStreak
+  - Exit to Home
+  - games.pictureRecognition
+  - Caveat
+  - Toggle Sound
+  - Mute
+  - Unmute
+  - Pause or Resume Game
+  - Resume
+  - Pause
+  - $_currentRound
+  - ${widget.totalRounds}
+  - $_currentLevel
+  - TargetDisplayPhase
+  - ${item.regionalName} • ${item.region}
+  - InteractiveGridPhase
+  - ${item.name}, ${item.categoryLabel} from ${item.region}
+
+==================== lib/games/pattern_memory_game.dart ====================
+  - sessionId
+  - trialNumber
+  - gridSize
+  - patternCount
+  - isCorrect
+  - reactionTimeMs
+  - Pattern telemetry save error: $e
+  - Pattern telemetry sync error: $e
+  - Audio pre-warm error: $e
+  - Error loading preferences: $e
+  - Error saving preferences: $e
+  - ML training session saved locally. Total stored: ${existingSessions.length}
+  - Error saving ML session data: $e
+  - Sound playback error: $e
+  - Accuracy
+  - Avg Speed
+  - ${(avgRt / 1000).toStringAsFixed(1)}s
+  - Best Streak
+  - $_bestStreak
+  - })} (${cfg.gridSize}×${cfg.gridSize})
+  - ${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s
+  - Exit to Home
+  - games.patternMemory
+  - Caveat
+  - Toggle Sound
+  - Mute
+  - Unmute
+  - Pause or Resume Game
+  - Resume
+  - Pause
+  - $_currentTrial
+  - ${widget.totalTrials}
+  - ($_completedCount)
+  - $_currentLevel
+  - $_countdownNumber
+  - ${_currentConfig.patternCount}
+  - Tile ${index + 1}
+  - Memorize the highlighted pattern
+  - Tap the pattern tiles ($remaining left)
+  - Pattern completed!
+  - Completing session...
+  - Reviewing pattern...
+  - Next pattern...
+  - Game completed! Well done.
+
+==================== lib/games/king_shanaba_game.dart ====================
+  - King Shanaba
+  - sessionId
+  - gameType
+  - trialNumber
+  - slideDistance
+  - reactionTimeMs
+  - isCorrect
+  - targetTolerance
+  - initialVelocity
+  - Gentle Pace
+  - Balanced
+  - Steady Focus
+  - Sharp Aim
+  - Master Court
+  - The Gateway
+  - Target Struck! +$pointsGained
+  - Exit to Home
+  - games.kingShanaba
+  - Caveat
+  - Toggle Sound
+  - Mute
+  - Unmute
+  - Pause or Resume Game
+  - Resume
+  - Pause
+  - ${_currentTrial.clamp(1, widget.totalTrials)}
+  - ${widget.totalTrials}
+  - ${_adaptiveEngine.level}
+  - $_currentTrial
+  - Accuracy
+  - Avg Speed
+  - ${(avgRt / 1000).toStringAsFixed(1)}s
+  - Best Streak
+  - $_bestStreak
+
+==================== lib/games/bamboo_dance_game.dart ====================
+  - Bamboo Dance
+  - GridPos($col, $row)
+  - sessionId
+  - gameType
+  - trialNumber
+  - expectedDirection
+  - actualDirection
+  - reactionTimeMs
+  - isCorrect
+  - rhythmAccuracy
+  - timingWindowMs
+  - Familiarisation
+  - Gentle Start
+  - Gentle Alternation
+  - Left-Right Shifts
+  - Four Directions
+  - All Directions
+  - Rhythm Pattern
+  - Rhythmic Tempo
+  - Pattern Memory
+  - Memory & Rhythm
+  - Cheraw Harmony
+  - Harmonious Flow
+  - Step target circle
+  - Hint: Tap on the target circle
+  - $currentStep
+  - ${widget.totalTargetTrials}
+  - $_correctStepsCount
+  - ${_engine.currentStageNumber}
+  - ${_correctStepsCount * 10}
+  - ${cfg.stageNumber}
+  - ${cfg.subtitle} • ${cfg.bpm} BPM
+  - games.bambooDance
+  - Caveat
+  - Exit to Home
+  - Accuracy
+  - $accuracyPercent%
+  - Avg Speed
+  - ${(avgRt / 1000).toStringAsFixed(1)}s
+  - Best Streak
+  - $_bestStreak
+
+==================== lib/widgets/game_completion_dialog.dart ====================
+  - $finalScore
+  - $bestScore
+  - Accuracy
+  - Avg Speed
+  - Best Streak

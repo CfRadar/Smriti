@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../models/caregiver_models.dart';
 import '../../services/caregiver_api_service.dart';
+import '../../services/locale_service.dart';
 
 class CaregiverOverviewTab extends StatefulWidget {
   const CaregiverOverviewTab({super.key});
@@ -47,15 +48,15 @@ class _CaregiverOverviewTabState extends State<CaregiverOverviewTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 48, color: _muted),
+            const Icon(Icons.cloud_off_rounded, size: 48, color: _muted),
             const SizedBox(height: 12),
-            Text('Could not load data',
-                style: TextStyle(color: _muted, fontSize: 15)),
+            Text(context.tr('caregiver.couldNotLoad'),
+                style: const TextStyle(color: _muted, fontSize: 15)),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(context.tr('common.retry')),
             ),
           ],
         ),
@@ -73,10 +74,10 @@ class _CaregiverOverviewTabState extends State<CaregiverOverviewTab> {
           _SectionCard(
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 28,
                   backgroundColor: _lightGreen,
-                  child: const Icon(Icons.person_rounded,
+                  child: Icon(Icons.person_rounded,
                       color: Color(0xFF214E3B), size: 30),
                 ),
                 const SizedBox(width: 16),
@@ -84,14 +85,14 @@ class _CaregiverOverviewTabState extends State<CaregiverOverviewTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Patient Overview',
-                          style: TextStyle(
+                      Text(context.tr('caregiver.patientOverview'),
+                          style: const TextStyle(
                               color: _green,
                               fontSize: 17,
                               fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text('ID: ${_patientId ?? "—"}',
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: _muted,
                               fontSize: 11,
                               fontFamily: 'monospace')),
@@ -155,8 +156,8 @@ class _CaregiverOverviewTabState extends State<CaregiverOverviewTab> {
           const SizedBox(height: 20),
 
           // ── Cognitive scores ───────────────────────────────────────────────
-          Text('Cognitive Scores',
-              style: TextStyle(
+          Text(context.tr('caregiver.cognitiveScores'),
+              style: const TextStyle(
                   color: _green,
                   fontSize: 15,
                   fontWeight: FontWeight.w700)),
@@ -199,7 +200,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3)),
         ],
@@ -225,9 +226,9 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,7 +239,7 @@ class _StatTile extends StatelessWidget {
               style: TextStyle(
                   color: color, fontSize: 24, fontWeight: FontWeight.w800)),
           Text(label,
-              style: TextStyle(color: color.withOpacity(0.7), fontSize: 12)),
+              style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 12)),
         ],
       ),
     );
@@ -268,7 +269,7 @@ class _ScoreRow extends StatelessWidget {
             child: LinearProgressIndicator(
               value: pct.clamp(0.0, 1.0),
               minHeight: 10,
-              backgroundColor: color.withOpacity(0.12),
+              backgroundColor: color.withValues(alpha: 0.12),
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/karaoke_song.dart';
+import '../services/locale_service.dart';
 
 class KaraokePlayerScreen extends StatefulWidget {
   final KaraokeSong song;
@@ -386,7 +387,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
           // Back button
           _GlassIconBtn(
             icon: Icons.arrow_back_ios_new_rounded,
-            tooltip: 'Go Back',
+            tooltip: context.tr('karaoke.goBack'),
             onTap: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 12),
@@ -396,26 +397,32 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.song.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.song.getLocalizedTitle(context),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  widget.song.culturalLabel,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.song.getLocalizedCulturalLabel(context),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.65),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -434,14 +441,14 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                   border: Border.all(
                       color: const Color(0xFFB794F4).withValues(alpha: 0.45)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.mic_rounded, color: Color(0xFFD6BCFA), size: 11),
-                    SizedBox(width: 4),
+                    const Icon(Icons.mic_rounded, color: Color(0xFFD6BCFA), size: 11),
+                    const SizedBox(width: 4),
                     Text(
-                      'KARAOKE',
-                      style: TextStyle(
+                      context.tr('karaoke.badge'),
+                      style: const TextStyle(
                         color: Color(0xFFD6BCFA),
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -486,13 +493,13 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildPillTab(
-            title: 'Focus Stage',
+            title: context.tr('karaoke.focusStage'),
             icon: Icons.mic_rounded,
             isSelected: !_showFullLyrics,
             onTap: () => setState(() => _showFullLyrics = false),
           ),
           _buildPillTab(
-            title: 'All Lyrics',
+            title: context.tr('karaoke.allLyrics'),
             icon: Icons.format_list_bulleted_rounded,
             isSelected: _showFullLyrics,
             onTap: () {
@@ -692,7 +699,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
         _GlowingMusicIcon(),
         const SizedBox(height: 16),
         Text(
-          'Intro…',
+          context.tr('karaoke.intro'),
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.65),
             fontSize: 20,
@@ -702,7 +709,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
         ),
         const SizedBox(height: 6),
         Text(
-          'Lyrics start in ~10 seconds',
+          context.tr('karaoke.lyricsStartSoon'),
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.40),
             fontSize: 13,
@@ -727,7 +734,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    'Up next: $firstLyric',
+                    context.tr('karaoke.upNext', {'lyric': firstLyric}),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -761,9 +768,9 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
           const Icon(Icons.celebration_rounded,
               color: Color(0xFFF6E05E), size: 36),
           const SizedBox(height: 10),
-          const Text(
-            'Song Finished!',
-            style: TextStyle(
+          Text(
+            context.tr('karaoke.songFinished'),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -771,7 +778,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'Wonderful singing • Tap Replay to sing again',
+            context.tr('karaoke.wonderfulSinging'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 13,
@@ -919,15 +926,15 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                                 const Color(0xFF68D391).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.mic_rounded,
+                              const Icon(Icons.mic_rounded,
                                   size: 10, color: Color(0xFF68D391)),
-                              SizedBox(width: 3),
+                              const SizedBox(width: 3),
                               Text(
-                                'SINGING',
-                                style: TextStyle(
+                                context.tr('karaoke.singing'),
+                                style: const TextStyle(
                                   color: Color(0xFF68D391),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,
@@ -1056,7 +1063,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                     _GlassIconBtn(
                       icon: Icons.replay_rounded,
                       size: 22,
-                      tooltip: 'Restart Song',
+                      tooltip: context.tr('karaoke.restartSong'),
                       onTap: _restart,
                     ),
                     const SizedBox(width: 14),
@@ -1069,7 +1076,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                     _GlassIconBtn(
                       icon: Icons.forward_10_rounded,
                       size: 22,
-                      tooltip: 'Forward 10s',
+                      tooltip: context.tr('karaoke.forward10s'),
                       onTap: () =>
                           _seekTo(_position + const Duration(seconds: 10)),
                     ),
@@ -1082,8 +1089,8 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
                           : Icons.lyrics_rounded,
                       size: 22,
                       tooltip: _showFullLyrics
-                          ? 'Show Focus Stage'
-                          : 'Show All Lyrics',
+                          ? context.tr('karaoke.showFocusStage')
+                          : context.tr('karaoke.showAllLyrics'),
                       isActive: _showFullLyrics,
                       onTap: () {
                         setState(() {
@@ -1204,7 +1211,7 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
 
   Widget _buildVolumeControl() {
     return PopupMenuButton<double>(
-      tooltip: 'Volume',
+      tooltip: context.tr('karaoke.volume'),
       color: const Color(0xFF1A2744),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (v) async {
@@ -1212,10 +1219,10 @@ class _KaraokePlayerScreenState extends State<KaraokePlayerScreen>
         await _player.setVolume(v);
       },
       itemBuilder: (_) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           enabled: false,
-          child: Text('Volume',
-              style: TextStyle(
+          child: Text(context.tr('karaoke.volume'),
+              style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontWeight: FontWeight.w700)),

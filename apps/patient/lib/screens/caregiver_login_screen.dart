@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/caregiver_api_service.dart';
+import '../services/locale_service.dart';
 import 'caregiver_dashboard_screen.dart';
 
 class CaregiverLoginScreen extends StatefulWidget {
@@ -145,9 +146,9 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                     ),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
-                    'Caregiver Portal',
-                    style: TextStyle(
+                  Text(
+                    context.tr('caregiver.portal'),
+                    style: const TextStyle(
                       color: Color(0xFF1E3A4B),
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -155,10 +156,10 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Sign in to manage reminders & review analytics',
+                  Text(
+                    context.tr('caregiverLogin.signInSubtitle'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color(0xFF64748B),
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -191,7 +192,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                         children: [
                           _Field(
                             controller: _emailCtrl,
-                            label: 'Caregiver Email',
+                            label: context.tr('caregiverLogin.emailLabel'),
                             hint: 'caregiver@smriti.com',
                             icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
@@ -203,7 +204,7 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                           const SizedBox(height: 18),
                           _Field(
                             controller: _passCtrl,
-                            label: 'Password',
+                            label: context.tr('caregiverLogin.passwordLabel'),
                             hint: '••••••••',
                             icon: Icons.lock_outline_rounded,
                             obscure: _obscure,
@@ -274,9 +275,9 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Text(
-                                      'Sign In to Dashboard',
-                                      style: TextStyle(
+                                  : Text(
+                                      context.tr('caregiverLogin.signInButton'),
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.2,
@@ -293,9 +294,9 @@ class _CaregiverLoginScreenState extends State<CaregiverLoginScreen>
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back_rounded,
                         size: 16, color: _textGrey),
-                    label: const Text(
-                      'Back to role selection',
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('caregiverLogin.backToRole'),
+                      style: const TextStyle(
                         color: _textGrey,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
