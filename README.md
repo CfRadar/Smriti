@@ -9,7 +9,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.0-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
-[![License](https://img.shields.io/badge/License-Proprietary-red)](#license)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
@@ -482,5 +482,5 @@ Contributions to improve accessibility, add regional language translations, or o
 
 ## 📄 License
 
-Copyright © 2026 Smriti Care Ecosystem. All rights reserved.  
-Distributed under internal proprietary license for healthcare, clinical, and NGO deployment.
+This project is licensed under the **MIT License** - see the [LICENSE](file:///d:/Smriti/LICENSE) file for details.  
+Copyright © 2026 Smriti Contributors.
