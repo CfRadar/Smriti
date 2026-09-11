@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 
 import 'controllers/voice_command_controller.dart';
 import 'services/fcm_token_service.dart';
+import 'screens/caregiver_login_screen.dart';
+import 'screens/caregiver_dashboard_screen.dart';
+import 'screens/welcome_login_screen.dart';
 import 'games/picture_recognition_game.dart';
 import 'games/bamboo_dance_game.dart';
 import 'games/king_shanaba_game.dart';
@@ -273,7 +276,10 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
         fontFamily: 'Arial',
       ),
       routes: {
+        '/welcome': (context) => const WelcomeLoginScreen(),
         '/home': (context) => const GameHubPage(),
+        '/caregiver-login': (context) => const CaregiverLoginScreen(),
+        '/caregiver-dashboard': (context) => const CaregiverDashboardScreen(),
       },
       home: const SplashPage(),
       builder: (context, child) {
@@ -364,14 +370,14 @@ class _SplashPageState extends State<SplashPage>
     );
 
     _controller.forward();
-    Future.delayed(const Duration(milliseconds: 2800), _openGameHub);
+    Future.delayed(const Duration(milliseconds: 2800), _openWelcomeScreen);
   }
 
-  void _openGameHub() {
+  void _openWelcomeScreen() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const GameHubPage(),
+        pageBuilder: (_, __, ___) => const WelcomeLoginScreen(),
         transitionDuration: const Duration(milliseconds: 500),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
@@ -837,6 +843,24 @@ class _GameHubPageState extends State<GameHubPage>
                 }
               },
             ),
+          // ── Caregiver portal button ──────────────────────────────────────
+          Positioned(
+            bottom: 110,
+            right: 20,
+            child: Tooltip(
+              message: 'Caregiver Portal',
+              child: FloatingActionButton.small(
+                heroTag: 'caregiver_fab',
+                backgroundColor: const Color(0xFF214E3B),
+                onPressed: () {
+                  Navigator.of(context)
+                      .pushNamed('/caregiver-login');
+                },
+                child: const Icon(Icons.medical_services_outlined,
+                    color: Colors.white, size: 20),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1781,6 +1805,7 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 80,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile000.png',
                 icon: Icons.image_search_rounded,
                 title: 'Picture Recognition',
                 gradientColors: const [Color(0xFFFFE0B2), Color(0xFFFFB74D)],
@@ -1793,6 +1818,7 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 80,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile001.png',
                 icon: Icons.grid_view_rounded,
                 title: 'Pattern Memory',
                 gradientColors: const [Color(0xFFE1BEE7), Color(0xFFBA68C8)],
@@ -1805,6 +1831,7 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 180,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile002.png',
                 icon: Icons.sports_esports_rounded,
                 title: 'King Shanaba',
                 gradientColors: const [Color(0xFFC8E6C9), Color(0xFF81C784)],
@@ -1817,6 +1844,7 @@ class _GameHubPageState extends State<GameHubPage>
               delay: 180,
               child: _gameCard(
                 context,
+                imageAsset: 'assets/images/thumbnail/tile003.png',
                 icon: Icons.music_note_rounded,
                 title: 'Bamboo Dance',
                 gradientColors: const [Color(0xFFFFCDD2), Color(0xFFE57373)],
@@ -1857,7 +1885,8 @@ class _GameHubPageState extends State<GameHubPage>
 
   Widget _gameCard(
     BuildContext context, {
-    required IconData icon,
+    IconData? icon,
+    String? imageAsset,
     required String title,
     required List<Color> gradientColors,
     required Color iconColor,
@@ -1891,7 +1920,7 @@ class _GameHubPageState extends State<GameHubPage>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Playful Gradient Background
+                // Theme Gradient Background
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -1902,31 +1931,50 @@ class _GameHubPageState extends State<GameHubPage>
                   ),
                 ),
 
-                // Playful Center Icon in white circular glass badge
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Container(
-                      padding: const EdgeInsets.all(11),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: iconColor.withValues(alpha: 0.22),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                if (imageAsset != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 26),
+                    child: Image.asset(
+                      imageAsset,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            icon ?? Icons.sports_esports_rounded,
+                            color: iconColor,
+                            size: 34,
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        icon,
-                        color: iconColor,
-                        size: 34,
+                        );
+                      },
+                    ),
+                  ),
+                ] else ...[
+                  // Playful Center Icon in white circular glass badge
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Container(
+                        padding: const EdgeInsets.all(11),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.72),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: iconColor.withValues(alpha: 0.22),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          icon ?? Icons.sports_esports_rounded,
+                          color: iconColor,
+                          size: 34,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
 
                 // Soon Tag for upcoming games
                 if (!isAvailable)
@@ -1964,7 +2012,16 @@ class _GameHubPageState extends State<GameHubPage>
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6.5),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.54),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.58),
+                          Colors.black.withValues(alpha: 0.85),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
                     ),
                     child: Text(
                       title,

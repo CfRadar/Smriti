@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/scripts/seed.js",
+    "seed:caregiver": "node src/scripts/seed_caregiver.js",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "keywords": [
