@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:patient/games/blink_game.dart';
+import 'package:patient/games/picture_recognition_game.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -168,24 +168,6 @@ void main() {
       // Preference persisted
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getInt('smriti_picture_game_level'), 4);
-    });
-
-    testWidgets('Legacy BlinkGameScreen backward compatibility works seamlessly',
-        (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: BlinkGameScreen(
-            sessionId: 'legacy_blink_test',
-            totalTrials: 5,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Should render PictureRecognitionGameScreen seamlessly
-      expect(find.byType(PictureRecognitionGameScreen), findsOneWidget);
-      expect(find.text('Picture Recognition'), findsOneWidget);
     });
 
     testWidgets('Toggling sound off mutes sound button and disables click audio playback',
