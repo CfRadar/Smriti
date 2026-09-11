@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:patient/controllers/voice_command_controller.dart';
 import 'package:patient/models/voice_command.dart';
+import 'package:patient/services/locale_service.dart';
 import 'package:patient/widgets/animated_fragmented_divider.dart';
 import 'package:patient/widgets/game_completion_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,6 +59,34 @@ class GameItem {
         return 'Delicacy';
       case CulturalCategory.items:
         return 'Craft & Heritage';
+    }
+  }
+
+  String localizedName(BuildContext context) {
+    final key = 'items.$id.name';
+    final translated = context.tr(key);
+    return (translated != key && translated.isNotEmpty) ? translated : name;
+  }
+
+  String localizedSubtitle(BuildContext context) {
+    final key = 'items.$id.region';
+    final translated = context.tr(key);
+    if (translated != key && translated.isNotEmpty) {
+      return '$regionalName • $translated';
+    }
+    return '$regionalName • $region';
+  }
+
+  String localizedCategory(BuildContext context) {
+    switch (category) {
+      case CulturalCategory.animals:
+        return context.tr('gameplay.categoryFauna');
+      case CulturalCategory.clothing:
+        return context.tr('gameplay.categoryAttire');
+      case CulturalCategory.food:
+        return context.tr('gameplay.categoryFood');
+      case CulturalCategory.items:
+        return context.tr('gameplay.categoryCraft');
     }
   }
 
@@ -399,6 +428,18 @@ class AdaptiveDifficultyConfig {
       timeAllowanceSecondsPerTarget: allowance,
       title: desc,
     );
+  }
+
+  String getLocalizedTitle(BuildContext context) {
+    if (level <= 3) {
+      return context.tr('gameplay.diffSingleTargetDesc', {'time': '8.0'});
+    } else if (level <= 7) {
+      return context.tr('gameplay.diffDualTargetDesc', {'time': '6.0'});
+    } else if (level <= 10) {
+      return context.tr('gameplay.diffTripleTargetDesc', {'time': '4.5'});
+    } else {
+      return context.tr('gameplay.diffTripleTargetDesc', {'time': '3.5'});
+    }
   }
 }
 
@@ -977,18 +1018,18 @@ class _PictureRecognitionGameScreenState
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Select Difficulty Level',
-                      style: TextStyle(
+                    Text(
+                      context.tr('gameplay.selectDifficulty'),
+                      style: const TextStyle(
                         color: textDark,
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Choose starting challenge (1 to 12)',
-                      style: TextStyle(color: textGrey, fontSize: 13),
+                    Text(
+                      context.tr('gameplay.chooseStartingChallenge'),
+                      style: const TextStyle(color: textGrey, fontSize: 13),
                     ),
                     const SizedBox(height: 16),
                     ConstrainedBox(
@@ -1036,7 +1077,7 @@ class _PictureRecognitionGameScreenState
                               ),
                             ),
                             title: Text(
-                              'Level $lvl (${cfg.targetCount} Target${cfg.targetCount > 1 ? 's' : ''})',
+                              '${context.tr('gameplay.level', {'level': '$lvl'})} (${cfg.targetCount} Target${cfg.targetCount > 1 ? 's' : ''})',
                               style: TextStyle(
                                 fontWeight: isSelected
                                     ? FontWeight.bold
@@ -1044,10 +1085,14 @@ class _PictureRecognitionGameScreenState
                                 color: textDark,
                               ),
                             ),
-                            subtitle: Text(
-                              cfg.title,
-                              style: const TextStyle(
-                                  fontSize: 12, color: textGrey),
+                            subtitle: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                cfg.getLocalizedTitle(context),
+                                style: const TextStyle(
+                                    fontSize: 12, color: textGrey),
+                              ),
                             ),
                             trailing: isSelected
                                 ? const Icon(
@@ -1221,9 +1266,9 @@ class _PictureRecognitionGameScreenState
   Widget _buildNavBackButton() {
     return Semantics(
       button: true,
-      label: 'Exit to Home',
+      label: context.tr('gameplay.exitToHomeTooltip'),
       child: Tooltip(
-        message: 'Exit to Home',
+        message: context.tr('gameplay.exitToHomeTooltip'),
         child: InkWell(
           onTap: () {
             Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -1264,11 +1309,11 @@ class _PictureRecognitionGameScreenState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Picture Recognition',
+          Text(
+            context.tr('games.pictureRecognition'),
             textAlign: TextAlign.center,
             maxLines: 1,
-            style: TextStyle(
+            style: const TextStyle(
               color: primaryNavy,
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -1417,18 +1462,18 @@ class _PictureRecognitionGameScreenState
               const Icon(Icons.pause_circle_filled_rounded,
                   size: 48.0, color: primarySage),
               const SizedBox(height: 12.0),
-              const Text(
-                'Game Paused',
-                style: TextStyle(
+              Text(
+                context.tr('gameplay.gamePaused'),
+                style: const TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.w700,
                   color: textDark,
                 ),
               ),
               const SizedBox(height: 6.0),
-              const Text(
-                'Say "Resume" or tap below.',
-                style: TextStyle(fontSize: 14.0, color: textGrey),
+              Text(
+                context.tr('gameplay.pauseVoiceHint'),
+                style: const TextStyle(fontSize: 14.0, color: textGrey),
               ),
               const SizedBox(height: 18.0),
               ElevatedButton.icon(
@@ -1442,9 +1487,12 @@ class _PictureRecognitionGameScreenState
                       horizontal: 22.0, vertical: 12.0),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text(
-                  'Resume Session',
-                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('gameplay.resumeSession'),
+                    style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                  ),
                 ),
                 onPressed: resumeGame,
               ),
@@ -1452,9 +1500,12 @@ class _PictureRecognitionGameScreenState
               TextButton.icon(
                 onPressed: _openDifficultySheet,
                 icon: const Icon(Icons.tune_rounded, size: 18, color: textGrey),
-                label: const Text(
-                  'Difficulty Settings',
-                  style: TextStyle(fontSize: 13.0, color: textGrey, fontWeight: FontWeight.w600),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('gameplay.difficultySettings'),
+                    style: const TextStyle(fontSize: 13.0, color: textGrey, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],
@@ -1546,20 +1597,30 @@ class _PictureRecognitionGameScreenState
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 1. Round tracker
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.style_rounded, size: 18, color: darkGreen),
-              const SizedBox(width: 6),
-              Text(
-                'Round $_currentRound / ${widget.totalRounds}',
-                style: const TextStyle(
-                  color: primaryNavy,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.style_rounded, size: 18, color: darkGreen),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      context.tr('gameplay.round', {
+                        'round': '$_currentRound',
+                        'total': '${widget.totalRounds}',
+                      }),
+                      style: const TextStyle(
+                        color: primaryNavy,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // 2. Tappable Level badge
@@ -1581,12 +1642,15 @@ class _PictureRecognitionGameScreenState
                 children: [
                   const Icon(Icons.bolt_rounded, size: 14, color: darkGreen),
                   const SizedBox(width: 3),
-                  Text(
-                    'Level $_currentLevel',
-                    style: const TextStyle(
-                      color: darkGreen,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      context.tr('gameplay.level', {'level': '$_currentLevel'}),
+                      style: const TextStyle(
+                        color: darkGreen,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
@@ -1630,12 +1694,15 @@ class _PictureRecognitionGameScreenState
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Text(
-                  'pts',
-                  style: TextStyle(
-                    color: textGrey,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('common.pts'),
+                    style: const TextStyle(
+                      color: textGrey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -1651,8 +1718,10 @@ class _PictureRecognitionGameScreenState
   Widget _buildTargetDisplayPhase() {
     final count = _currentTargetItems.length;
     final promptTitle = count == 1
-        ? 'Find this Item'
-        : (count == 2 ? 'Find Both Items' : 'Find All 3 Items');
+        ? context.tr('gameplay.findItem')
+        : (count == 2
+            ? context.tr('gameplay.findBothItems')
+            : context.tr('gameplay.findAll3Items'));
 
     return LayoutBuilder(
       key: const ValueKey('TargetDisplayPhase'),
@@ -1706,13 +1775,18 @@ class _PictureRecognitionGameScreenState
                       Icon(Icons.visibility_rounded,
                           size: isVeryCompact ? 14 : 16, color: darkGreen),
                       const SizedBox(width: 5),
-                      Text(
-                        promptTitle,
-                        style: TextStyle(
-                          color: darkGreen,
-                          fontSize: isVeryCompact ? 12 : 13.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.2,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            promptTitle,
+                            style: TextStyle(
+                              color: darkGreen,
+                              fontSize: isVeryCompact ? 12 : 13.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -1720,7 +1794,7 @@ class _PictureRecognitionGameScreenState
                 ),
                 SizedBox(height: isVeryCompact ? 3 : 5),
                 Text(
-                  'Remember and recognize in the next screen',
+                  context.tr('gameplay.rememberAndRecognize'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: textGrey,
@@ -1756,12 +1830,17 @@ class _PictureRecognitionGameScreenState
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        "I'm Ready!",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: isVeryCompact ? 13 : 15,
-                          letterSpacing: 0.3,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            context.tr('gameplay.imReady'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: isVeryCompact ? 13 : 15,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -1810,28 +1889,34 @@ class _PictureRecognitionGameScreenState
           ),
         ),
         SizedBox(height: isCompact ? 6 : 9),
-        Text(
-          item.name,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: textDark,
-            fontSize: isCompact ? 17 : 19,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.2,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            item.localizedName(context),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: textDark,
+              fontSize: isCompact ? 17 : 19,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          '${item.regionalName} • ${item.region}',
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: primarySage,
-            fontSize: isCompact ? 11.5 : 12.5,
-            fontWeight: FontWeight.w700,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            item.localizedSubtitle(context),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: primarySage,
+              fontSize: isCompact ? 11.5 : 12.5,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -1872,15 +1957,18 @@ class _PictureRecognitionGameScreenState
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                item.name,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: textDark,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  item.localizedName(context),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: textDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -1965,7 +2053,7 @@ class _PictureRecognitionGameScreenState
 
     return Semantics(
       button: true,
-      label: '${item.name}, ${item.categoryLabel} from ${item.region}',
+      label: '${item.localizedName(context)}, ${item.localizedCategory(context)} from ${item.localizedSubtitle(context)}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -2085,17 +2173,21 @@ class _PictureRecognitionGameScreenState
                   size: 15,
                   color: primarySage,
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  _currentPhase == PictureGamePhase.targetDisplay
-                      ? 'Memorize item'
-                      : (count == 1
-                          ? 'Find item'
-                          : '$remaining of $count remaining'),
-                  style: const TextStyle(
-                    color: textDark,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _currentPhase == PictureGamePhase.targetDisplay
+                          ? context.tr('gameplay.memorizeItem')
+                          : (count == 1
+                              ? context.tr('gameplay.findItem')
+                              : '$remaining / $count'),
+                      style: const TextStyle(
+                        color: textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2104,7 +2196,7 @@ class _PictureRecognitionGameScreenState
 
           // End game button
           IconButton(
-            tooltip: 'End Game Session',
+            tooltip: context.tr('gameplay.endSession'),
             icon: const Icon(Icons.stop_circle_outlined,
                 color: alertRed, size: 26),
             onPressed: _endGame,

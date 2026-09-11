@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/caregiver_api_service.dart';
+import '../services/locale_service.dart';
 import 'caregiver_login_screen.dart';
 import 'caregiver_dashboard_screen.dart';
 import '../main.dart';
@@ -68,9 +69,16 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
       backgroundColor: _screenBg,
       body: SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
             // ── Top Hero Visual with gradient fade to screen background ───
             SizedBox(
               height: screenHeight * 0.38,
@@ -163,23 +171,23 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select Role',
-                          style: TextStyle(
+                          context.tr('welcome.selectRole'),
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: _darkBlue,
                             letterSpacing: -0.5,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          'Select as Patient if you play cognitive games &\nselect Caregiver if it is care and monitoring',
-                          style: TextStyle(
+                          context.tr('welcome.roleSubtitle'),
+                          style: const TextStyle(
                             fontSize: 13.5,
                             color: _textGrey,
                             height: 1.45,
@@ -224,14 +232,14 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _SlimRoleTile(
-                    title: 'Patient',
+                    title: context.tr('welcome.patient'),
                     borderColor: _darkGreen,
                     textColor: _darkGreen,
                     onTap: _navigateToPatient,
                   ),
                   const SizedBox(height: 14),
                   _SlimRoleTile(
-                    title: 'Caregiver',
+                    title: context.tr('welcome.caregiver'),
                     borderColor: _darkGreen,
                     textColor: _darkGreen,
                     onTap: _navigateToCaregiver,
@@ -242,7 +250,12 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
+},
+),
+),
+);
   }
 }
 

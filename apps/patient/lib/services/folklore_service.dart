@@ -59,7 +59,7 @@ class FolkloreService {
 
     final stories = groupedStories.values.map((draft) {
       final ordered = <String, FolkloreTranslation>{};
-      final preferredOrder = <String>[_defaultLanguage, 'hi', 'mni', 'kh', 'ang', 'as', 'kar', 'mizo'];
+      final preferredOrder = <String>[_defaultLanguage, 'hi', 'as', 'bn', 'lus', 'mni', 'kh', 'ang', 'kar', 'mizo'];
 
       for (final key in preferredOrder) {
         if (draft.translations.containsKey(key)) {
@@ -299,11 +299,12 @@ class FolkloreService {
     if (value.contains('english')) return 'en';
     if (value.contains('hindi')) return 'hi';
     if (value.contains('assam') || value.contains('assamese')) return 'as';
+    if (value.contains('bengali') || value.contains('bangla')) return 'bn';
+    if (value.contains('mizo') || value.contains('lus')) return 'lus';
     if (value.contains('meitei') || value.contains('manipuri') || value.contains('mni')) return 'mni';
     if (value.contains('khasi')) return 'kh';
     if (value.contains('angami')) return 'ang';
     if (value.contains('karbi')) return 'kar';
-    if (value.contains('mizo')) return 'mizo';
     if (value.contains('lepcha')) return 'lepcha';
     if (value.contains('mising')) return 'mising';
     if (value.contains('garo')) return 'garo';
@@ -319,6 +320,11 @@ class FolkloreService {
         return 'हिन्दी';
       case 'as':
         return 'অসমীয়া';
+      case 'bn':
+        return 'বাংলা';
+      case 'lus':
+      case 'mizo':
+        return 'Mizo';
       case 'mni':
         return 'Meitei / Manipuri';
       case 'kh':
@@ -327,8 +333,6 @@ class FolkloreService {
         return 'Angami';
       case 'kar':
         return 'Karbi';
-      case 'mizo':
-        return 'Mizo';
       case 'lepcha':
         return 'Lepcha';
       case 'mising':

@@ -10,6 +10,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../data/karaoke_data.dart';
+import '../services/locale_service.dart';
 import '../main.dart' show buildSmoothGameRoute;
 import '../models/karaoke_song.dart';
 import 'karaoke_player_screen.dart';
@@ -60,13 +61,13 @@ class _KaraokeScreenState extends State<KaraokeScreen>
                     children: [
                       _GlassBack(onTap: () => Navigator.of(context).pop()),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Karaoke',
-                              style: TextStyle(
+                              context.tr('karaoke.title'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
@@ -74,8 +75,8 @@ class _KaraokeScreenState extends State<KaraokeScreen>
                               ),
                             ),
                             Text(
-                              'Folk songs of Northeast India',
-                              style: TextStyle(
+                              context.tr('karaoke.subtitle'),
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -94,15 +95,15 @@ class _KaraokeScreenState extends State<KaraokeScreen>
                           border: Border.all(
                               color: Colors.white.withValues(alpha: 0.35)),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.mic_rounded,
+                            const Icon(Icons.mic_rounded,
                                 color: Colors.white, size: 14),
-                            SizedBox(width: 5),
+                            const SizedBox(width: 5),
                             Text(
-                              'KARAOKE',
-                              style: TextStyle(
+                              context.tr('karaoke.badge'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
@@ -427,7 +428,7 @@ class _SongCardState extends State<_SongCard>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          widget.song.culturalLabel,
+                          widget.song.getLocalizedCulturalLabel(context),
                           style: TextStyle(
                             color: accent,
                             fontSize: 10,
@@ -438,14 +439,18 @@ class _SongCardState extends State<_SongCard>
                       ),
                       const SizedBox(height: 8),
                       // Song title
-                      Text(
-                        widget.song.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.2,
-                          height: 1.2,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          widget.song.getLocalizedTitle(context),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                            height: 1.2,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -457,7 +462,8 @@ class _SongCardState extends State<_SongCard>
                               color: Colors.white.withValues(alpha: 0.55)),
                           const SizedBox(width: 5),
                           Text(
-                            '${widget.song.lyrics.length} lines',
+                            context.tr('karaoke.linesCount',
+                                {'count': '${widget.song.lyrics.length}'}),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.55),
                               fontSize: 12,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/reminder_model.dart';
 import '../../services/caregiver_api_service.dart';
+import '../../services/locale_service.dart';
 
 class CaregiverRemindersTab extends StatefulWidget {
   const CaregiverRemindersTab({super.key});
@@ -43,7 +44,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
       setState(() => _reminders.removeWhere((x) => x.id == r.id));
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Reminder deleted')));
+            .showSnackBar(SnackBar(content: Text(context.tr('caregiver.reminderDeleted'))));
       }
     }
   }
@@ -101,8 +102,8 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
         onPressed: _showCreateSheet,
         backgroundColor: _green,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New Reminder',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        label: Text(context.tr('caregiver.newReminder'),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: _loading
           ? const Center(
@@ -119,16 +120,16 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.notifications_none_rounded,
+                                const Icon(Icons.notifications_none_rounded,
                                     size: 56, color: _muted),
                                 const SizedBox(height: 12),
-                                Text('No reminders yet',
+                                Text(context.tr('caregiver.noRemindersYet'),
                                     style:
-                                        TextStyle(color: _muted, fontSize: 15)),
+                                        const TextStyle(color: _muted, fontSize: 15)),
                                 const SizedBox(height: 8),
-                                Text('Tap + to create one',
+                                Text(context.tr('caregiver.tapToCreateReminder'),
                                     style: TextStyle(
-                                        color: _muted.withOpacity(0.7),
+                                        color: _muted.withValues(alpha: 0.7),
                                         fontSize: 13)),
                               ],
                             ),
@@ -163,7 +164,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2)),
                               ],
@@ -174,7 +175,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: _accent.withOpacity(0.12),
+                                    color: _accent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(_typeIcon(r.type),
@@ -194,7 +195,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
                                       Text(
                                         DateFormat('hh:mm a · EEE, d MMM')
                                             .format(r.scheduledTime.toLocal()),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                             fontSize: 12, color: _muted),
                                       ),
                                     ],
@@ -205,7 +206,7 @@ class _CaregiverRemindersTabState extends State<CaregiverRemindersTab> {
                                       horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: _statusColor(r.status)
-                                        .withOpacity(0.12),
+                                        .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
@@ -302,7 +303,7 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
     if (ok) {
       widget.onCreated();
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reminder created ✓')));
+          SnackBar(content: Text(context.tr('caregiver.reminderCreated'))));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to create reminder')));
@@ -352,7 +353,7 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _type,
+                initialValue: _type,
                 decoration: const InputDecoration(
                     labelText: 'Type', border: OutlineInputBorder()),
                 items: _types
@@ -369,7 +370,7 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _repeat,
+                initialValue: _repeat,
                 decoration: const InputDecoration(
                     labelText: 'Repeat', border: OutlineInputBorder()),
                 items: ['none', 'daily', 'weekly', 'custom']
@@ -383,7 +384,7 @@ class _CreateReminderSheetState extends State<_CreateReminderSheet> {
                 value: _voiceEnabled,
                 onChanged: (v) => setState(() => _voiceEnabled = v),
                 title: const Text('Voice Prompt'),
-                activeColor: _green,
+                activeThumbColor: _green,
                 contentPadding: EdgeInsets.zero,
               ),
               if (_voiceEnabled) ...[

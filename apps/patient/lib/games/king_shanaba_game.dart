@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controllers/voice_command_controller.dart';
 import '../models/voice_command.dart';
+import '../services/locale_service.dart';
 import '../widgets/animated_fragmented_divider.dart';
 import '../widgets/game_completion_dialog.dart';
 
@@ -1080,17 +1081,17 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       }
       final int pointsGained = max(60, 120 - (distanceToTarget * 0.70).round());
       _score += pointsGained;
-      _feedbackMessage = 'Target Struck! +$pointsGained';
+      _feedbackMessage = context.tr('gameplay.targetStruck', {'pts': '$pointsGained'});
       _lastTrialSuccess = true;
     } else {
       _currentStreak = 0;
       _lastTrialSuccess = false;
       if (discPxY > targetPxY + tolerance) {
-        _feedbackMessage = 'A gentle push! Slide a little further';
+        _feedbackMessage = context.tr('gameplay.gentlePush');
       } else if (discPxY < targetPxY - tolerance) {
-        _feedbackMessage = 'Good force! Try a softer touch';
+        _feedbackMessage = context.tr('gameplay.goodForce');
       } else {
-        _feedbackMessage = 'Close call! Keep your focus';
+        _feedbackMessage = context.tr('gameplay.closeCall');
       }
       _playMissSound();
     }
@@ -1328,9 +1329,9 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
   Widget _buildNavBackButton() {
     return Semantics(
       button: true,
-      label: 'Exit to Home',
+      label: context.tr('gameplay.exitToHomeTooltip'),
       child: Tooltip(
-        message: 'Exit to Home',
+        message: context.tr('gameplay.exitToHomeTooltip'),
         child: InkWell(
           onTap: () {
             Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -1371,11 +1372,11 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'King Shanaba',
+          Text(
+            context.tr('games.kingShanaba'),
             textAlign: TextAlign.center,
             maxLines: 1,
-            style: TextStyle(
+            style: const TextStyle(
               color: primaryNavy,
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -1384,9 +1385,9 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               letterSpacing: 0.3,
             ),
           ),
-          const Text(
-            'Traditional Manipuri Kangshang',
-            style: TextStyle(
+          Text(
+            context.tr('gameplay.traditionalKang'),
+            style: const TextStyle(
               fontSize: 10.0,
               fontWeight: FontWeight.w600,
               color: textGrey,
@@ -1634,7 +1635,10 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                   size: 18, color: darkGreen),
               const SizedBox(width: 6),
               Text(
-                'Round ${_currentTrial.clamp(1, widget.totalTrials)} / ${widget.totalTrials}',
+                context.tr('gameplay.round', {
+                  'round': '${_currentTrial.clamp(1, widget.totalTrials)}',
+                  'total': '${widget.totalTrials}',
+                }),
                 style: const TextStyle(
                   color: primaryNavy,
                   fontSize: 13,
@@ -1663,7 +1667,7 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                 const Icon(Icons.bolt_rounded, size: 14, color: darkGreen),
                 const SizedBox(width: 3),
                 Text(
-                  'Level ${_adaptiveEngine.level}',
+                  context.tr('gameplay.level', {'level': '${_adaptiveEngine.level}'}),
                   style: const TextStyle(
                     color: darkGreen,
                     fontSize: 12,
@@ -1712,9 +1716,9 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Text(
-                  'pts',
-                  style: TextStyle(
+                Text(
+                  context.tr('common.pts'),
+                  style: const TextStyle(
                     color: textGrey,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -1960,7 +1964,10 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                         const Icon(Icons.play_circle_filled_rounded, size: 15.0, color: goldAccent),
                         const SizedBox(width: 5.0),
                         Text(
-                          'Round $_currentTrial of ${widget.totalTrials} • Aim & Strike',
+                          context.tr('gameplay.aimAndStrike', {
+                            'round': '$_currentTrial',
+                            'total': '${widget.totalTrials}',
+                          }),
                           style: const TextStyle(
                             fontSize: 12.0,
                             fontWeight: FontWeight.w700,
@@ -2009,13 +2016,16 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
             ),
             const SizedBox(width: 10.0),
             Flexible(
-              child: Text(
-                _feedbackMessage ?? '',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: isSuccess ? Colors.white : textDark,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _feedbackMessage ?? '',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: isSuccess ? Colors.white : textDark,
+                  ),
                 ),
               ),
             ),
@@ -2042,18 +2052,18 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
             ),
           ],
         ),
-        child: const FittedBox(
+        child: FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.record_voice_over_rounded, size: 14.0, color: darkGreen),
-              SizedBox(width: 6.0),
+              const Icon(Icons.record_voice_over_rounded, size: 14.0, color: darkGreen),
+              const SizedBox(width: 6.0),
               Text(
-                'Pull back to aim & strike • Voice: "pause", "resume", "exit"',
+                '${context.tr('gameplay.aimAndStrikeVoice')}"pause", "resume", "exit"',
                 textAlign: TextAlign.center,
                 maxLines: 1,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12.0,
                   fontWeight: FontWeight.w700,
                   color: darkGreen,
@@ -2084,18 +2094,18 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
               const Icon(Icons.pause_circle_filled_rounded,
                   size: 48.0, color: primarySage),
               const SizedBox(height: 12.0),
-              const Text(
-                'Game Paused',
-                style: TextStyle(
+              Text(
+                context.tr('gameplay.gamePaused'),
+                style: const TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.w700,
                   color: textDark,
                 ),
               ),
               const SizedBox(height: 6.0),
-              const Text(
-                'Say "Resume" or tap below.',
-                style: TextStyle(fontSize: 14.0, color: textGrey),
+              Text(
+                context.tr('gameplay.pauseVoiceHint'),
+                style: const TextStyle(fontSize: 14.0, color: textGrey),
               ),
               const SizedBox(height: 18.0),
               ElevatedButton.icon(
@@ -2109,9 +2119,12 @@ class _KingShanabaGameScreenState extends State<KingShanabaGameScreen>
                       horizontal: 22.0, vertical: 12.0),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text(
-                  'Resume Session',
-                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('gameplay.resumeSession'),
+                    style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                  ),
                 ),
                 onPressed: resumeGame,
               ),

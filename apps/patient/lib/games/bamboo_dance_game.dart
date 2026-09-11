@@ -30,6 +30,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controllers/voice_command_controller.dart';
 import '../models/voice_command.dart';
+import '../services/locale_service.dart';
 import '../widgets/animated_fragmented_divider.dart';
 import '../widgets/game_completion_dialog.dart';
 
@@ -305,6 +306,18 @@ class BambooStageConfig {
   static BambooStageConfig getForStage(int stageNumber) {
     final index = (stageNumber - 1).clamp(0, defaultStages.length - 1);
     return defaultStages[index];
+  }
+
+  String getLocalizedName(BuildContext context) {
+    final key = 'gameplay.bambooStage${stageNumber}Name';
+    final translated = context.tr(key);
+    return (translated != key && translated.isNotEmpty) ? translated : name;
+  }
+
+  String getLocalizedSubtitle(BuildContext context) {
+    final key = 'gameplay.bambooStage${stageNumber}Sub';
+    final translated = context.tr(key);
+    return (translated != key && translated.isNotEmpty) ? translated : subtitle;
   }
 }
 
@@ -1201,7 +1214,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                                             height: targetRadius * 2,
                                             child: Semantics(
                                               button: true,
-                                              label: 'Step target circle',
+                                              label: context.tr('gameplay.stepTargetHint'),
                                               child: GestureDetector(
                                                 key: const ValueKey('bamboo_target_circle'),
                                                 behavior: HitTestBehavior.opaque,
@@ -1287,7 +1300,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                                                   : (targetCenter.dy - targetRadius - 48).clamp(0.0, courtSize - 44.0),
                                               child: Semantics(
                                                 button: true,
-                                                label: 'Hint: Tap on the target circle',
+                                                label: context.tr('gameplay.stepTargetHint'),
                                                 child: GestureDetector(
                                                   onTap: () => _processStep(isCorrect: true),
                                                   child: Container(
@@ -1311,22 +1324,25 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                                                         ),
                                                       ],
                                                     ),
-                                                    child: const Row(
+                                                    child: Row(
                                                       mainAxisSize: MainAxisSize.min,
                                                       children: [
-                                                        Icon(
+                                                        const Icon(
                                                           Icons.touch_app_rounded,
                                                           color: orangeAccent,
                                                           size: 15,
                                                         ),
-                                                        SizedBox(width: 5),
-                                                        Text(
-                                                          'Tap on the target! 🎯',
-                                                          style: TextStyle(
-                                                            color: primaryNavy,
-                                                            fontSize: 12,
-                                                            fontWeight: FontWeight.w700,
-                                                            letterSpacing: 0.1,
+                                                        const SizedBox(width: 5),
+                                                        FittedBox(
+                                                          fit: BoxFit.scaleDown,
+                                                          child: Text(
+                                                            context.tr('gameplay.tapOnTarget'),
+                                                            style: const TextStyle(
+                                                              color: primaryNavy,
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w700,
+                                                              letterSpacing: 0.1,
+                                                            ),
                                                           ),
                                                         ),
                                                       ],
@@ -1395,7 +1411,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                       size: 18, color: darkGreen),
                   const SizedBox(width: 5),
                   Text(
-                    'Step $currentStep / ${widget.totalTargetTrials}',
+                    context.tr('gameplay.step', {'step': '$currentStep', 'total': '${widget.totalTargetTrials}'}),
                     style: const TextStyle(
                       color: primaryNavy,
                       fontSize: 13,
@@ -1404,7 +1420,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Done: $_correctStepsCount',
+                    context.tr('gameplay.doneCount', {'count': '$_correctStepsCount'}),
                     style: const TextStyle(
                       color: primarySage,
                       fontSize: 11,
@@ -1442,7 +1458,7 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                           size: 14, color: darkGreen),
                       const SizedBox(width: 3),
                       Text(
-                        'Stage ${_engine.currentStageNumber}',
+                        context.tr('gameplay.stage', {'stage': '${_engine.currentStageNumber}'}),
                         style: const TextStyle(
                           color: darkGreen,
                           fontSize: 12,
@@ -1498,9 +1514,9 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                       ),
                     ),
                     const SizedBox(width: 2),
-                    const Text(
-                      'pts',
-                      style: TextStyle(
+                    Text(
+                      context.tr('common.pts'),
+                      style: const TextStyle(
                         color: textMuted,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -1541,12 +1557,15 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Dance Stages (1–6)',
-                          style: TextStyle(
-                            color: primaryNavy,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            context.tr('gameplay.danceStages'),
+                            style: const TextStyle(
+                              color: primaryNavy,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         IconButton(
@@ -1600,20 +1619,28 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
                                 ),
                               ),
                             ),
-                            title: Text(
-                              'Stage ${cfg.stageNumber}: ${cfg.name}',
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
-                                color: primaryNavy,
+                            title: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '${context.tr('gameplay.stage', {'stage': '${cfg.stageNumber}'})}: ${cfg.getLocalizedName(context)}',
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                  color: primaryNavy,
+                                ),
                               ),
                             ),
-                            subtitle: Text(
-                              '${cfg.subtitle} • ${cfg.bpm} BPM',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: textMuted,
+                            subtitle: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '${cfg.getLocalizedSubtitle(context)} • ${cfg.bpm} BPM',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
                               ),
                             ),
                             trailing: isSelected
@@ -1761,12 +1788,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
       fit: BoxFit.scaleDown,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Bamboo Dance',
+        children: [          Text(
+            context.tr('games.bambooDance'),
             textAlign: TextAlign.center,
             maxLines: 1,
-            style: TextStyle(
+            style: const TextStyle(
               color: primaryNavy,
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -1800,9 +1826,9 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
   Widget _buildNavBackButton() {
     return Semantics(
       button: true,
-      label: 'Exit to Home',
+      label: context.tr('gameplay.exitToHomeTooltip'),
       child: Tooltip(
-        message: 'Exit to Home',
+        message: context.tr('gameplay.exitToHomeTooltip'),
         child: InkWell(
           onTap: () => Navigator.of(context).pop(),
           borderRadius: BorderRadius.circular(12),
@@ -1864,9 +1890,11 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
       },
       child: Semantics(
         button: true,
-        label: 'Toggle Sound',
+        label: context.tr('gameplay.toggleSoundTooltip'),
         child: Tooltip(
-          message: _isSoundEnabled ? 'Mute Sound' : 'Enable Sound',
+          message: _isSoundEnabled
+              ? context.tr('gameplay.muteSound')
+              : context.tr('gameplay.enableSound'),
           child: InkWell(
             onTap: () {
               setState(() {
@@ -1938,9 +1966,13 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
       },
       child: Semantics(
         button: true,
-        label: _isPaused ? 'Resume Game' : 'Pause Game',
+        label: _isPaused
+            ? context.tr('gameplay.resumeGame')
+            : context.tr('gameplay.pauseGame'),
         child: Tooltip(
-          message: _isPaused ? 'Resume' : 'Pause',
+          message: _isPaused
+              ? context.tr('gameplay.resume')
+              : context.tr('gameplay.pause'),
           child: InkWell(
             onTap: () {
               if (_isPaused) {
@@ -2018,19 +2050,19 @@ class _BambooDanceGameScreenState extends State<BambooDanceGameScreen>
           metrics: [
             GameCompletionMetric(
               icon: Icons.check_circle_outline_rounded,
-              label: 'Accuracy',
+              label: context.tr('gameplay.accuracy'),
               value: '$accuracyPercent%',
               iconColor: GameCompletionDialog.darkGreen,
             ),
             GameCompletionMetric(
               icon: Icons.speed_rounded,
-              label: 'Avg Speed',
+              label: context.tr('gameplay.avgSpeed'),
               value: '${(avgRt / 1000).toStringAsFixed(1)}s',
               iconColor: GameCompletionDialog.sageGreen,
             ),
             GameCompletionMetric(
               icon: Icons.local_fire_department_rounded,
-              label: 'Best Streak',
+              label: context.tr('gameplay.bestStreak'),
               value: '$_bestStreak',
               iconColor: GameCompletionDialog.darkGreen,
             ),

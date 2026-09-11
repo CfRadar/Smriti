@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../models/caregiver_models.dart';
 import '../../services/caregiver_api_service.dart';
+import '../../services/locale_service.dart';
 
 class CaregiverMemoriesTab extends StatefulWidget {
   const CaregiverMemoriesTab({super.key});
@@ -41,7 +42,7 @@ class _CaregiverMemoriesTabState extends State<CaregiverMemoriesTab> {
       setState(() => _memories.removeWhere((x) => x.id == m.id));
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Memory removed')));
+            .showSnackBar(SnackBar(content: Text(context.tr('caregiver.memoryRemoved'))));
       }
     }
   }
@@ -80,8 +81,8 @@ class _CaregiverMemoriesTabState extends State<CaregiverMemoriesTab> {
         onPressed: _showAddSheet,
         backgroundColor: _green,
         icon: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white),
-        label: const Text('Add Memory',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        label: Text(context.tr('caregiver.addMemory'),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
       body: _loading
           ? const Center(
@@ -98,16 +99,16 @@ class _CaregiverMemoriesTabState extends State<CaregiverMemoriesTab> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.photo_album_outlined,
+                                const Icon(Icons.photo_album_outlined,
                                     size: 56, color: _muted),
                                 const SizedBox(height: 12),
-                                Text('No memories yet',
-                                    style: TextStyle(
+                                Text(context.tr('caregiver.noMemoriesYet'),
+                                    style: const TextStyle(
                                         color: _muted, fontSize: 15)),
                                 const SizedBox(height: 8),
-                                Text('Tap + to add a family memory',
+                                Text(context.tr('caregiver.tapToAddMemory'),
                                     style: TextStyle(
-                                        color: _muted.withOpacity(0.7),
+                                        color: _muted.withValues(alpha: 0.7),
                                         fontSize: 13)),
                               ],
                             ),
@@ -154,7 +155,7 @@ class _MemoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.07),
+                color: Colors.black.withValues(alpha: 0.07),
                 blurRadius: 8,
                 offset: const Offset(0, 3)),
           ],
@@ -197,7 +198,7 @@ class _MemoryCard extends StatelessWidget {
                           .join(', '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 11,
                           color: _accent),
                     ),
@@ -348,7 +349,7 @@ class _AddMemorySheetState extends State<_AddMemorySheet> {
     if (ok) {
       widget.onAdded();
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Memory added ✓')));
+          .showSnackBar(SnackBar(content: Text(context.tr('caregiver.memoryAdded'))));
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Failed to add memory')));

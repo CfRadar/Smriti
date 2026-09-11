@@ -4,6 +4,10 @@
 // KaraokeLyric: a single lyric line with start/end timestamps.
 // KaraokeSong:  the full song descriptor (id, title, audioAsset, lyrics).
 
+import 'package:flutter/widgets.dart';
+
+import '../services/locale_service.dart';
+
 /// A single lyric line with its start and end playback positions.
 ///
 /// Timestamps are intentionally stored as [Duration] so that
@@ -38,4 +42,16 @@ class KaraokeSong {
     required this.audioAsset,
     required this.lyrics,
   });
+
+  String getLocalizedTitle(BuildContext context) {
+    final key = 'karaoke.song_${id}_title';
+    final val = context.tr(key);
+    return (val.isNotEmpty && val != key) ? val : title;
+  }
+
+  String getLocalizedCulturalLabel(BuildContext context) {
+    final key = 'karaoke.song_${id}_label';
+    final val = context.tr(key);
+    return (val.isNotEmpty && val != key) ? val : culturalLabel;
+  }
 }

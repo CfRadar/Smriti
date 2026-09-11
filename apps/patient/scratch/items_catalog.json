@@ -1,0 +1,247 @@
+[
+  {
+    "id": "animal_rhino",
+    "name": "One-Horned Rhino",
+    "regionalName": "গঁড় (Gorh)",
+    "region": "Assam (Kaziranga)",
+    "category": "animals"
+  },
+  {
+    "id": "animal_sangai",
+    "name": "Sangai Deer",
+    "regionalName": "চাঙাই (Sangai)",
+    "region": "Manipur (Keibul Lamjao)",
+    "category": "animals"
+  },
+  {
+    "id": "animal_golden_langur",
+    "name": "Golden Langur",
+    "regionalName": "সোণালী বান্দৰ",
+    "region": "Assam & Bodoland",
+    "category": "animals"
+  },
+  {
+    "id": "animal_mithun",
+    "name": "Mithun (Gayal)",
+    "regionalName": "মিথুন (Mithun)",
+    "region": "Nagaland & Arunachal",
+    "category": "animals"
+  },
+  {
+    "id": "animal_hornbill",
+    "name": "Great Hornbill",
+    "regionalName": "ধনেশ পক্ষী (Dhanesh)",
+    "region": "Arunachal & Nagaland",
+    "category": "animals"
+  },
+  {
+    "id": "animal_hoolock_gibbon",
+    "name": "Hoolock Gibbon",
+    "regionalName": "হলৌ বান্দৰ (Hoolock)",
+    "region": "Assam & Hoollongapar",
+    "category": "animals"
+  },
+  {
+    "id": "animal_black_bear",
+    "name": "Himalayan Bear",
+    "regionalName": "হিমালয়ৰ ভালুক",
+    "region": "Arunachal Pradesh",
+    "category": "animals"
+  },
+  {
+    "id": "animal_serow_takin",
+    "name": "Takin / Serow",
+    "regionalName": "টাকিন (Takin)",
+    "region": "Mizoram & Sikkim",
+    "category": "animals"
+  },
+  {
+    "id": "cloth_naga_headgear",
+    "name": "Naga Headgear",
+    "regionalName": "নগা মুকুট",
+    "region": "Nagaland",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_jaapi",
+    "name": "Assamese Jaapi",
+    "regionalName": "জাপি (Jaapi)",
+    "region": "Assam",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_mizo_puan",
+    "name": "Mizo Puan Textile",
+    "regionalName": "Puan Chei",
+    "region": "Mizoram",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_tribal_dress",
+    "name": "Tribal Festive Attire",
+    "regionalName": "জনগোষ্ঠীয় সাজ",
+    "region": "North East India",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_loin_loom",
+    "name": "Traditional Loin Loom",
+    "regionalName": "কঁকাল তাঁত (Loom)",
+    "region": "Nagaland & Manipur",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_mekhela_chador",
+    "name": "Mekhela Chador",
+    "regionalName": "মেখেলা চাদৰ",
+    "region": "Assam Silk",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_tsungkotepsu",
+    "name": "Naga Warrior Shawl",
+    "regionalName": "Tsungkotepsu Shawl",
+    "region": "Nagaland (Ao Naga)",
+    "category": "clothing"
+  },
+  {
+    "id": "cloth_cheraw_costume",
+    "name": "Mizo Folk Costume",
+    "regionalName": "Cheraw Costume",
+    "region": "Mizoram",
+    "category": "clothing"
+  },
+  {
+    "id": "food_bhoot_jolokia",
+    "name": "Bhoot Jolokia",
+    "regionalName": "ভোট জলকীয়া (Ghost Pepper)",
+    "region": "Assam & Nagaland",
+    "category": "food"
+  },
+  {
+    "id": "food_assamese_thali",
+    "name": "Assamese Thali",
+    "regionalName": "অসমীয়া কাঁহী (Thali)",
+    "region": "Assam",
+    "category": "food"
+  },
+  {
+    "id": "food_jadoh",
+    "name": "Jadoh Rice",
+    "regionalName": "Ja Doh (Khasi Rice)",
+    "region": "Meghalaya",
+    "category": "food"
+  },
+  {
+    "id": "food_smoked_pork",
+    "name": "Smoked Pork Delicacy",
+    "regionalName": "ধোঁৱাচঙীয়া মাংস",
+    "region": "Nagaland",
+    "category": "food"
+  },
+  {
+    "id": "food_steamed_momos",
+    "name": "Steamed Momos",
+    "regionalName": "মমো (Momos)",
+    "region": "Sikkim & Arunachal",
+    "category": "food"
+  },
+  {
+    "id": "food_galho",
+    "name": "Galho Stew",
+    "regionalName": "Galho Rice Stew",
+    "region": "Nagaland",
+    "category": "food"
+  },
+  {
+    "id": "food_bamboo_curry",
+    "name": "Bamboo Shoot Curry",
+    "regionalName": "বাঁহ গাজৰ তৰকাৰী",
+    "region": "Assam (Khorisa)",
+    "category": "food"
+  },
+  {
+    "id": "food_bamboo_pickle",
+    "name": "Fermented Bamboo Pickle",
+    "regionalName": "বাঁহ গাজৰ আচাৰ",
+    "region": "Manipur & Assam",
+    "category": "food"
+  },
+  {
+    "id": "food_poita_bhat",
+    "name": "Poita Bhat Feast",
+    "regionalName": "পঁইতা ভাত (Poita Bhat)",
+    "region": "Assam",
+    "category": "food"
+  },
+  {
+    "id": "food_steamed_feast",
+    "name": "Bamboo Steamed Meal",
+    "regionalName": "বাঁহত সিজোৱা আহাৰ",
+    "region": "Mizoram & Tripura",
+    "category": "food"
+  },
+  {
+    "id": "item_cane_basket",
+    "name": "Cane & Bamboo Basket",
+    "regionalName": "বাঁহ-বেতৰ ডলা (Basket)",
+    "region": "Assam & Tripura",
+    "category": "items"
+  },
+  {
+    "id": "item_terracotta_birds",
+    "name": "Asharikandi Clay Birds",
+    "regionalName": "আশাৰীকান্দি টেৰাকোটা চৰাই",
+    "region": "Assam (Dhubri)",
+    "category": "items"
+  },
+  {
+    "id": "item_bell_metal",
+    "name": "Sarthebari Bell",
+    "regionalName": "কাঁহৰ ঘণ্টা (Bell Metal)",
+    "region": "Assam (Sarthebari)",
+    "category": "items"
+  },
+  {
+    "id": "item_vaibel_pipe",
+    "name": "Bamboo Vaibel Pipe",
+    "regionalName": "Mizo Vaibel (Pipe)",
+    "region": "Mizoram",
+    "category": "items"
+  },
+  {
+    "id": "item_brass_utensils",
+    "name": "Kansa Brass Bowls",
+    "regionalName": "কাঁহ-পিতলৰ বাটি-কাঁহী",
+    "region": "Assam",
+    "category": "items"
+  },
+  {
+    "id": "item_root_bridge",
+    "name": "Living Root Bridge",
+    "regionalName": "Jingkieng Jri",
+    "region": "Meghalaya (Cherrapunji)",
+    "category": "items"
+  },
+  {
+    "id": "item_majuli_mask",
+    "name": "Majuli Traditional Mask",
+    "regionalName": "মাজুলীৰ মুখা (Mukha)",
+    "region": "Assam (Majuli)",
+    "category": "items"
+  },
+  {
+    "id": "item_naga_spear",
+    "name": "Naga Warrior Spear",
+    "regionalName": "নগা যাঠি (Warrior Spear)",
+    "region": "Nagaland",
+    "category": "items"
+  },
+  {
+    "id": "item_bihu_dhol",
+    "name": "Assamese Bihu Dhol",
+    "regionalName": "বিহু ঢোল (Dhol Drum)",
+    "region": "Assam",
+    "category": "items"
+  }
+]

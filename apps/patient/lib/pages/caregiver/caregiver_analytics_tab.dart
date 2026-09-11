@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../models/caregiver_models.dart';
 import '../../services/caregiver_api_service.dart';
+import '../../services/locale_service.dart';
 
 class CaregiverAnalyticsTab extends StatefulWidget {
   const CaregiverAnalyticsTab({super.key});
@@ -45,15 +46,15 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.bar_chart_rounded, size: 52, color: _muted),
+            const Icon(Icons.bar_chart_rounded, size: 52, color: _muted),
             const SizedBox(height: 12),
-            Text('No analytics data yet',
-                style: TextStyle(color: _muted, fontSize: 15)),
+            Text(context.tr('caregiver.noAnalytics'),
+                style: const TextStyle(color: _muted, fontSize: 15)),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(context.tr('common.retry')),
             ),
           ],
         ),
@@ -68,7 +69,7 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
         children: [
           // ── 7-day trend ─────────────────────────────────────────────────────
           if (_analytics!.sevenDayTrend.isNotEmpty) ...[
-            const _SectionHeader(title: '7-Day Score Trend'),
+            _SectionHeader(title: context.tr('caregiver.sevenDayTrend')),
             const SizedBox(height: 12),
             Container(
               height: 180,
@@ -78,7 +79,7 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 10,
                       offset: const Offset(0, 3)),
                 ],
@@ -88,9 +89,9 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
             ),
             const SizedBox(height: 8),
             // Legend
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 _LegendDot(color: Color(0xFF214E3B), label: 'Cognitive'),
                 SizedBox(width: 16),
                 _LegendDot(color: Color(0xFF4A7C59), label: 'Memory'),
@@ -103,7 +104,7 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
 
           // ── Game type breakdown ──────────────────────────────────────────────
           if (_analytics!.gameTypeBreakdown.isNotEmpty) ...[
-            const _SectionHeader(title: 'Game Breakdown'),
+            _SectionHeader(title: context.tr('caregiver.gameBreakdown')),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -112,7 +113,7 @@ class _CaregiverAnalyticsTabState extends State<CaregiverAnalyticsTab> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 10,
                       offset: const Offset(0, 3)),
                 ],
@@ -199,7 +200,7 @@ class _TrendPainter extends CustomPainter {
 
     // Grid lines
     final gridPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.15)
+      ..color = Colors.grey.withValues(alpha: 0.15)
       ..strokeWidth = 1;
     for (int i = 0; i <= 4; i++) {
       final y = h * (1 - i / 4);
@@ -285,7 +286,7 @@ class _GameBar extends StatelessWidget {
                 Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),

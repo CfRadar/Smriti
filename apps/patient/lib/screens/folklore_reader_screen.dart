@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../models/folklore_story.dart';
 import '../services/folklore_read_aloud_service.dart';
+import '../services/locale_service.dart';
 import '../widgets/folklore_theme.dart';
 
 class FolkloreReaderScreen extends StatefulWidget {
@@ -45,8 +46,15 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
   @override
   void initState() {
     super.initState();
-    _storyTheme = FolkloreStoryTheme.forStory(widget.story);
-    _selectedLanguageCode = widget.story.defaultLanguageCode;
+    _storyTheme = FolkloreStoryTheme.forKey(widget.story.title);
+    final currentAppLocale = LocaleService.instance.locale;
+    if (widget.story.translations.containsKey(currentAppLocale)) {
+      _selectedLanguageCode = currentAppLocale;
+    } else if (currentAppLocale == 'lus' && widget.story.translations.containsKey('mizo')) {
+      _selectedLanguageCode = 'mizo';
+    } else {
+      _selectedLanguageCode = widget.story.defaultLanguageCode;
+    }
 
     if (widget.readAloudService != null) {
       _readAloudService = widget.readAloudService!;
@@ -104,10 +112,10 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
       });
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Audio narration paused.'),
+        SnackBar(
+          content: Text(context.tr('folklore.narrationPaused')),
           behavior: SnackBarBehavior.floating,
-          duration: Duration(milliseconds: 1200),
+          duration: const Duration(milliseconds: 1200),
         ),
       );
       return;
@@ -127,7 +135,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Reading story aloud in $language...'),
+        content: Text(context.tr('folklore.readingAloud', {'language': language})),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(milliseconds: 1500),
       ),
@@ -144,10 +152,10 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
               _isPlaying = false;
             });
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Finished reading story.'),
+              SnackBar(
+                content: Text(context.tr('folklore.finishedReading')),
                 behavior: SnackBarBehavior.floating,
-                duration: Duration(milliseconds: 1200),
+                duration: const Duration(milliseconds: 1200),
               ),
             );
           }
@@ -158,10 +166,10 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
               _isPlaying = false;
             });
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Could not read aloud. Please check network connection.'),
+              SnackBar(
+                content: Text(context.tr('folklore.couldNotRead')),
                 behavior: SnackBarBehavior.floating,
-                duration: Duration(milliseconds: 1500),
+                duration: const Duration(milliseconds: 1500),
               ),
             );
           }
@@ -223,12 +231,12 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Reading Text Size',
+                            context.tr('folklore.readingTextSize'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: FolkloreStoryTheme.darkNavy,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -245,9 +253,9 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                       ],
                     ),
                     const SizedBox(height: 6),
-                    const Text(
-                      'Adjust text size for comfortable reading without eye strain.',
-                      style: TextStyle(
+                    Text(
+                      context.tr('folklore.adjustFontSizeDesc'),
+                      style: const TextStyle(
                         color: FolkloreStoryTheme.softSlate,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -308,7 +316,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'Preview: Sample Storybook Text (${_fontSize.toInt()} pt)',
+                          context.tr('folklore.samplePreview', {'size': '${_fontSize.toInt()}'}),
                           style: TextStyle(
                             fontFamily: 'serif',
                             fontSize: _fontSize * 0.9,
@@ -402,7 +410,9 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                                 // Origin note
                                 Center(
                                   child: Text(
-                                    'Oral Tradition of ${widget.story.region} • Northeast India',
+                                    context.tr('folklore.oralTradition', {
+                                      'region': widget.story.getLocalizedRegion(context),
+                                    }),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: FolkloreStoryTheme.softSlate,
@@ -485,7 +495,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                   ),
                 ),
                 Text(
-                  widget.story.region,
+                  widget.story.getLocalizedRegion(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -500,7 +510,9 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
 
           // Bookmark Button
           IconButton(
-            tooltip: _isBookmarked ? 'Bookmarked' : 'Bookmark Story',
+            tooltip: _isBookmarked
+                ? context.tr('folklore.bookmarked')
+                : context.tr('folklore.bookmarkStory'),
             icon: Icon(
               _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
               color: _isBookmarked ? FolkloreStoryTheme.sageGreen : FolkloreStoryTheme.darkNavy,
@@ -510,7 +522,9 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_isBookmarked ? 'Story saved to bookmarks!' : 'Bookmark removed.'),
+                  content: Text(_isBookmarked
+                      ? context.tr('folklore.bookmarkSaved')
+                      : context.tr('folklore.bookmarkRemoved')),
                   behavior: SnackBarBehavior.floating,
                   duration: const Duration(milliseconds: 1100),
                 ),
@@ -521,7 +535,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
           // Language Selector
           if (languages.length > 1)
             PopupMenuButton<String>(
-              tooltip: 'Select Language',
+              tooltip: context.tr('settings.language'),
               icon: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -580,7 +594,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
 
           // Font Size Button
           IconButton(
-            tooltip: 'Adjust Font Size',
+            tooltip: context.tr('folklore.adjustFontSize'),
             icon: const Icon(
               Icons.format_size_rounded,
               color: FolkloreStoryTheme.darkNavy,
@@ -651,7 +665,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        widget.story.region,
+                        widget.story.getLocalizedRegion(context),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -666,7 +680,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '~${theme.readingMinutes} min read',
+                        context.tr('folklore.readingMinutes', {'minutes': theme.readingMinutes.toString()}),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -677,21 +691,25 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  selectedTranslation.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: FolkloreStoryTheme.darkNavy,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                    height: 1.25,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    selectedTranslation.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: FolkloreStoryTheme.darkNavy,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                      height: 1.25,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.story.subtitle,
+                  widget.story.getLocalizedSubtitle(context),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -804,17 +822,17 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.eco_rounded,
                 size: 18,
                 color: FolkloreStoryTheme.sageGreen,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'MORAL OF THE TALE',
-                style: TextStyle(
+                context.tr('folklore.moralOfTale'),
+                style: const TextStyle(
                   color: FolkloreStoryTheme.sageGreen,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w800,
@@ -905,7 +923,9 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _isPlaying ? 'Narration in Progress' : 'Read Aloud Story',
+                      _isPlaying
+                          ? context.tr('folklore.narrationInProgress')
+                          : context.tr('folklore.readAloudStory'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -917,8 +937,10 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
                     const SizedBox(height: 2),
                     Text(
                       _isPlaying
-                          ? 'Narrating in ${selectedTranslation.languageLabel}'
-                          : 'Tap to listen with voice assistance',
+                          ? context.tr('folklore.narratingIn', {
+                              'language': selectedTranslation.languageLabel,
+                            })
+                          : context.tr('folklore.tapToListen'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

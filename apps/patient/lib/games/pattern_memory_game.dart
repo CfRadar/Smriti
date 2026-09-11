@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:patient/controllers/voice_command_controller.dart';
 import 'package:patient/models/voice_command.dart';
+import 'package:patient/services/locale_service.dart';
 import 'package:patient/widgets/animated_fragmented_divider.dart';
 import 'package:patient/widgets/game_completion_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -839,9 +840,9 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Difficulty Preset (1–10)',
-                                style: TextStyle(
+                              Text(
+                                context.tr('gameplay.difficultyPreset'),
+                                style: const TextStyle(
                                   color: textDark,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -895,7 +896,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                                     ),
                                   ),
                                   title: Text(
-                                    'Level $lvl (${cfg.gridSize}×${cfg.gridSize})',
+                                    '${context.tr('gameplay.level', {'level': '$lvl'})} (${cfg.gridSize}×${cfg.gridSize})',
                                     style: TextStyle(
                                       fontWeight: isSelected
                                           ? FontWeight.bold
@@ -903,11 +904,18 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                                       color: textDark,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    '${cfg.patternCount} tiles • ${(cfg.displayDurationMs / 1000).toStringAsFixed(1)}s',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: textGrey,
+                                  subtitle: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      context.tr('gameplay.patternDifficultySubtitle', {
+                                        'count': '${cfg.patternCount}',
+                                        'time': (cfg.displayDurationMs / 1000).toStringAsFixed(1),
+                                      }),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: textGrey,
+                                      ),
                                     ),
                                   ),
                                   trailing: isSelected
@@ -1035,9 +1043,9 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
   Widget _buildNavBackButton() {
     return Semantics(
       button: true,
-      label: 'Exit to Home',
+      label: context.tr('gameplay.exitToHomeTooltip'),
       child: Tooltip(
-        message: 'Exit to Home',
+        message: context.tr('gameplay.exitToHomeTooltip'),
         child: InkWell(
           onTap: () {
             Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -1078,11 +1086,11 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Pattern Memory',
+          Text(
+            context.tr('games.patternMemory'),
             textAlign: TextAlign.center,
             maxLines: 1,
-            style: TextStyle(
+            style: const TextStyle(
               color: primaryNavy,
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -1231,18 +1239,18 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
               const Icon(Icons.pause_circle_filled_rounded,
                   size: 48.0, color: primarySage),
               const SizedBox(height: 12.0),
-              const Text(
-                'Game Paused',
-                style: TextStyle(
+              Text(
+                context.tr('gameplay.gamePaused'),
+                style: const TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.w700,
                   color: textDark,
                 ),
               ),
               const SizedBox(height: 6.0),
-              const Text(
-                'Say "Resume" or tap below.',
-                style: TextStyle(fontSize: 14.0, color: textGrey),
+              Text(
+                context.tr('gameplay.pauseVoiceHint'),
+                style: const TextStyle(fontSize: 14.0, color: textGrey),
               ),
               const SizedBox(height: 18.0),
               ElevatedButton.icon(
@@ -1256,9 +1264,12 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                       horizontal: 22.0, vertical: 12.0),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text(
-                  'Resume Session',
-                  style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                label: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('gameplay.resumeSession'),
+                    style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
+                  ),
                 ),
                 onPressed: resumeGame,
               ),
@@ -1352,30 +1363,40 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 1. Trial progress
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.psychology_rounded,
-                  color: darkGreen, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                'Trial $_currentTrial / ${widget.totalTrials}',
-                style: const TextStyle(
-                  color: primaryNavy,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.psychology_rounded,
+                    color: darkGreen, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      context.tr('gameplay.trial', {
+                        'trial': '$_currentTrial',
+                        'total': '${widget.totalTrials}',
+                      }),
+                      style: const TextStyle(
+                        color: primaryNavy,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '($_completedCount)',
-                style: const TextStyle(
-                  color: primarySage,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(width: 4),
+                Text(
+                  '($_completedCount)',
+                  style: const TextStyle(
+                    color: primarySage,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // 2. Tappable Level badge
@@ -1397,12 +1418,15 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                 children: [
                   const Icon(Icons.bolt_rounded, color: darkGreen, size: 14),
                   const SizedBox(width: 3),
-                  Text(
-                    'Level $_currentLevel',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: darkGreen,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      context.tr('gameplay.level', {'level': '$_currentLevel'}),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: darkGreen,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -1466,12 +1490,15 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Text(
-                  'pts',
-                  style: TextStyle(
-                    color: textGrey,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    context.tr('common.pts'),
+                    style: const TextStyle(
+                      color: textGrey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -1534,12 +1561,15 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Get Ready',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textDark,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              context.tr('gameplay.getReady'),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textDark,
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -1552,12 +1582,17 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            'Memorize the ${_currentConfig.patternCount} tiles',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              color: textGrey,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              context.tr('gameplay.memorizeTiles', {
+                'count': '${_currentConfig.patternCount}',
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: textGrey,
+              ),
             ),
           ),
         ],
@@ -1620,7 +1655,7 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     return Semantics(
       button: isRecall && !isCompleted,
       enabled: isRecall && !isCompleted,
-      label: 'Tile ${index + 1}',
+      label: context.tr('gameplay.tileAria', {'num': '${index + 1}'}),
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: targetAngle, end: targetAngle),
         duration: const Duration(milliseconds: 450),
@@ -1780,32 +1815,32 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
     switch (_currentPhase) {
       case PatternGamePhase.countdown:
       case PatternGamePhase.memorize:
-        message = 'Memorize the highlighted pattern';
+        message = context.tr('gameplay.memorizePattern');
         iconData = Icons.visibility_rounded;
         break;
       case PatternGamePhase.recall:
         final remaining =
             _currentConfig.patternCount - _selectedTileIndices.length;
         message = remaining > 0
-            ? 'Tap the pattern tiles ($remaining left)'
-            : 'Pattern completed!';
+            ? context.tr('gameplay.tapPatternRemaining', {'count': '$remaining'})
+            : context.tr('gameplay.patternCompleted');
         iconData = Icons.touch_app_rounded;
         break;
       case PatternGamePhase.feedback:
         final isFinalTrial = _currentTrial >= widget.totalTrials;
         if (isFinalTrial) {
-          message = 'Completing session...';
+          message = context.tr('gameplay.completingSession');
           iconData = Icons.emoji_events_rounded;
         } else if (_lastWrongTileIndex != null) {
-          message = 'Reviewing pattern...';
+          message = context.tr('gameplay.reviewingPattern');
           iconData = Icons.visibility_rounded;
         } else {
-          message = 'Next pattern...';
+          message = context.tr('gameplay.nextPattern');
           iconData = Icons.refresh_rounded;
         }
         break;
       case PatternGamePhase.completed:
-        message = 'Game completed! Well done.';
+        message = context.tr('gameplay.patternGameCompleted');
         iconData = Icons.emoji_events_rounded;
         break;
     }
@@ -1830,13 +1865,16 @@ class _PatternMemoryGameScreenState extends State<PatternMemoryGameScreen>
           Icon(iconData, color: darkGreen, size: 18),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textDark,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textDark,
+                ),
               ),
             ),
           ),

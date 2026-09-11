@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../main.dart' show buildSmoothGameRoute;
 import '../models/folklore_story.dart';
 import '../services/folklore_service.dart';
+import '../services/locale_service.dart';
 import '../widgets/folklore_theme.dart';
 import 'folklore_reader_screen.dart';
 
@@ -136,28 +137,28 @@ class _FolkloreListScreenState extends State<FolkloreListScreen> {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Folklore',
+                  context.tr('folklore.title'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: FolkloreStoryTheme.darkNavy,
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  'Tales & legends of Northeast India',
+                  context.tr('folklore.subtitle'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: FolkloreStoryTheme.softSlate,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -184,7 +185,7 @@ class _FolkloreListScreenState extends State<FolkloreListScreen> {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  '${_stories.length} Tales',
+                  context.tr('folklore.talesCount', {'count': _stories.length.toString()}),
                   style: const TextStyle(
                     color: FolkloreStoryTheme.darkNavy,
                     fontSize: 12,
@@ -201,13 +202,13 @@ class _FolkloreListScreenState extends State<FolkloreListScreen> {
 
   Widget _buildStoryTabs() {
     final tabItems = <_TabItem>[
-      const _TabItem(
-        title: 'All Tales',
+      _TabItem(
+        title: context.tr('folklore.allTales'),
         icon: Icons.auto_stories_rounded,
       ),
       ..._stories.map(
         (s) => _TabItem(
-          title: s.title,
+          title: s.getLocalizedTitle(context),
           icon: FolkloreStoryTheme.forStory(s).icon,
         ),
       ),
@@ -331,22 +332,22 @@ class _FolkloreListScreenState extends State<FolkloreListScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.auto_stories_rounded,
               size: 44,
               color: FolkloreStoryTheme.softSlate,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'No folklore stories available yet.',
+              context.tr('folklore.noStories'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: FolkloreStoryTheme.darkNavy,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -435,7 +436,7 @@ class _MinimalistStoryCardState extends State<_MinimalistStoryCard>
       },
       child: Semantics(
         button: true,
-        label: story.title,
+        label: story.getLocalizedTitle(context),
         child: GestureDetector(
           onTapDown: (_) => setState(() => _pressed = true),
           onTapUp: (_) => setState(() => _pressed = false),
@@ -511,21 +512,24 @@ class _MinimalistStoryCardState extends State<_MinimalistStoryCard>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              story.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: FolkloreStoryTheme.darkNavy,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.1,
-                                height: 1.25,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                story.getLocalizedTitle(context),
+                                maxLines: 2,
+                                style: const TextStyle(
+                                  color: FolkloreStoryTheme.darkNavy,
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.1,
+                                  height: 1.25,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              story.subtitle,
+                              story.getLocalizedSubtitle(context),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -543,13 +547,14 @@ class _MinimalistStoryCardState extends State<_MinimalistStoryCard>
                               children: [
                                 _MinimalPill(
                                   icon: Icons.location_on_rounded,
-                                  label: story.region,
+                                  label: story.getLocalizedRegion(context),
                                   textColor: FolkloreStoryTheme.darkNavy,
                                   bgColor: FolkloreStoryTheme.paleGreen,
                                 ),
                                 _MinimalPill(
                                   icon: Icons.schedule_rounded,
-                                  label: '~${theme.readingMinutes} min read',
+                                  label: context.tr('folklore.readingMinutes',
+                                      {'minutes': '${theme.readingMinutes}'}),
                                   textColor: FolkloreStoryTheme.softSlate,
                                   bgColor: const Color(0xFFF5F7FB),
                                 ),
@@ -598,19 +603,19 @@ class _MinimalistStoryCardState extends State<_MinimalistStoryCard>
                       ),
 
                       // Read Story link
-                      const Row(
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Read Story',
-                            style: TextStyle(
+                            context.tr('folklore.readStory'),
+                            style: const TextStyle(
                               color: FolkloreStoryTheme.darkNavy,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          SizedBox(width: 4),
-                          Icon(
+                          const SizedBox(width: 4),
+                          const Icon(
                             Icons.arrow_forward_rounded,
                             size: 14,
                             color: FolkloreStoryTheme.darkNavy,

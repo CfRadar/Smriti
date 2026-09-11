@@ -6,6 +6,7 @@ import '../pages/caregiver/caregiver_reminders_tab.dart';
 import '../pages/caregiver/caregiver_memories_tab.dart';
 import '../pages/caregiver/caregiver_analytics_tab.dart';
 import '../services/caregiver_api_service.dart';
+import '../services/locale_service.dart';
 
 class CaregiverDashboardScreen extends StatefulWidget {
   const CaregiverDashboardScreen({super.key});
@@ -22,12 +23,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
 
   int _tabIndex = 0;
 
-  final List<_TabItem> _tabs = const [
-    _TabItem(icon: Icons.dashboard_rounded, label: 'Overview'),
-    _TabItem(icon: Icons.notifications_rounded, label: 'Reminders'),
-    _TabItem(icon: Icons.photo_library_rounded, label: 'Memories'),
-    _TabItem(icon: Icons.bar_chart_rounded, label: 'Analytics'),
-  ];
+
 
   final List<Widget> _pages = const [
     CaregiverOverviewTab(),
@@ -40,16 +36,16 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(context.tr('common.logout')),
+        content: Text(context.tr('caregiver.logoutConfirm')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+              child: Text(context.tr('common.cancel'))),
           TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Logout',
-                  style: TextStyle(color: Colors.red))),
+              child: Text(context.tr('common.logout'),
+                  style: const TextStyle(color: Colors.red))),
         ],
       ),
     );
@@ -67,6 +63,13 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tabs = [
+      _TabItem(icon: Icons.dashboard_rounded, label: context.tr('caregiver.overview')),
+      _TabItem(icon: Icons.notifications_rounded, label: context.tr('caregiver.reminders')),
+      _TabItem(icon: Icons.photo_library_rounded, label: context.tr('caregiver.memories')),
+      _TabItem(icon: Icons.bar_chart_rounded, label: context.tr('caregiver.analytics')),
+    ];
+
     return Scaffold(
       backgroundColor: _ivory,
       appBar: AppBar(
@@ -86,9 +89,9 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                   color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Caregiver Portal',
-              style: TextStyle(
+            Text(
+              context.tr('caregiver.portal'),
+              style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFF8F5EC)),
@@ -98,7 +101,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Logout',
+            tooltip: context.tr('common.logout'),
             onPressed: _logout,
           ),
         ],
@@ -112,7 +115,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, -3)),
           ],
@@ -123,8 +126,8 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_tabs.length, (i) {
-                final tab = _tabs[i];
+              children: List.generate(tabs.length, (i) {
+                final tab = tabs[i];
                 final active = _tabIndex == i;
                 return GestureDetector(
                   onTap: () => setState(() => _tabIndex = i),
@@ -135,7 +138,7 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
                         horizontal: 18, vertical: 10),
                     decoration: BoxDecoration(
                       color: active
-                          ? _green.withOpacity(0.1)
+                          ? _green.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(14),
                     ),
