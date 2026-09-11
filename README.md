@@ -1,6 +1,10 @@
 # Smriti (स्मृति)
 
-> **An Intelligent, Culturally-Attuned Cognitive Care and Memory Assistance Ecosystem for Dementia and Alzheimer's Patients, Caregivers, and Clinicians.**
+> **BHADWE POORE TIME YAHI DEKHTA REHTA HAI KYA ?
+KOI KAAM NHI HAI 
+
+
+An Intelligent, Culturally-Attuned Cognitive Care and Memory Assistance Ecosystem for Dementia and Alzheimer's Patients, Caregivers, and Clinicians.**
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev)
