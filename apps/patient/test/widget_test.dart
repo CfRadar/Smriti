@@ -53,4 +53,23 @@ void main() {
     expect(find.text('Bamboo Dance'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Renders clean minimal activity header and all 6 game cards',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: GameHubPage()));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Verify clean minimal header
+    expect(find.text('Choose an activity'), findsOneWidget);
+    expect(find.text('6 Games'), findsOneWidget);
+    expect(find.text('Tap to shuffle fun ideas ✨'), findsNothing);
+
+    // Verify all 6 games are present in the minimal cards grid
+    expect(find.text('Picture Recognition'), findsOneWidget);
+    expect(find.text('Pattern Memory'), findsOneWidget);
+    expect(find.text('King Shanaba'), findsOneWidget);
+    expect(find.text('Bamboo Dance'), findsOneWidget);
+    expect(find.text('Story Recall'), findsOneWidget);
+    expect(find.text('Mindful Breath'), findsOneWidget);
+  });
 }
