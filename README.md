@@ -1,5 +1,4 @@
-# BHADWE POORE TIME YAHI DEKHTA REHTA HAI KYA ?
-KOI KAAM NHI HAI Smriti (स्मृति)
+# Smriti (स्मृति)
 
 > **An Intelligent, Culturally-Attuned Cognitive Care and Memory Assistance Ecosystem for Dementia and Alzheimer's Patients, Caregivers, and Clinicians.**
 
