@@ -96,8 +96,27 @@ class LocaleService extends ChangeNotifier {
   }
 }
 
+/// InheritedNotifier that allows any widget in the widget tree to reactively
+/// rebuild whenever LocaleService changes locale.
+class LocaleScope extends InheritedNotifier<LocaleService> {
+  const LocaleScope({
+    super.key,
+    required LocaleService notifier,
+    required super.child,
+  }) : super(notifier: notifier);
+
+  static LocaleService of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<LocaleScope>();
+    return scope?.notifier ?? LocaleService.instance;
+  }
+}
+
 /// Convenience extension for calling `context.tr('key')` anywhere in the widget tree.
 extension TranslationContextExtension on BuildContext {
-  String tr(String key, [Map<String, String>? params]) =>
-      LocaleService.instance.translate(key, params);
+  String tr(String key, [Map<String, String>? params]) {
+    try {
+      dependOnInheritedWidgetOfExactType<LocaleScope>();
+    } catch (_) {}
+    return LocaleService.instance.translate(key, params);
+  }
 }

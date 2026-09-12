@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:patient/l10n/app_translations.dart';
@@ -242,5 +243,112 @@ void main() {
 
       await service.setLocale('en');
     });
+  });
+
+  group('Instant Reactive Translation with LocaleScope', () {
+    testWidgets(
+      'Widgets using context.tr update instantly without clicking tabs or manual intervention',
+      (tester) async {
+        final service = LocaleService.instance;
+        await service.setLocale('en');
+
+        Widget buildTestApp() {
+          return LocaleScope(
+            notifier: service,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Builder(
+                builder: (context) {
+                  return Text(context.tr('nav.games'));
+                },
+              ),
+            ),
+          );
+        }
+
+        await tester.pumpWidget(buildTestApp());
+        expect(find.text('Games'), findsOneWidget);
+
+        // Change locale to Hindi - translates immediately upon pump
+        await service.setLocale('hi');
+        await tester.pump();
+        expect(find.text('खेल'), findsOneWidget);
+
+        // Change locale to Assamese
+        await service.setLocale('as');
+        await tester.pump();
+        expect(find.text('খেল'), findsOneWidget);
+
+        // Change locale to Bengali
+        await service.setLocale('bn');
+        await tester.pump();
+        expect(find.text('খেলা'), findsOneWidget);
+
+        // Change locale back to English
+        await service.setLocale('en');
+        await tester.pump();
+        expect(find.text('Games'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ModalBottomSheet renders and changes language without throwing No MaterialLocalizations found',
+      (tester) async {
+        final service = LocaleService.instance;
+        await service.setLocale('en');
+
+        Widget buildApp() {
+          return MaterialApp(
+            localizationsDelegates: const [
+              DefaultMaterialLocalizations.delegate,
+              DefaultWidgetsLocalizations.delegate,
+            ],
+            builder: (context, child) => LocaleScope(
+              notifier: service,
+              child: child!,
+            ),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (ctx) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(ctx.tr('settings.language')),
+                          ElevatedButton(
+                            onPressed: () => service.setLocale('hi'),
+                            child: const Text('Set Hindi'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: const Text('Open Sheet'),
+                ),
+              ),
+            ),
+          );
+        }
+
+        await tester.pumpWidget(buildApp());
+        await tester.tap(find.text('Open Sheet'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Language'), findsOneWidget);
+
+        // Tap Set Hindi inside the bottom sheet
+        await tester.tap(find.text('Set Hindi'));
+        await tester.pumpAndSettle();
+
+        // Must translate to 'भाषा' and NOT throw any No MaterialLocalizations found exception
+        expect(find.text('भाषा'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        // Restore English
+        await service.setLocale('en');
+      },
+    );
   });
 }

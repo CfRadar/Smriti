@@ -86,35 +86,50 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Scenic cultural backdrop
-                  Image.asset(
-                    'assets/images/kang_court_board_clean.jpg',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                    errorBuilder: (_, __, ___) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFFDCE8DA), Color(0xFFF0F4F8)],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Gradient overlay that smoothly fades into the screen background
+                  // Warm ambient pastel background
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.transparent,
-                          Color(0x33F0F4F8),
-                          Color(0xCCF0F4F8),
+                          Color(0xFFFFF9F0),
+                          Color(0xFFFEF2E4),
                           Color(0xFFF0F4F8),
                         ],
-                        stops: [0.25, 0.55, 0.85, 1.0],
+                      ),
+                    ),
+                  ),
+
+                  // Mascot image peeking cheerfully
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 48, bottom: 4),
+                      child: Image.asset(
+                        'assets/images/welcome_mascot.jpg',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+
+                  // Subtle gradient overlay at the very bottom for smooth transition
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 28,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Color(0xFFF0F4F8),
+                          ],
+                        ),
                       ),
                     ),
                   ),
