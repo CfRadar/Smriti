@@ -62,6 +62,21 @@ Route<T> buildSmoothGameRoute<T>(Widget page) {
   );
 }
 
+class _FallbackMaterialLocalizationsDelegate
+    extends LocalizationsDelegate<MaterialLocalizations> {
+  const _FallbackMaterialLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<MaterialLocalizations> load(Locale locale) =>
+      DefaultMaterialLocalizations.load(locale);
+
+  @override
+  bool shouldReload(_FallbackMaterialLocalizationsDelegate old) => false;
+}
+
 class SmritiApp extends StatefulWidget {
   const SmritiApp({super.key});
 
@@ -274,6 +289,10 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
       builder: (context, _) {
         return MaterialApp(
           navigatorKey: _navigatorKey,
+          localizationsDelegates: const [
+            _FallbackMaterialLocalizationsDelegate(),
+            DefaultWidgetsLocalizations.delegate,
+          ],
           debugShowCheckedModeBanner: false,
           title: 'SMRITI',
           theme: ThemeData(
@@ -293,7 +312,10 @@ class _SmritiAppState extends State<SmritiApp> with WidgetsBindingObserver {
               return const SizedBox.shrink();
             }
 
-            return child;
+            return LocaleScope(
+              notifier: LocaleService.instance,
+              child: child,
+            );
           },
         );
       },
@@ -601,6 +623,7 @@ class _GameHubPageState extends State<GameHubPage>
   @override
   void initState() {
     super.initState();
+    LocaleService.instance.addListener(_onLocaleChanged);
     _reminderPopController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -622,8 +645,15 @@ class _GameHubPageState extends State<GameHubPage>
     });
   }
 
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    LocaleService.instance.removeListener(_onLocaleChanged);
     _streakCelebrationTimer?.cancel();
     _reminderPopController.dispose();
     super.dispose();
@@ -825,11 +855,11 @@ class _GameHubPageState extends State<GameHubPage>
                   sliver: SliverToBoxAdapter(
                     child: _selectedTabIndex == 0
                         ? KeyedSubtree(
-                            key: const ValueKey('games_tab'),
+                            key: ValueKey('games_tab_${LocaleService.instance.locale}'),
                             child: _buildGamesSection(context),
                           )
                         : KeyedSubtree(
-                            key: const ValueKey('activities_tab'),
+                            key: ValueKey('activities_tab_${LocaleService.instance.locale}'),
                             child: _buildActivitiesScreen(),
                           ),
                   ),

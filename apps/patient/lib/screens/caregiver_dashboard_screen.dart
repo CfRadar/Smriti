@@ -32,6 +32,22 @@ class _CaregiverDashboardScreenState extends State<CaregiverDashboardScreen> {
     CaregiverAnalyticsTab(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    LocaleService.instance.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    LocaleService.instance.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,

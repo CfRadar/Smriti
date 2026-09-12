@@ -46,6 +46,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
   @override
   void initState() {
     super.initState();
+    LocaleService.instance.addListener(_onLocaleChanged);
     _storyTheme = FolkloreStoryTheme.forKey(widget.story.title);
     final currentAppLocale = LocaleService.instance.locale;
     if (widget.story.translations.containsKey(currentAppLocale)) {
@@ -71,6 +72,18 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
     _scrollController.addListener(_updateReadingProgress);
   }
 
+  void _onLocaleChanged() {
+    if (!mounted) return;
+    final currentAppLocale = LocaleService.instance.locale;
+    setState(() {
+      if (widget.story.translations.containsKey(currentAppLocale)) {
+        _selectedLanguageCode = currentAppLocale;
+      } else if (currentAppLocale == 'lus' && widget.story.translations.containsKey('mizo')) {
+        _selectedLanguageCode = 'mizo';
+      }
+    });
+  }
+
   void _updateReadingProgress() {
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
@@ -88,6 +101,7 @@ class _FolkloreReaderScreenState extends State<FolkloreReaderScreen>
 
   @override
   void dispose() {
+    LocaleService.instance.removeListener(_onLocaleChanged);
     _scrollController.removeListener(_updateReadingProgress);
     _scrollController.dispose();
     _waveController.dispose();

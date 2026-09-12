@@ -25,11 +25,17 @@ class _FolkloreListScreenState extends State<FolkloreListScreen> {
   @override
   void initState() {
     super.initState();
+    LocaleService.instance.addListener(_onLocaleChanged);
     _loadStories();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    LocaleService.instance.removeListener(_onLocaleChanged);
     _tabsScrollController.dispose();
     super.dispose();
   }
